@@ -48,18 +48,15 @@ npm install
 
 ### Razvojni način rada:
 
-1. **Backend poslužitelj** (Terminal 1):
+1. **Backend poslužitelj** (port 3000):
 ```bash
 npm run dev
 ```
 
-2. **Frontend development server** (Terminal 2):
+2. **Frontend development server** (port 3001):
 ```bash
 npm run dev-client
 ```
-
-Frontend će biti dostupan na http://localhost:3001
-Backend API na http://localhost:3000
 
 ### Produkcijski način rada:
 
@@ -68,12 +65,13 @@ Backend API na http://localhost:3000
 npm run build
 ```
 
-2. **Pokretanje produkcijskog poslužitelja**:
+2. **Pokretanje poslužitelja**:
 ```bash
 npm start
 ```
 
-Aplikacija će biti dostupna na http://localhost:3000
+**Razvojni način**: Frontend (3001) + Backend (3000)  
+**Produkcijski način**: Sve na portu 3000
 
 Aplikacija će biti dostupna na http://localhost:3000
 
@@ -81,13 +79,13 @@ Aplikacija će biti dostupna na http://localhost:3000
 
 ```
 poligon/
-├── app.js              # Express backend poslužitelj
+├── app.js              # Express.js backend poslužitelj
 ├── package.json        # npm konfiguracija
 ├── webpack.config.js   # Webpack konfiguracija
 ├── .babelrc           # Babel konfiguracija
 ├── README.md          # Dokumentacija
 ├── .gitignore         # Git ignore pravila
-├── src/               # React frontend kod
+├── src/               # React source kod
 │   ├── index.js       # React entry point
 │   ├── App.js         # Glavna React komponenta
 │   ├── index.html     # HTML template
@@ -100,13 +98,16 @@ poligon/
 │   │   └── NotFound.js # 404 stranica
 │   └── styles/        # CSS stilovi
 │       └── main.css   # Glavni CSS
-├── dist/              # Build output (generirano)
-└── public/            # Stari statički fajlovi (za uklanjanje)
+└── dist/              # Webpack build output (generiran)
 ```
 
 ## 🛣️ API Rute
 
-- `GET /api/status` - Status poslužitelja
+## 🛣️ API Rute
+
+- `GET /api/status` - Status API endpoint
+- `GET /api/about` - Podaci za O nama stranicu
+- `GET /*` - Služi React aplikaciju (SPA routing)
 - `GET /api/about` - Podaci o aplikaciji
 - `GET /*` - Služi React aplikaciju (catch-all)
 
@@ -116,8 +117,18 @@ Možete lako prilagoditi aplikaciju:
 
 1. **React komponente**: Uredite datoteke u `/src/components/` i `/src/pages/`
 2. **Stilovi**: Uredite `/src/styles/main.css`
-3. **API**: Dodajte nove rute u `app.js`
-4. **Build konfiguracija**: Uredite `webpack.config.js`
+3. **Backend API**: Uredite `app.js` za dodavanje novih API ruta
+4. **Webpack konfiguracija**: Uredite `webpack.config.js`
+5. **Build proces**: Prilagodite npm skripte u `package.json`
+
+## ⚛️ React Features
+
+- Funkcionalne komponente s Hooks
+- State management s useState i useEffect
+- API pozivi s fetch
+- Jednostavan SPA routing
+- Komponente za ponovno korištenje
+- Modern JavaScript (ES6+)
 
 ## 🎯 React Features
 

@@ -1,7 +1,7 @@
 {
   "name": "poligon",
   "version": "1.0.0",
-  "description": "A simple web app project tracker",
+  "description": "React.js web application template with Express.js backend",
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/thedanielbatinicproject/poligon#readme",
   "dependencies": {
-    "express": "^5.1.0",
+    "express": "^4.21.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

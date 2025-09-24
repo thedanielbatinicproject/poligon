@@ -49,7 +49,7 @@ app.get('/api/about', (req, res) => {
 });
 
 // Serviranje React aplikacije za sve ostale rute
-app.get('/*', (req, res) => {
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
