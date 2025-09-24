@@ -1,16 +1,22 @@
-# Poligon - Node.js Web Aplikacija Predložak
+# Poligon - React.js Web Aplikacija Predložak
 
-Početni predložak za Node.js web aplikacije s Express.js okvirom i EJS template engine-om.
+Početni predložak za full-stack web aplikacije s React.js frontend-om i Express.js backend-om.
 
 ## 🚀 Značajke
 
-- Express.js poslužitelj
-- EJS template engine za dinamičko renderiranje
-- Statičke datoteke (CSS, JavaScript)
-- API rute
-- Rukovanje greškama
+### Frontend (React.js):
+- React komponente i hooks
+- Moderna JavaScript (ES6+)
 - Responzivni dizajn
-- Nodemon za razvoj
+- SPA (Single Page Application)
+- Hot reloading za razvoj
+
+### Backend (Express.js):
+- RESTful API
+- JSON odgovori
+- CORS podrška
+- Error handling
+- Statičko služenje React build-a
 
 ## 📋 Ovisnosti
 
@@ -18,8 +24,11 @@ Početni predložak za Node.js web aplikacije s Express.js okvirom i EJS templat
 - npm
 
 ### Glavni npm paketi:
-- **express** - Web okvir
-- **ejs** - Template engine
+- **react** - Frontend library
+- **react-dom** - DOM rendering za React
+- **express** - Backend web okvir
+- **webpack** - Module bundler
+- **babel** - JavaScript transpiler
 - **nodemon** - Razvojni alat za automatsko pokretanje
 
 ## 🛠️ Instalacija
@@ -37,15 +46,34 @@ npm install
 
 ## 🏃‍♂️ Pokretanje
 
-### Razvojni način rada (s nodemon):
+### Razvojni način rada:
+
+1. **Backend poslužitelj** (Terminal 1):
 ```bash
 npm run dev
 ```
 
+2. **Frontend development server** (Terminal 2):
+```bash
+npm run dev-client
+```
+
+Frontend će biti dostupan na http://localhost:3001
+Backend API na http://localhost:3000
+
 ### Produkcijski način rada:
+
+1. **Build React aplikacije**:
+```bash
+npm run build
+```
+
+2. **Pokretanje produkcijskog poslužitelja**:
 ```bash
 npm start
 ```
+
+Aplikacija će biti dostupna na http://localhost:3000
 
 Aplikacija će biti dostupna na http://localhost:3000
 
@@ -53,45 +81,52 @@ Aplikacija će biti dostupna na http://localhost:3000
 
 ```
 poligon/
-├── app.js              # Glavna datoteka poslužitelja
+├── app.js              # Express backend poslužitelj
 ├── package.json        # npm konfiguracija
+├── webpack.config.js   # Webpack konfiguracija
+├── .babelrc           # Babel konfiguracija
 ├── README.md          # Dokumentacija
 ├── .gitignore         # Git ignore pravila
-├── views/             # EJS template stranice
-│   ├── index.ejs      # Početna stranica
-│   ├── about.ejs      # O nama stranica
-│   ├── 404.ejs        # 404 greška stranica
-│   └── layout.ejs     # Layout template (za buduće proširenje)
-└── public/            # Statičke datoteke
-    ├── css/
-    │   └── style.css  # Stilovi
-    └── js/
-        └── main.js    # Frontend JavaScript
+├── src/               # React frontend kod
+│   ├── index.js       # React entry point
+│   ├── App.js         # Glavna React komponenta
+│   ├── index.html     # HTML template
+│   ├── components/    # React komponente
+│   │   ├── Header.js  # Header komponenta
+│   │   └── Footer.js  # Footer komponenta
+│   ├── pages/         # React stranice
+│   │   ├── Home.js    # Početna stranica
+│   │   ├── About.js   # O nama stranica
+│   │   └── NotFound.js # 404 stranica
+│   └── styles/        # CSS stilovi
+│       └── main.css   # Glavni CSS
+├── dist/              # Build output (generirano)
+└── public/            # Stari statički fajlovi (za uklanjanje)
 ```
 
 ## 🛣️ API Rute
 
-- `GET /` - Početna stranica
-- `GET /about` - O nama stranica
-- `GET /api/status` - Status API endpoint
+- `GET /api/status` - Status poslužitelja
+- `GET /api/about` - Podaci o aplikaciji
+- `GET /*` - Služi React aplikaciju (catch-all)
 
 ## 🎨 Prilagođavanje
 
 Možete lako prilagoditi aplikaciju:
 
-1. **Stilovi**: Uredite `/public/css/style.css`
-2. **JavaScript**: Uredite `/public/js/main.js`
-3. **EJS template stranice**: Uredite datoteke u `/views/` direktoriju
-4. **Logika poslužitelja**: Uredite `app.js`
-5. **Template varijable**: Proslijedite dodatne podatke iz ruta u EJS template-e
+1. **React komponente**: Uredite datoteke u `/src/components/` i `/src/pages/`
+2. **Stilovi**: Uredite `/src/styles/main.css`
+3. **API**: Dodajte nove rute u `app.js`
+4. **Build konfiguracija**: Uredite `webpack.config.js`
 
-## 🎯 EJS Template značajke
+## 🎯 React Features
 
-- Dinamičko renderiranje sadržaja
-- Prenos podataka iz poslužitelja u template-e
-- Iteriranje kroz nizove i objekte
-- Uvjetno renderiranje
-- Mogućnost stvaranja layout template-a
+- **Komponente**: Modularne i ponovne komponente
+- **Hooks**: useState, useEffect za state management
+- **Event handling**: Interaktivni elementi
+- **API pozivi**: Fetch za komunikaciju s backend-om
+- **Kondicionalno renderiranje**: Dinamični sadržaj
+- **Hot reloading**: Instant feedback tijekom razvoja
 
 ## 📝 Licenca
 

@@ -4,62 +4,53 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// EJS setup
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
 // Middleware za parsiranje JSON-a
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serviranje statičkih fajlova
-app.use(express.static(path.join(__dirname, 'public')));
+// Serviranje React build datoteka
+app.use(express.static(path.join(__dirname, 'dist')));
 
-// Osnovne rute
-app.get('/', (req, res) => {
-    res.render('index', {
-        title: 'Početna',
-        heading: 'Dobrodošli na Poligon',
-        description: 'Ova stranica je stvorena kao početni predložak za Node.js web aplikaciju s EJS template engine-om.',
-        currentYear: new Date().getFullYear()
+// CORS za React development
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
+
+// API rute
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'success',
+        message: 'Poslužitelj je pokrenut s React.js frontend-om!',
+        timestamp: new Date().toISOString(),
+        framework: 'React.js',
+        backend: 'Express.js'
     });
 });
 
-app.get('/about', (req, res) => {
-    const technologies = ['Node.js', 'Express.js', 'EJS', 'HTML5', 'CSS3', 'JavaScript'];
+app.get('/api/about', (req, res) => {
+    const technologies = ['Node.js', 'Express.js', 'React.js', 'HTML5', 'CSS3', 'JavaScript', 'Webpack', 'Babel'];
     const features = [
-        'EJS template renderiranje',
-        'Express poslužitelj',
-        'Statičke datoteke',
+        'React komponente',
+        'Express API poslužitelj',
+        'Webpack bundling',
+        'Babel transpiling',
         'API rute',
         'Rukovanje greškama',
         'Responzivni dizajn'
     ];
     
-    res.render('about', {
-        title: 'O nama',
+    res.json({
         technologies: technologies,
         features: features,
         currentYear: new Date().getFullYear()
     });
 });
 
-// API ruta
-app.get('/api/status', (req, res) => {
-    res.json({
-        status: 'success',
-        message: 'Poslužitelj je pokrenut s EJS template engine-om!',
-        timestamp: new Date().toISOString(),
-        templateEngine: 'EJS'
-    });
-});
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).render('404', {
-        title: '404 - Stranica nije pronađena',
-        currentYear: new Date().getFullYear()
-    });
+// Serviranje React aplikacije za sve ostale rute
+app.get('/*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // Error handler

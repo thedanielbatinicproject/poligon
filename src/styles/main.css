@@ -57,6 +57,11 @@ header {
     color: #3498db;
 }
 
+.nav-menu a.active {
+    color: #3498db;
+    font-weight: bold;
+}
+
 /* Glavni sadržaj */
 main {
     min-height: calc(100vh - 140px);
