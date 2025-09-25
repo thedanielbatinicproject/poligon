@@ -1,72 +1,79 @@
-require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const cors = require('cors');
-
-// Import middleware and routes
-const { verifyToken } = require('./server/middleware/auth');
-const authRoutes = require('./server/routes/auth');
-const JsonDB = require('./server/utils/JsonDB');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize database
-const db = new JsonDB(path.join(__dirname, 'data.json'));
-
-// Middleware
+// Middleware za parsiranje JSON-a i cookies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// CORS configuration
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3001',
-    credentials: true
-}));
+// Serviranje React build datoteka
+app.use(express.static(path.join(__dirname, 'dist')));
 
-// Apply auth middleware to all routes
-app.use(verifyToken);
+// CORS za React development - dodajemo support za credentials
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// API rute
+const authRoutes = require('./server/routes/auth');
+const thesesRoutes = require('./server/routes/theses');
 
-// API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/theses', require('./server/routes/theses'));
-
-// API status endpoint
+app.use('/api/theses', thesesRoutes);
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'success',
-        message: 'Poligon - Diplomski Builder je aktivan',
+        message: 'Poslužitelj je pokrenut s React.js frontend-om!',
         timestamp: new Date().toISOString(),
-        authenticated: !!req.user,
-        mode: req.user ? 'EDIT' : 'VIEW'
+        framework: 'React.js',
+        backend: 'Express.js'
     });
 });
 
-// Serve React application
-app.use(express.static(path.join(__dirname, 'dist')));
+app.get('/api/about', (req, res) => {
+    const technologies = ['Node.js', 'Express.js', 'React.js', 'HTML5', 'CSS3', 'JavaScript', 'Webpack', 'Babel'];
+    const features = [
+        'React komponente',
+        'Express API poslužitelj',
+        'Webpack bundling',
+        'Babel transpiling',
+        'API rute',
+        'Rukovanje greškama',
+        'Responzivni dizajn'
+    ];
+    
+    res.json({
+        technologies: technologies,
+        features: features,
+        currentYear: new Date().getFullYear()
+    });
+});
 
-// Catch all handler for React Router
+// Serviranje React aplikacije za sve ostale rute
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// Global error handler
+// Error handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ 
-        error: 'Internal server error',
-        ...(process.env.NODE_ENV === 'development' && { details: err.message })
-    });
+    console.error(err.stack);
+    res.status(500).json({ error: 'Nešto je pošlo po zlu!' });
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Poligon server running on http://localhost:${PORT}`);
-    console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Poslužitelj pokrenut na http://localhost:${PORT}`);
 });
 
 module.exports = app;

@@ -1,326 +1,139 @@
 const express = require('express');
-const JsonDB = require('../utils/JsonDB');
-const { Thesis, Chapter } = require('../models/Thesis');
-const { verifyToken } = require('../middleware/auth');
-
 const router = express.Router();
-const thesesDB = new JsonDB('server/data/theses.json');
-const chaptersDB = new JsonDB('server/data/chapters.json');
+const ThesisModel = require('../models/ThesisModel');
 
-// Get all theses for user
-router.get('/', verifyToken, async (req, res) => {
+// Import session functions from auth
+const fs = require('fs');
+const path = require('path');
+
+const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json');
+
+function loadActiveSessions() {
     try {
-        const allTheses = await thesesDB.read();
-        const userTheses = allTheses.filter(thesis => thesis.metadata.author.email === req.user.email);
-        res.json(userTheses.map(thesis => ({
-            id: thesis.id,
-            title: thesis.metadata.title,
-            updated: thesis.updated,
-            stats: thesis.stats
-        })));
+        if (fs.existsSync(SESSIONS_FILE)) {
+            const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
+            const sessionsArray = JSON.parse(data);
+            return new Map(sessionsArray);
+        }
+    } catch (error) {
+        console.error('Error loading sessions:', error);
+    }
+    return new Map();
+}
+
+// Middleware za autentifikaciju - sada koristi cookies
+const authenticateUser = (req, res, next) => {
+    // Za POST/PUT/DELETE operacije zahtijevaj autentifikaciju
+    if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
+        const sessionId = req.cookies.sessionId;
+        
+        if (!sessionId) {
+            return res.status(401).json({ error: 'Authentication required - no session cookie' });
+        }
+        
+        // Učitaj aktivne sesije iz fajla
+        const activeSessions = loadActiveSessions();
+        
+        if (!activeSessions.has(sessionId)) {
+            return res.status(401).json({ error: 'Invalid or expired session' });
+        }
+        
+        const sessionData = activeSessions.get(sessionId);
+        req.user = sessionData.user;
+        req.sessionId = sessionId;
+    }
+    
+    next();
+};
+
+// GET /api/theses - Dohvati sve theses
+router.get('/', async (req, res) => {
+    try {
+        const theses = await ThesisModel.getAll();
+        res.json(theses);
     } catch (error) {
         console.error('Error fetching theses:', error);
-        res.status(500).json({ error: 'Failed to fetch theses' });
+        res.status(500).json({ error: 'Error fetching theses' });
     }
 });
 
-// Get specific thesis
-router.get('/:id', verifyToken, async (req, res) => {
+// GET /api/theses/:id - Dohvati specifični thesis
+router.get('/:id', async (req, res) => {
     try {
-        const allTheses = await thesesDB.read();
-        const thesis = allTheses.find(t => t.id === req.params.id);
-        
+        const thesis = await ThesisModel.getById(req.params.id);
         if (!thesis) {
             return res.status(404).json({ error: 'Thesis not found' });
         }
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
         res.json(thesis);
     } catch (error) {
         console.error('Error fetching thesis:', error);
-        res.status(500).json({ error: 'Failed to fetch thesis' });
+        res.status(500).json({ error: 'Error fetching thesis' });
     }
 });
 
-// Create new thesis
-router.post('/', verifyToken, async (req, res) => {
+// POST /api/theses - Kreiraj novi thesis
+router.post('/', authenticateUser, async (req, res) => {
     try {
-        const thesisData = {
-            ...req.body,
-            metadata: {
-                ...req.body.metadata,
-                author: {
-                    ...req.body.metadata?.author,
-                    email: req.user.email
-                }
-            }
-        };
-        
-        const thesis = new Thesis(thesisData);
-        
-        const allTheses = await thesesDB.read();
-        allTheses.push(thesis.toJSON());
-        await thesesDB.write(allTheses);
-        
-        res.status(201).json(thesis.toJSON());
+        const thesis = await ThesisModel.create(req.body);
+        res.status(201).json(thesis);
     } catch (error) {
         console.error('Error creating thesis:', error);
-        res.status(500).json({ error: 'Failed to create thesis' });
+        res.status(500).json({ error: 'Error creating thesis' });
     }
 });
 
-// Update thesis metadata
-router.put('/:id', verifyToken, async (req, res) => {
+// PUT /api/theses/:id - Ažuriraj thesis
+router.put('/:id', authenticateUser, async (req, res) => {
     try {
-        const allTheses = await thesesDB.read();
-        const thesisIndex = allTheses.findIndex(t => t.id === req.params.id);
-        
-        if (thesisIndex === -1) {
-            return res.status(404).json({ error: 'Thesis not found' });
-        }
-        
-        const thesis = allTheses[thesisIndex];
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
-        // Update thesis
-        const updatedThesis = new Thesis({
-            ...thesis,
-            ...req.body,
-            updated: new Date().toISOString(),
-            version: thesis.version + 1
-        });
-        
-        allTheses[thesisIndex] = updatedThesis.toJSON();
-        await thesesDB.write(allTheses);
-        
-        res.json(updatedThesis.toJSON());
+        const thesis = await ThesisModel.update(req.params.id, req.body);
+        res.json(thesis);
     } catch (error) {
         console.error('Error updating thesis:', error);
-        res.status(500).json({ error: 'Failed to update thesis' });
+        res.status(500).json({ error: 'Error updating thesis' });
     }
 });
 
-// Delete thesis
-router.delete('/:id', verifyToken, async (req, res) => {
+// DELETE /api/theses/:id - Obriši thesis
+router.delete('/:id', authenticateUser, async (req, res) => {
     try {
-        const allTheses = await thesesDB.read();
-        const thesisIndex = allTheses.findIndex(t => t.id === req.params.id);
-        
-        if (thesisIndex === -1) {
-            return res.status(404).json({ error: 'Thesis not found' });
-        }
-        
-        const thesis = allTheses[thesisIndex];
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
-        allTheses.splice(thesisIndex, 1);
-        await thesesDB.write(allTheses);
-        
-        res.json({ message: 'Thesis deleted successfully' });
+        await ThesisModel.delete(req.params.id);
+        res.status(204).send();
     } catch (error) {
         console.error('Error deleting thesis:', error);
-        res.status(500).json({ error: 'Failed to delete thesis' });
+        res.status(500).json({ error: 'Error deleting thesis' });
     }
 });
 
-// Chapter Management
-
-// Add chapter
-router.post('/:id/chapters', verifyToken, async (req, res) => {
+// POST /api/theses/:id/chapters - Dodaj novo poglavlje
+router.post('/:id/chapters', authenticateUser, async (req, res) => {
     try {
-        const allTheses = await thesesDB.read();
-        const thesisIndex = allTheses.findIndex(t => t.id === req.params.id);
-        
-        if (thesisIndex === -1) {
-            return res.status(404).json({ error: 'Thesis not found' });
-        }
-        
-        const thesis = allTheses[thesisIndex];
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
-        const thesisInstance = new Thesis(thesis);
-        const newChapter = thesisInstance.addChapter(req.body, req.body.parent_id);
-        
-        allTheses[thesisIndex] = thesisInstance.toJSON();
-        await thesesDB.write(allTheses);
-        
-        res.status(201).json(newChapter);
+        const thesis = await ThesisModel.addChapter(req.params.id, req.body);
+        res.json(thesis);
     } catch (error) {
         console.error('Error adding chapter:', error);
-        res.status(500).json({ error: 'Failed to add chapter' });
+        res.status(500).json({ error: 'Error adding chapter' });
     }
 });
 
-// Update chapter
-router.put('/:id/chapters/:chapterId', verifyToken, async (req, res) => {
+// PUT /api/theses/:id/chapters/:chapterId - Ažuriraj poglavlje
+router.put('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
     try {
-        const allTheses = await thesesDB.read();
-        const thesisIndex = allTheses.findIndex(t => t.id === req.params.id);
-        
-        if (thesisIndex === -1) {
-            return res.status(404).json({ error: 'Thesis not found' });
-        }
-        
-        const thesis = allTheses[thesisIndex];
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
-        const thesisInstance = new Thesis(thesis);
-        const chapter = thesisInstance.findChapter(req.params.chapterId);
-        
-        if (!chapter) {
-            return res.status(404).json({ error: 'Chapter not found' });
-        }
-        
-        // Update chapter
-        Object.assign(chapter, req.body, {
-            updated: new Date().toISOString()
-        });
-        
-        thesisInstance.updateStats();
-        
-        allTheses[thesisIndex] = thesisInstance.toJSON();
-        await thesesDB.write(allTheses);
-        
-        res.json(chapter);
+        const thesis = await ThesisModel.updateChapter(req.params.id, req.params.chapterId, req.body);
+        res.json(thesis);
     } catch (error) {
         console.error('Error updating chapter:', error);
-        res.status(500).json({ error: 'Failed to update chapter' });
+        res.status(500).json({ error: 'Error updating chapter' });
     }
 });
 
-// Delete chapter
-router.delete('/:id/chapters/:chapterId', verifyToken, async (req, res) => {
+// DELETE /api/theses/:id/chapters/:chapterId - Obriši poglavlje
+router.delete('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
     try {
-        const allTheses = await thesesDB.read();
-        const thesisIndex = allTheses.findIndex(t => t.id === req.params.id);
-        
-        if (thesisIndex === -1) {
-            return res.status(404).json({ error: 'Thesis not found' });
-        }
-        
-        const thesis = allTheses[thesisIndex];
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
-        const thesisInstance = new Thesis(thesis);
-        const removed = thesisInstance.removeChapter(req.params.chapterId);
-        
-        if (!removed) {
-            return res.status(404).json({ error: 'Chapter not found' });
-        }
-        
-        allTheses[thesisIndex] = thesisInstance.toJSON();
-        await thesesDB.write(allTheses);
-        
-        res.json({ message: 'Chapter deleted successfully' });
+        const thesis = await ThesisModel.deleteChapter(req.params.id, req.params.chapterId);
+        res.json(thesis);
     } catch (error) {
         console.error('Error deleting chapter:', error);
-        res.status(500).json({ error: 'Failed to delete chapter' });
-    }
-});
-
-// Reorder chapters
-router.put('/:id/chapters/:chapterId/move', verifyToken, async (req, res) => {
-    try {
-        const { newParentId, newOrder } = req.body;
-        
-        const allTheses = await thesesDB.read();
-        const thesisIndex = allTheses.findIndex(t => t.id === req.params.id);
-        
-        if (thesisIndex === -1) {
-            return res.status(404).json({ error: 'Thesis not found' });
-        }
-        
-        const thesis = allTheses[thesisIndex];
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
-        const thesisInstance = new Thesis(thesis);
-        const moved = thesisInstance.moveChapter(req.params.chapterId, newParentId, newOrder);
-        
-        if (!moved) {
-            return res.status(404).json({ error: 'Chapter not found' });
-        }
-        
-        allTheses[thesisIndex] = thesisInstance.toJSON();
-        await thesesDB.write(allTheses);
-        
-        res.json({ message: 'Chapter moved successfully' });
-    } catch (error) {
-        console.error('Error moving chapter:', error);
-        res.status(500).json({ error: 'Failed to move chapter' });
-    }
-});
-
-// Auto-save chapter content
-router.patch('/:id/chapters/:chapterId/autosave', verifyToken, async (req, res) => {
-    try {
-        const { content } = req.body;
-        
-        const allTheses = await thesesDB.read();
-        const thesisIndex = allTheses.findIndex(t => t.id === req.params.id);
-        
-        if (thesisIndex === -1) {
-            return res.status(404).json({ error: 'Thesis not found' });
-        }
-        
-        const thesis = allTheses[thesisIndex];
-        
-        // Check ownership
-        if (thesis.metadata.author.email !== req.user.email) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        
-        const thesisInstance = new Thesis(thesis);
-        const chapter = thesisInstance.findChapter(req.params.chapterId);
-        
-        if (!chapter) {
-            return res.status(404).json({ error: 'Chapter not found' });
-        }
-        
-        // Update only content and timestamp
-        chapter.content = content;
-        chapter.updated = new Date().toISOString();
-        
-        thesisInstance.updateStats();
-        
-        allTheses[thesisIndex] = thesisInstance.toJSON();
-        await thesesDB.write(allTheses);
-        
-        res.json({ 
-            message: 'Auto-saved successfully',
-            wordCount: chapter.getWordCount(),
-            updated: chapter.updated
-        });
-    } catch (error) {
-        console.error('Error auto-saving chapter:', error);
-        res.status(500).json({ error: 'Failed to auto-save chapter' });
+        res.status(500).json({ error: 'Error deleting chapter' });
     }
 });
 

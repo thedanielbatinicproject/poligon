@@ -1,57 +1,149 @@
 const express = require('express');
-const { login, requireAuth } = require('../middleware/auth');
-
 const router = express.Router();
 
-// Login endpoint
-router.post('/login', async (req, res) => {
+// Persistent session store
+const fs = require('fs');
+const path = require('path');
+
+const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json');
+
+// Ensure data directory exists
+const dataDir = path.dirname(SESSIONS_FILE);
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Load sessions from file
+let activeSessions = new Map();
+
+function loadSessions() {
     try {
-        const { username, password, rememberMe } = req.body;
-        
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Username and password required' });
+        if (fs.existsSync(SESSIONS_FILE)) {
+            const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
+            const sessionsArray = JSON.parse(data);
+            activeSessions = new Map(sessionsArray);
+
         }
+    } catch (error) {
+        console.error('❌ Error loading sessions:', error);
+        activeSessions = new Map();
+    }
+}
 
-        const token = await login(username, password, rememberMe);
-        
-        // Set HTTP-only cookie
-        const cookieOptions = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000 // 30 days or 2 hours
+function saveSessions() {
+    try {
+        const sessionsArray = Array.from(activeSessions.entries());
+        fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessionsArray, null, 2));
+
+    } catch (error) {
+        console.error('❌ Error saving sessions:', error);
+    }
+}
+
+// Load sessions on startup
+loadSessions();
+
+// Helper funkcije
+function generateSessionId() {
+    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function getSessionFromCookie(req) {
+    const sessionId = req.cookies.sessionId;
+    
+    if (!sessionId) {
+        return null;
+    }
+    
+    const session = activeSessions.get(sessionId);
+    return session;
+}
+
+// Login endpoint  
+router.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    // Simple auth check
+    const validUsername = process.env.ADMIN_USERNAME || 'admin';
+    const validPassword = process.env.ADMIN_PASSWORD || 'admin';
+    
+    if (username === validUsername && password === validPassword) {
+        const sessionId = generateSessionId();
+        const sessionData = {
+            sessionId,
+            user: { username, role: 'admin' },
+            createdAt: new Date(),
+            lastAccess: new Date()
         };
+        
+        activeSessions.set(sessionId, sessionData);
+        saveSessions(); // Spremamo sesije u fajl
+        
+        // Postavljamo cookie sa sessionId
+        res.cookie('sessionId', sessionId, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+        
 
-        res.cookie('authToken', token, cookieOptions);
-        res.json({ 
-            success: true, 
+        
+        res.json({
+            success: true,
             message: 'Login successful',
             user: { username, role: 'admin' }
         });
-    } catch (error) {
-        res.status(401).json({ error: error.message });
+    } else {
+        res.status(401).json({
+            success: false,
+            message: 'Invalid credentials'
+        });
+    }
+});
+
+// Status endpoint - proverava da li je korisnik ulogovan
+router.get('/status', (req, res) => {
+    const session = getSessionFromCookie(req);
+    
+    if (session) {
+        // Ažuriramo last access
+        session.lastAccess = new Date();
+        activeSessions.set(session.sessionId, session);
+        saveSessions(); // Spremamo ažuriranje u fajl
+        
+
+        res.json({
+            success: true,
+            authenticated: true,
+            isAuthenticated: true,
+            user: session.user
+        });
+    } else {
+        res.json({
+            success: true,
+            authenticated: false,
+            isAuthenticated: false,
+            user: null
+        });
     }
 });
 
 // Logout endpoint
 router.post('/logout', (req, res) => {
-    res.clearCookie('authToken');
-    res.json({ success: true, message: 'Logout successful' });
-});
-
-// Check auth status
-router.get('/status', (req, res) => {
-    if (req.user) {
-        res.json({ 
-            authenticated: true, 
-            user: { 
-                username: req.user.username, 
-                role: req.user.role 
-            }
-        });
-    } else {
-        res.json({ authenticated: false });
+    const sessionId = req.cookies.sessionId;
+    
+    if (sessionId && activeSessions.has(sessionId)) {
+        activeSessions.delete(sessionId);
+        saveSessions(); // Spremamo promene u fajl
     }
+    
+    res.clearCookie('sessionId');
+    
+    res.json({
+        success: true,
+        message: 'Logout successful'
+    });
 });
 
 module.exports = router;

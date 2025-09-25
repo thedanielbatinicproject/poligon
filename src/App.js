@@ -1,93 +1,100 @@
 import React, { useState, useEffect } from 'react';
+import Dashboard from './pages/Dashboard';
+import DocumentPage from './pages/DocumentPage';
+import LoginPage from './pages/LoginPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/Dashboard';
-import LoadingSpinner from './components/LoadingSpinner';
+import { authAPI } from './utils/api';
+import './App.css';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('documents');
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState('VIEW'); // 'VIEW' or 'EDIT'
-  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
+  // Funkcija za provjeru auth statusa - koristi cookies
   const checkAuthStatus = async () => {
-    try {
-      const response = await fetch('/api/auth/status', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      
-      if (data.authenticated) {
-        setUser(data.user);
-        setMode('EDIT'); // Authenticated users start in EDIT mode
-      }
-      // If not authenticated, user stays null and mode stays 'VIEW'
-    } catch (error) {
-      console.error('Auth check failed:', error);
-    } finally {
-      setLoading(false);
+    const result = await authAPI.status();
+    
+    if (result.success && (result.data.isAuthenticated || result.data.authenticated)) {
+      setIsAuthenticated(true);
+      setUser(result.data.user);
+    } else {
+      setIsAuthenticated(false);
+      setUser(null);
     }
+    
+    setLoading(false);
   };
 
   const handleLogin = (userData) => {
     setUser(userData);
-    setMode('EDIT');
+    setIsAuthenticated(true);
+    setCurrentPage('documents');
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      setUser(null);
-      setMode('VIEW');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+    await authAPI.logout();
+    
+    setUser(null);
+    setIsAuthenticated(false);
+    setCurrentPage('documents');
   };
 
-  const toggleMode = () => {
-    if (user) {
-      setMode(prevMode => prevMode === 'VIEW' ? 'EDIT' : 'VIEW');
-    } else {
-      // Show login for unauthenticated users wanting to switch to EDIT
-      setShowLogin(true);
-    }
-  };
-
-  const handleShowLogin = () => {
-    setShowLogin(true);
-  };
-
-  const handleCloseLogin = () => {
-    setShowLogin(false);
-  };
-
+  // Loading state
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="app">
+        <div className="loading">🔄 Loading...</div>
+      </div>
+    );
   }
 
+  // Prikaz stranice za prijavu ako korisnik nije autentifikovan
+  if (!isAuthenticated) {
+    return (
+      <div className="app">
+        <Header 
+          user={null}
+          isAuthenticated={false}
+          onLogout={handleLogout}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+        <LoginPage onLogin={handleLogin} />
+        <Footer />
+      </div>
+    );
+  }
+
+  // Renderiranje stranica za autentifikovane korisnike
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'documents':
+        return <DocumentPage />;
+      default:
+        return <DocumentPage />;
+    }
+  };
+
   return (
-    <div className="App">
+    <div className="app">
       <Header 
-        user={user} 
-        mode={mode} 
-        onToggleMode={toggleMode}
+        user={user}
+        isAuthenticated={isAuthenticated}
         onLogout={handleLogout}
-        onShowLogin={handleShowLogin}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
       />
       <main className="main-content">
-        {showLogin && !user ? (
-          <LoginPage onLogin={handleLogin} onClose={handleCloseLogin} />
-        ) : (
-          <Dashboard user={user} mode={mode} />
-        )}
+        {renderPage()}
       </main>
       <Footer />
     </div>

@@ -1,64 +1,60 @@
 import React from 'react';
-import poligonLogo from '../images/poligon.png';
 
-function Header({ user, mode, onToggleMode, onLogout, onShowLogin }) {
+function Header({ currentPage, setCurrentPage, user, onLogout }) {
   return (
-    <header className="header">
-      <nav className="navbar">
+    <header>
+      <nav>
         <div className="nav-container">
-          <div className="nav-brand">
-            <div className="logo">
-              <img src={poligonLogo} alt="Poligon" className="logo-icon" />
-              <span className="logo-text">Poligon</span>
-            </div>
-          </div>
-
-          <div className="nav-content">
-            <div className="mode-controls">
-              <span className="mode-label">Mode:</span>
-              <div className="mode-toggle">
-                <button 
-                  className={`mode-btn ${mode === 'VIEW' ? 'active' : ''}`}
-                  onClick={mode === 'EDIT' ? onToggleMode : undefined}
-                  disabled={mode === 'VIEW'}
-                >
-                  VIEW
-                </button>
-                <button 
-                  className={`mode-btn ${mode === 'EDIT' ? 'active' : ''}`}
-                  onClick={onToggleMode}
-                  disabled={mode === 'EDIT'}
-                >
-                  EDIT
+          <h1>
+            <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}>
+              Poligon
+            </a>
+          </h1>
+          <ul className="nav-menu">
+            <li>
+              <a 
+                href="#" 
+                className={currentPage === 'home' ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
+              >
+                Početna
+              </a>
+            </li>
+            <li>
+              <a 
+                href="#" 
+                className={currentPage === 'documents' ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); setCurrentPage('documents'); }}
+              >
+                Dokumenti
+              </a>
+            </li>
+            <li>
+              <a 
+                href="#" 
+                className={currentPage === 'about' ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); setCurrentPage('about'); }}
+              >
+                O nama
+              </a>
+            </li>
+          </ul>
+          <div className="auth-section">
+            {user ? (
+              <div className="user-info">
+                <span>Pozdrav, {user.username}!</span>
+                <button onClick={onLogout} className="logout-btn">
+                  Odjavi se
                 </button>
               </div>
-            </div>
-
-            <div className="nav-actions">
-              {user ? (
-                <div className="user-menu">
-                  <span className="user-greeting">
-                    Pozdrav, {user.username}
-                  </span>
-                  <button 
-                    className="logout-btn"
-                    onClick={onLogout}
-                  >
-                    Odjava
-                  </button>
-                </div>
-              ) : (
-                <div className="guest-info">
-                  <span className="guest-mode">VIEW režim</span>
-                  <button 
-                    className="login-btn"
-                    onClick={onShowLogin}
-                  >
-                    Prijava
-                  </button>
-                </div>
-              )}
-            </div>
+            ) : (
+              <button 
+                onClick={() => setCurrentPage('login')}
+                className="login-btn"
+              >
+                Prijavi se
+              </button>
+            )}
           </div>
         </div>
       </nav>

@@ -1,201 +1,144 @@
-# Poligon - Diplomski Rad Builder
+# Poligon - React.js Web Aplikacija Predložak
 
-Napredna web aplikacija za kreiranje i upravljanje diplomskim radovima s podrškom za verzioniranje, kolaboraciju i automatsko generiranje sadržaja.
+Početni predložak za full-stack web aplikacije s React.js frontend-om i Express.js backend-om.
 
-## Značajke
-
-### Autentifikacija i dozvole:
-- Admin pristup s JWT autentifikacijom
-- Kolačići s podrškom za "zapamti me"
-- Dva režima rada: VIEW i EDIT
-- Gostinski pristup za čitanje
+## 🚀 Značajke
 
 ### Frontend (React.js):
-- Responzivni dizajn optimiziran za sve uređaje
-- Moderne React komponente s hooks
-- Intuitivno korisničko sučelje
-- Real-time prebacivanje između VIEW/EDIT režima
-- Mobilno-optimizirani UI
+- React komponente i hooks
+- Moderna JavaScript (ES6+)
+- Responzivni dizajn
+- SPA (Single Page Application)
+- Hot reloading za razvoj
 
 ### Backend (Express.js):
-- RESTful API arhitektura
-- JSON datoteke kao baza podataka
-- Sigurno rukovanje sessionima
-- CORS podrška za razvoj
-- Middleware za autentifikaciju
+- RESTful API
+- JSON odgovori
+- CORS podrška
+- Error handling
+- Statičko služenje React build-a
 
-## Preduvjeti
+## 📋 Ovisnosti
 
-- Node.js (v16 ili noviji)
-- npm ili yarn
+- Node.js (v14 ili noviji)
+- npm
 
-### Ključni npm paketi:
-
-#### Backend:
-- **express** - Web framework
-- **jsonwebtoken** - JWT autentifikacija
-- **bcrypt** - Hash lozinki
-- **cookie-parser** - Upravljanje kolačićima
-- **multer** - Upload datoteka
-- **cors** - Cross-Origin Resource Sharing
-
-#### Frontend:
-- **react** - UI library
-- **react-dom** - DOM rendering
+### Glavni npm paketi:
+- **react** - Frontend library
+- **react-dom** - DOM rendering za React
+- **express** - Backend web okvir
 - **webpack** - Module bundler
 - **babel** - JavaScript transpiler
+- **nodemon** - Razvojni alat za automatsko pokretanje
 
-#### Development:
-- **nodemon** - Auto-restart servera
-- **concurrently** - Paralelno pokretanje skripti
+## 🛠️ Instalacija
 
-## Instalacija
-
-1. **Kloniraj repozitorij:**
+1. Kloniraj repozitorij:
 ```bash
 git clone https://github.com/thedanielbatinicproject/poligon.git
 cd poligon
 ```
 
-2. **Instaliraj ovisnosti:**
+2. Instaliraj ovisnosti:
 ```bash
 npm install
 ```
 
-3. **Kreiraj .env datoteku:**
-```bash
-PORT=3000
-NODE_ENV=development
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-SESSION_DURATION_HOURS=2
-REMEMBER_ME_DURATION_DAYS=30
-```
-
-## Pokretanje
+## 🏃‍♂️ Pokretanje
 
 ### Razvojni način rada:
+
+1. **Backend poslužitelj** (port 3000):
 ```bash
-npm run dev  # Pokreće backend i frontend paralelno
+npm run dev
 ```
 
-Ili zasebno:
+2. **Frontend development server** (port 3001):
 ```bash
-npm run dev-server  # Backend na portu 3000
-npm run dev-client  # Frontend na portu 3001
+npm run dev-client
 ```
 
 ### Produkcijski način rada:
+
+1. **Build React aplikacije**:
 ```bash
-npm run build  # Build React aplikacije
-npm start      # Pokreće production server na portu 3000
+npm run build
 ```
 
-## Korištenje
+2. **Pokretanje poslužitelja**:
+```bash
+npm start
+```
 
-### Prijava:
-- **URL:** http://localhost:3000
-- **Admin korisničko ime:** admin (ili iz .env)
-- **Admin lozinka:** admin123 (ili iz .env)
-- **Zapamti me:** Postavlja kolačić na 30 dana
+**Razvojni način**: Frontend (3001) + Backend (3000)  
+**Produkcijski način**: Sve na portu 3000
 
-### Režimi rada:
+Aplikacija će biti dostupna na http://localhost:3000
 
-#### VIEW režim:
-- Dostupan svim korisnicima (i neautentificiranima)
-- Pregledavanje dokumenata
-- Čitanje sadržaja
-- Pregled povijesti promjena
-- Dodavanje komentara
-
-#### EDIT režim:
-- Dostupan samo autentificiranim korisnicima
-- Kreiranje novih dokumenata
-- Editiranje postojećeg sadržaja
-- Upload slika i datoteka
-- Upravljanje verzijama
-- Sve funkcionalnosti VIEW režima
-
-## Struktura projekta
+## 📁 Struktura projekta
 
 ```
 poligon/
-├── app.js                  # Express server
-├── package.json            # Dependencies i skripte
-├── webpack.config.js       # Webpack konfiguracija
-├── .babelrc               # Babel konfiguracija
-├── .env                   # Environment varijable
-├── data.json              # JSON baza podataka
-├── uploads/               # Uploadane datoteke
-├── server/                # Backend kod
-│   ├── middleware/        # Express middleware
-│   │   └── auth.js       # Autentifikacija
-│   ├── routes/           # API rute
-│   │   └── auth.js      # Auth endpoint-i
-│   └── utils/           # Utility funkcije
-│       └── JsonDB.js    # JSON baza wrapper
-├── src/                  # React frontend
-│   ├── components/      # React komponente
-│   │   ├── Header.js   # Navigacija
-│   │   ├── Footer.js   # Podnožje
-│   │   └── LoadingSpinner.js
-│   ├── pages/          # Stranice
-│   │   ├── LoginPage.js  # Prijava
-│   │   └── Dashboard.js  # Glavna stranica
-│   ├── styles/         # CSS stilovi
-│   │   └── main.css   # Glavni CSS
+├── app.js              # Express.js backend poslužitelj
+├── package.json        # npm konfiguracija
+├── webpack.config.js   # Webpack konfiguracija
+├── .babelrc           # Babel konfiguracija
+├── README.md          # Dokumentacija
+├── .gitignore         # Git ignore pravila
+├── src/               # React source kod
+│   ├── index.js       # React entry point
 │   ├── App.js         # Glavna React komponenta
-│   ├── index.js       # Entry point
-│   └── index.html     # HTML template
-└── dist/              # Build output (generirano)
+│   ├── index.html     # HTML template
+│   ├── components/    # React komponente
+│   │   ├── Header.js  # Header komponenta
+│   │   └── Footer.js  # Footer komponenta
+│   ├── pages/         # React stranice
+│   │   ├── Home.js    # Početna stranica
+│   │   ├── About.js   # O nama stranica
+│   │   └── NotFound.js # 404 stranica
+│   └── styles/        # CSS stilovi
+│       └── main.css   # Glavni CSS
+└── dist/              # Webpack build output (generiran)
 ```
 
-## API Endpoint-i
+## 🛣️ API Rute
 
-### Autentifikacija:
-- `POST /api/auth/login` - Prijava korisnika
-- `POST /api/auth/logout` - Odjava korisnika
-- `GET /api/auth/status` - Provjera autentifikacije
+## 🛣️ API Rute
 
-### Općenito:
-- `GET /api/status` - Status aplikacije
+- `GET /api/status` - Status API endpoint
+- `GET /api/about` - Podaci za O nama stranicu
+- `GET /*` - Služi React aplikaciju (SPA routing)
+- `GET /api/about` - Podaci o aplikaciji
+- `GET /*` - Služi React aplikaciju (catch-all)
 
-## Razvojne značajke
+## 🎨 Prilagođavanje
 
-- **Hot reloading** - Automatsko osvježavanje tijekom razvoja
-- **Source maps** - Lakše debugging
-- **Error handling** - Sveobuhvatan error handling
-- **Logging** - Detaljno logiranje za debug
-- **CORS** - Konfiguriran za razvoj i produkciju
+Možete lako prilagoditi aplikaciju:
 
-## Sigurnost
+1. **React komponente**: Uredite datoteke u `/src/components/` i `/src/pages/`
+2. **Stilovi**: Uredite `/src/styles/main.css`
+3. **Backend API**: Uredite `app.js` za dodavanje novih API ruta
+4. **Webpack konfiguracija**: Uredite `webpack.config.js`
+5. **Build proces**: Prilagodite npm skripte u `package.json`
 
-- JWT tokeni s HTTP-only kolačićima
-- Bcrypt za hash lozinki
-- CORS konfiguracija
-- Input validacija
-- Environment varijable za osjetljive podatke
+## ⚛️ React Features
 
-## Browser podrška
+- Funkcionalne komponente s Hooks
+- State management s useState i useEffect
+- API pozivi s fetch
+- Jednostavan SPA routing
+- Komponente za ponovno korištenje
+- Modern JavaScript (ES6+)
 
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-- Mobilni preglednici (iOS Safari, Chrome Mobile)
+## 🎯 React Features
 
-## Buduće značajke
+- **Komponente**: Modularne i ponovne komponente
+- **Hooks**: useState, useEffect za state management
+- **Event handling**: Interaktivni elementi
+- **API pozivi**: Fetch za komunikaciju s backend-om
+- **Kondicionalno renderiranje**: Dinamični sadržaj
+- **Hot reloading**: Instant feedback tijekom razvoja
 
-Planirane značajke za proširenje:
-- TipTap editor za strukturirano editiranje
-- Verzioniranje dokumenata (git-like)
-- Real-time kolaboracija
-- Automatsko generiranje popisa slika/tablica
-- PDF export
-- Komentar sustav
-- Backup i restore funkcionalnost
-
-## Licenca
+## 📝 Licenca
 
 ISC

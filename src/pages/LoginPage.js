@@ -1,136 +1,82 @@
 import React, { useState } from 'react';
-import poligonLogo from '../images/poligon.png';
+import { authAPI } from '../utils/api';
+import './LoginPage.css';
 
-function LoginPage({ onLogin, onClose }) {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    rememberMe: false
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+const LoginPage = ({ onLogin }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+        try {
+            console.log('🔑 Login attempt:', { username, password });
+            
+            const result = await authAPI.login({ username, password });
+            console.log('🔑 Login result:', result);
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-      });
+            if (result.success && result.data.success) {
+                console.log('✅ Login successful - cookie će biti automatski postavljen');
+                onLogin(result.data.user);
+            } else {
+                setError(result.data?.message || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            setError('Greška pri povezivanju sa serverom');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      const data = await response.json();
-
-      if (response.ok) {
-        onLogin(data.user);
-      } else {
-        setError(data.error || 'Greška pri prijavi');
-      }
-    } catch (error) {
-      setError('Greška mreže. Pokušajte ponovno.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="login-page">
-      <div className="login-container">
-        <div className="login-header">
-          {onClose && (
-            <button className="close-btn" onClick={onClose}>
-              ×
-            </button>
-          )}
-          <div className="login-logo">
-            <img src={poligonLogo} alt="Poligon" className="logo-icon" />
-            <h1>Poligon</h1>
-          </div>
-          <p className="login-subtitle">Diplomski rad builder</p>
-        </div>
-
-        <form className="login-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="username">Korisničko ime</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              placeholder="Unesite korisničko ime"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Lozinka</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Unesite lozinku"
-            />
-          </div>
-
-          <div className="form-group checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="rememberMe"
-                checked={formData.rememberMe}
-                onChange={handleChange}
-              />
-              <span className="checkbox-custom"></span>
-              Zapamti me (30 dana)
-            </label>
-          </div>
-
-          {error && (
-            <div className="error-message">
-              {error}
+    return (
+        <div className="login-page">
+            <div className="login-container">
+                <div className="login-form">
+                    <h2>Prijava</h2>
+                    <form onSubmit={handleLogin}>
+                        <div className="form-group">
+                            <label>Korisničko ime:</label>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Unesite korisničko ime"
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Lozinka:</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Unesite lozinku"
+                                required
+                            />
+                        </div>
+                        {error && <div className="error-message">{error}</div>}
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="login-btn"
+                        >
+                            {loading ? 'Prijavljivanje...' : 'Prijavi se'}
+                        </button>
+                    </form>
+                    <div className="demo-info">
+                        <p><strong>Demo podaci:</strong></p>
+                        <p>Korisničko ime: <code>admin</code></p>
+                        <p>Lozinka: <code>admin</code></p>
+                    </div>
+                </div>
             </div>
-          )}
-
-          <button 
-            type="submit" 
-            className="login-btn"
-            disabled={loading}
-          >
-            {loading ? 'Prijavljujem...' : 'Prijava'}
-          </button>
-        </form>
-
-        <div className="login-footer">
-          <p className="guest-access">
-            <strong>Gostinski pristup:</strong> Možete pregledati sadržaj bez prijave u VIEW režimu.
-          </p>
-          {onClose && (
-            <button className="back-to-view-btn" onClick={onClose}>
-              Povratak na VIEW režim
-            </button>
-          )}
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+};
 
 export default LoginPage;

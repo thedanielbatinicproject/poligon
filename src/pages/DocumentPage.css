@@ -1,8 +1,7 @@
-/* DocumentPage.css */
 .document-page {
     min-height: 100vh;
     background: var(--bg-primary);
-    position: relative;
+    color: var(--text-primary);
 }
 
 .document-page.loading {
@@ -13,17 +12,16 @@
 
 .loading-spinner {
     text-align: center;
-    color: var(--text-secondary);
 }
 
 .spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border-color);
-    border-top: 3px solid var(--primary-color);
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin: 0 auto 16px;
+    margin: 0 auto 1rem;
 }
 
 @keyframes spin {
@@ -31,329 +29,115 @@
     100% { transform: rotate(360deg); }
 }
 
-.document-page.error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.error-message {
-    text-align: center;
-    padding: 2rem;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    box-shadow: var(--shadow-md);
-}
-
-.error-message h2 {
-    color: var(--error-color);
-    margin-bottom: 1rem;
-}
-
-.retry-btn {
-    margin-top: 1rem;
-    padding: 0.75rem 1.5rem;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.retry-btn:hover {
-    background: var(--primary-hover);
-}
-
-/* Document Header */
 .document-header {
     background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 2rem;
+    border-bottom: 2px solid var(--border-color);
+    padding: 1.5rem 2rem;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 80px; /* Below main header */
-    z-index: 10;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.header-info {
+    flex: 1;
+}
+
+.document-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.document-meta {
+    display: flex;
+    gap: 2rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }
 
 .header-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-shrink: 0;
 }
 
-.document-title h1 {
-    color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.document-stats {
-    display: flex;
-    gap: 1rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-.document-stats span {
-    padding: 0.25rem 0.5rem;
-    background: var(--bg-tertiary);
-    border-radius: 4px;
-}
-
-/* Document Actions */
 .document-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .action-btn {
-    padding: 0.5rem 1rem;
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.action-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-    border-color: var(--border-hover);
-}
-
-/* View Switcher */
-.view-switcher {
-    display: flex;
-    gap: 0.5rem;
-    background: var(--bg-tertiary);
-    padding: 0.25rem;
-    border-radius: 6px;
-}
-
-.view-switcher button {
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem;
     border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s;
+    font-size: 0.9rem;
     font-weight: 500;
-}
-
-.view-switcher button:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-}
-
-.view-switcher button.active {
-    background: var(--primary-color);
-    color: white;
-}
-
-/* Document Content */
-.document-content {
-    height: calc(100vh - 160px); /* Account for headers */
-    overflow: hidden;
-}
-
-/* Chapters View */
-.chapters-view {
-    display: flex;
-    height: 100%;
-}
-
-.sidebar {
-    width: 300px;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
-    overflow-y: auto;
-}
-
-.main-editor {
-    flex: 1;
-    background: var(--bg-primary);
-    overflow-y: auto;
-}
-
-/* No Selection State */
-.no-selection {
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 2rem;
-}
-
-.welcome-message {
-    text-align: center;
-    max-width: 500px;
-}
-
-.welcome-message h2 {
-    color: var(--text-primary);
-    margin-bottom: 1rem;
-    font-size: 2rem;
-    font-weight: 600;
-}
-
-.welcome-message p {
-    color: var(--text-secondary);
-    margin-bottom: 2rem;
-    font-size: 1.125rem;
-    line-height: 1.6;
+    gap: 0.5rem;
 }
 
 .primary-btn {
-    padding: 0.75rem 1.5rem;
     background: var(--primary-color);
     color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 1rem;
-    transition: background-color 0.2s;
 }
 
 .primary-btn:hover {
     background: var(--primary-hover);
+    transform: translateY(-1px);
 }
 
 .secondary-btn {
-    padding: 0.75rem 1.5rem;
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 1rem;
-    transition: all 0.2s;
+    background: var(--secondary-color);
+    color: white;
 }
 
 .secondary-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-    border-color: var(--border-hover);
+    background: var(--secondary-hover);
+    transform: translateY(-1px);
 }
 
-.welcome-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-/* Saving Indicator */
-.saving-indicator {
-    position: fixed;
-    top: 90px;
-    right: 2rem;
-    background: var(--success-color);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    z-index: 1000;
-    box-shadow: var(--shadow-md);
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.saving-spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-/* Preview View */
-.preview-view {
+.document-content {
     padding: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
 }
 
-.preview-view h2 {
-    color: var(--text-primary);
+.no-document {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+
+.no-document h2 {
     margin-bottom: 1rem;
+    color: var(--text-secondary);
 }
 
-/* Responsive Design */
+.no-document p {
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
 @media (max-width: 768px) {
     .document-header {
         flex-direction: column;
+        align-items: stretch;
         gap: 1rem;
-        padding: 1rem;
     }
-
-    .document-stats {
-        flex-wrap: wrap;
+    
+    .document-actions {
         justify-content: center;
     }
-
-    .chapters-view {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        width: 100%;
-        height: 200px;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .main-editor {
-        height: calc(100% - 200px);
-    }
-}
-
-@media (max-width: 480px) {
-    .document-header {
-        padding: 0.75rem;
-    }
-
-    .document-title h1 {
-        font-size: 1.25rem;
-    }
-
-    .document-stats {
-        font-size: 0.75rem;
-        gap: 0.5rem;
-    }
-
-    .view-switcher {
-        width: 100%;
-    }
-
-    .view-switcher button {
+    
+    .action-btn {
         flex: 1;
-        padding: 0.75rem 0.5rem;
-        font-size: 0.875rem;
+        justify-content: center;
+    }
+    
+    .document-meta {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }
