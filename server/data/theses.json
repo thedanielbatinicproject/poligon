@@ -1,1 +1,1072 @@
-[]
+[
+  {
+    "id": "thesis_1758807712968_31861zpn2",
+    "created": "2025-09-25T13:41:52.968Z",
+    "updated": "2025-09-25T13:41:52.968Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758807853481_6k1fpesjk",
+    "created": "2025-09-25T13:44:13.481Z",
+    "updated": "2025-09-25T13:44:13.481Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758807853499_h309jurpq",
+    "created": "2025-09-25T13:44:13.499Z",
+    "updated": "2025-09-25T13:44:13.499Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758808040503_yqmn4akxa",
+    "created": "2025-09-25T13:47:20.503Z",
+    "updated": "2025-09-25T13:47:20.503Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758808071717_1faibtsz3",
+    "created": "2025-09-25T13:47:51.717Z",
+    "updated": "2025-09-25T13:47:51.717Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758808071721_xiwz5jsv1",
+    "created": "2025-09-25T13:47:51.721Z",
+    "updated": "2025-09-25T13:47:51.721Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758808410974_2hbrhzdak",
+    "created": "2025-09-25T13:53:30.974Z",
+    "updated": "2025-09-25T13:53:30.974Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758808410986_4xmzkhkxe",
+    "created": "2025-09-25T13:53:30.986Z",
+    "updated": "2025-09-25T13:53:30.986Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758808455395_ci87kq456",
+    "created": "2025-09-25T13:54:15.395Z",
+    "updated": "2025-09-25T13:54:15.395Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  },
+  {
+    "id": "thesis_1758808455894_uk5j8i039",
+    "created": "2025-09-25T13:54:15.894Z",
+    "updated": "2025-09-25T13:54:15.894Z",
+    "version": 1,
+    "metadata": {
+      "title": "Nova diplomska radnja",
+      "subtitle": "",
+      "author": {
+        "name": "",
+        "email": "",
+        "studentId": ""
+      },
+      "mentor": {
+        "name": "",
+        "title": "",
+        "department": ""
+      },
+      "institution": {
+        "name": "Sveučilište u Zagrebu",
+        "department": "",
+        "faculty": "",
+        "logo": ""
+      },
+      "academic": {
+        "degree": "Bachelor",
+        "field": "",
+        "year": 2025,
+        "defense_date": null
+      },
+      "language": "hr",
+      "keywords": [],
+      "abstract": {
+        "hr": "",
+        "en": ""
+      },
+      "lay_summary": {
+        "hr": "",
+        "en": ""
+      }
+    },
+    "structure": {
+      "title_page": {
+        "enabled": true,
+        "order": 1
+      },
+      "committee_page": {
+        "enabled": true,
+        "order": 2
+      },
+      "abstract": {
+        "enabled": true,
+        "order": 3
+      },
+      "lay_summary": {
+        "enabled": true,
+        "order": 4
+      },
+      "preface": {
+        "enabled": false,
+        "order": 5
+      },
+      "acknowledgements": {
+        "enabled": false,
+        "order": 6
+      },
+      "table_of_contents": {
+        "enabled": true,
+        "order": 7
+      },
+      "list_of_tables": {
+        "enabled": false,
+        "order": 8
+      },
+      "list_of_figures": {
+        "enabled": false,
+        "order": 9
+      },
+      "chapters": [],
+      "bibliography": {
+        "enabled": true,
+        "order": 100
+      },
+      "appendices": {
+        "enabled": false,
+        "order": 101
+      }
+    },
+    "chapters": [],
+    "bibliography": [],
+    "settings": {
+      "auto_save": true,
+      "auto_save_interval": 30000,
+      "word_count_target": 0,
+      "citation_style": "apa",
+      "page_format": "a4",
+      "font_size": 12,
+      "line_spacing": 1.5
+    },
+    "stats": {
+      "word_count": 0,
+      "page_count": 0,
+      "chapter_count": 0,
+      "last_session_duration": 0,
+      "total_time_spent": 0
+    }
+  }
+]

@@ -414,11 +414,18 @@ const DocumentPage = ({ mode, user }) => {
                     {mode === 'EDIT' && user && (
                         <div className="document-actions">
                             <button 
-                                className="action-btn"
+                                className="action-btn primary-btn"
+                                onClick={createNewThesis}
+                                title="Kreiraj novi dokument"
+                            >
+                                📄 Novi dokument
+                            </button>
+                            <button 
+                                className="action-btn secondary-btn"
                                 onClick={() => setShowDocumentManager(true)}
                                 title="Upravljanje dokumentima"
                             >
-                                �️ Dokumenti
+                                📁 Upravljaj dokumentima
                             </button>
                         </div>
                     )}
@@ -487,7 +494,7 @@ const DocumentPage = ({ mode, user }) => {
                                                             className="secondary-btn"
                                                             onClick={() => setShowDocumentManager(true)}
                                                         >
-                                                            �️ Upravljaj dokumentima
+                                                            📁 Upravljaj dokumentima
                                                         </button>
                                                     </div>
                                                 )}
