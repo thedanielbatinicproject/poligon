@@ -2,8 +2,9 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class JsonDB {
-    constructor(filePath) {
+    constructor(filePath, initialData = []) {
         this.filePath = filePath;
+        this.initialData = initialData;
         this._queue = Promise.resolve();
         this._initDB();
     }
@@ -13,13 +14,11 @@ class JsonDB {
             await fs.access(this.filePath);
         } catch (error) {
             // File doesn't exist, create initial structure
-            const initialData = {
-                documents: [],
-                assets: [],
-                versions: [],
-                users: []
-            };
-            await this._writeAtomic(initialData);
+            // Ensure directory exists
+            const dir = path.dirname(this.filePath);
+            await fs.mkdir(dir, { recursive: true });
+            
+            await fs.writeFile(this.filePath, JSON.stringify(this.initialData, null, 2));
         }
     }
 
@@ -28,28 +27,41 @@ class JsonDB {
             const data = await fs.readFile(this.filePath, 'utf8');
             return JSON.parse(data);
         } catch (error) {
-            if (error.code === 'ENOENT') {
-                return { documents: [], assets: [], versions: [], users: [] };
+            console.error('Error reading JSON file:', error);
+            return this.initialData;
+        }
+    }
+
+    async _writeAtomic(data) {
+        const tempFile = this.filePath + '.tmp';
+        try {
+            await fs.writeFile(tempFile, JSON.stringify(data, null, 2));
+            await fs.rename(tempFile, this.filePath);
+        } catch (error) {
+            // Cleanup temp file if it exists
+            try {
+                await fs.unlink(tempFile);
+            } catch (cleanupError) {
+                // Ignore cleanup errors
             }
             throw error;
         }
     }
 
-    async _writeAtomic(data) {
-        const tempPath = this.filePath + '.tmp';
-        await fs.writeFile(tempPath, JSON.stringify(data, null, 2), 'utf8');
-        await fs.rename(tempPath, this.filePath);
+    async runExclusive(fn) {
+        return this._queue = this._queue.then(fn, fn);
     }
 
-    // Serialize all database operations to prevent race conditions
-    runExclusive(operation) {
-        this._queue = this._queue.then(() => operation());
-        return this._queue;
-    }
-
-    async getState() {
+    async read() {
         return this.runExclusive(async () => {
             return await this._read();
+        });
+    }
+
+    async write(data) {
+        return this.runExclusive(async () => {
+            await this._writeAtomic(data);
+            return data;
         });
     }
 

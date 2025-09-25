@@ -9,6 +9,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState('VIEW'); // 'VIEW' or 'EDIT'
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     checkAuthStatus();
@@ -25,6 +26,7 @@ function App() {
         setUser(data.user);
         setMode('EDIT'); // Authenticated users start in EDIT mode
       }
+      // If not authenticated, user stays null and mode stays 'VIEW'
     } catch (error) {
       console.error('Auth check failed:', error);
     } finally {
@@ -51,7 +53,20 @@ function App() {
   };
 
   const toggleMode = () => {
-    setMode(prevMode => prevMode === 'VIEW' ? 'EDIT' : 'VIEW');
+    if (user) {
+      setMode(prevMode => prevMode === 'VIEW' ? 'EDIT' : 'VIEW');
+    } else {
+      // Show login for unauthenticated users wanting to switch to EDIT
+      setShowLogin(true);
+    }
+  };
+
+  const handleShowLogin = () => {
+    setShowLogin(true);
+  };
+
+  const handleCloseLogin = () => {
+    setShowLogin(false);
   };
 
   if (loading) {
@@ -65,10 +80,11 @@ function App() {
         mode={mode} 
         onToggleMode={toggleMode}
         onLogout={handleLogout}
+        onShowLogin={handleShowLogin}
       />
       <main className="main-content">
-        {!user ? (
-          <LoginPage onLogin={handleLogin} />
+        {showLogin && !user ? (
+          <LoginPage onLogin={handleLogin} onClose={handleCloseLogin} />
         ) : (
           <Dashboard user={user} mode={mode} />
         )}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import poligonLogo from '../images/poligon.png';
 
-function LoginPage({ onLogin }) {
+function LoginPage({ onLogin, onClose }) {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -50,8 +51,13 @@ function LoginPage({ onLogin }) {
     <div className="login-page">
       <div className="login-container">
         <div className="login-header">
+          {onClose && (
+            <button className="close-btn" onClick={onClose}>
+              ×
+            </button>
+          )}
           <div className="login-logo">
-            <span className="logo-icon">📄</span>
+            <img src={poligonLogo} alt="Poligon" className="logo-icon" />
             <h1>Poligon</h1>
           </div>
           <p className="login-subtitle">Diplomski rad builder</p>
@@ -116,6 +122,11 @@ function LoginPage({ onLogin }) {
           <p className="guest-access">
             <strong>Gostinski pristup:</strong> Možete pregledati sadržaj bez prijave u VIEW režimu.
           </p>
+          {onClose && (
+            <button className="back-to-view-btn" onClick={onClose}>
+              Povratak na VIEW režim
+            </button>
+          )}
         </div>
       </div>
     </div>

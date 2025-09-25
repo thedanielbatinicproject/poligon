@@ -34,6 +34,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/theses', require('./server/routes/theses'));
 
 // API status endpoint
 app.get('/api/status', (req, res) => {

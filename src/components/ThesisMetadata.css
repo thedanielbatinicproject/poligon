@@ -1,0 +1,359 @@
+/* ThesisMetadata.css */
+.thesis-metadata {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+}
+
+/* Metadata Header */
+.metadata-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem 2rem;
+}
+
+.metadata-header h2 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Tab Switcher */
+.tab-switcher {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    padding: 0.25rem;
+    border-radius: 6px;
+    width: fit-content;
+}
+
+.tab-switcher button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.tab-switcher button:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tab-switcher button.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Metadata Content */
+.metadata-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+.tab-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Section */
+.section {
+    margin-bottom: 3rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.section h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+/* Fields Grid */
+.fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.fields-grid .field-group:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+
+/* Field Group */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field-group label {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.required {
+    color: var(--error-color);
+    margin-left: 0.25rem;
+}
+
+.char-count {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: normal;
+}
+
+/* Input Styles */
+.field-group input,
+.field-group select,
+.field-group textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.field-group input::placeholder,
+.field-group textarea::placeholder {
+    color: var(--text-tertiary);
+}
+
+.field-group select {
+    cursor: pointer;
+}
+
+.field-group textarea {
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* Field Display (View Mode) */
+.field-display {
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    min-height: 20px;
+}
+
+.field-display.textarea-display {
+    min-height: 60px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.field-display .empty {
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+/* Special Field Types */
+.field-group input[type="email"] {
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.field-group input[type="url"] {
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.field-group input[type="number"] {
+    text-align: right;
+}
+
+.field-group input[type="date"] {
+    cursor: pointer;
+}
+
+/* Keywords Field */
+.field-group small {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Metadata Footer */
+.metadata-footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.save-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auto-save-indicator {
+    color: var(--success-color);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* View Mode Adjustments */
+.thesis-metadata.view .section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* Validation States */
+.field-group input:invalid,
+.field-group textarea:invalid {
+    border-color: var(--error-color);
+}
+
+.field-group input:valid,
+.field-group textarea:valid {
+    border-color: var(--success-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .metadata-header {
+        padding: 1rem;
+    }
+
+    .metadata-content {
+        padding: 1rem;
+    }
+
+    .section {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .fields-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .tab-switcher {
+        width: 100%;
+    }
+
+    .tab-switcher button {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .metadata-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .section {
+        padding: 1rem;
+        border-radius: 6px;
+    }
+
+    .section h3 {
+        font-size: 1.125rem;
+    }
+
+    .field-group input,
+    .field-group select,
+    .field-group textarea,
+    .field-display {
+        padding: 0.625rem;
+        font-size: 0.8125rem;
+    }
+
+    .metadata-footer {
+        padding: 0.75rem 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .metadata-header,
+    .metadata-footer {
+        display: none;
+    }
+
+    .metadata-content {
+        padding: 0;
+    }
+
+    .section {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+        margin-bottom: 1rem;
+    }
+
+    .fields-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .field-display {
+        border: none;
+        background: none;
+        padding: 0.25rem 0;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .field-group input,
+    .field-group select,
+    .field-group textarea,
+    .tab-switcher button {
+        transition: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .field-group input,
+    .field-group select,
+    .field-group textarea {
+        border-width: 2px;
+    }
+
+    .field-group input:focus,
+    .field-group select:focus,
+    .field-group textarea:focus {
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.3);
+    }
+}
