@@ -1,35 +1,60 @@
 import React from 'react';
 
-function Header({ currentPage, setCurrentPage }) {
+function Header({ user, mode, onToggleMode, onLogout }) {
   return (
-    <header>
-      <nav>
+    <header className="header">
+      <nav className="navbar">
         <div className="nav-container">
-          <h1>
-            <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}>
-              Poligon
-            </a>
-          </h1>
-          <ul className="nav-menu">
-            <li>
-              <a 
-                href="#" 
-                className={currentPage === 'home' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
-              >
-                Početna
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                className={currentPage === 'about' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); setCurrentPage('about'); }}
-              >
-                O nama
-              </a>
-            </li>
-          </ul>
+          <div className="nav-brand">
+            <div className="logo">
+              <span className="logo-icon">📄</span>
+              <span className="logo-text">Poligon</span>
+            </div>
+          </div>
+
+          <div className="nav-content">
+            {user && (
+              <div className="mode-controls">
+                <span className="mode-label">Mode:</span>
+                <div className="mode-toggle">
+                  <button 
+                    className={`mode-btn ${mode === 'VIEW' ? 'active' : ''}`}
+                    onClick={onToggleMode}
+                    disabled={mode === 'VIEW'}
+                  >
+                    VIEW
+                  </button>
+                  <button 
+                    className={`mode-btn ${mode === 'EDIT' ? 'active' : ''}`}
+                    onClick={onToggleMode}
+                    disabled={mode === 'EDIT'}
+                  >
+                    EDIT
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="nav-actions">
+              {user ? (
+                <div className="user-menu">
+                  <span className="user-greeting">
+                    Pozdrav, {user.username}
+                  </span>
+                  <button 
+                    className="logout-btn"
+                    onClick={onLogout}
+                  >
+                    Odjava
+                  </button>
+                </div>
+              ) : (
+                <div className="guest-info">
+                  <span className="guest-mode">VIEW režim</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </nav>
     </header>

@@ -1,66 +1,71 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+// Import middleware and routes
+const { verifyToken } = require('./server/middleware/auth');
+const authRoutes = require('./server/routes/auth');
+const JsonDB = require('./server/utils/JsonDB');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware za parsiranje JSON-a
+// Initialize database
+const db = new JsonDB(path.join(__dirname, 'data.json'));
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// Serviranje React build datoteka
-app.use(express.static(path.join(__dirname, 'dist')));
+// CORS configuration
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3001',
+    credentials: true
+}));
 
-// CORS za React development
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
-});
+// Apply auth middleware to all routes
+app.use(verifyToken);
 
-// API rute
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// API Routes
+app.use('/api/auth', authRoutes);
+
+// API status endpoint
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'success',
-        message: 'Poslužitelj je pokrenut s React.js frontend-om!',
+        message: 'Poligon - Diplomski Builder je aktivan',
         timestamp: new Date().toISOString(),
-        framework: 'React.js',
-        backend: 'Express.js'
+        authenticated: !!req.user,
+        mode: req.user ? 'EDIT' : 'VIEW'
     });
 });
 
-app.get('/api/about', (req, res) => {
-    const technologies = ['Node.js', 'Express.js', 'React.js', 'HTML5', 'CSS3', 'JavaScript', 'Webpack', 'Babel'];
-    const features = [
-        'React komponente',
-        'Express API poslužitelj',
-        'Webpack bundling',
-        'Babel transpiling',
-        'API rute',
-        'Rukovanje greškama',
-        'Responzivni dizajn'
-    ];
-    
-    res.json({
-        technologies: technologies,
-        features: features,
-        currentYear: new Date().getFullYear()
-    });
-});
+// Serve React application
+app.use(express.static(path.join(__dirname, 'dist')));
 
-// Serviranje React aplikacije za sve ostale rute
+// Catch all handler for React Router
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// Error handler
+// Global error handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Nešto je pošlo po zlu!' });
+    console.error('Error:', err);
+    res.status(500).json({ 
+        error: 'Internal server error',
+        ...(process.env.NODE_ENV === 'development' && { details: err.message })
+    });
 });
 
 app.listen(PORT, () => {
-    console.log(`Poslužitelj pokrenut na http://localhost:${PORT}`);
+    console.log(`🚀 Poligon server running on http://localhost:${PORT}`);
+    console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 module.exports = app;
