@@ -1,14 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import Dashboard from './pages/Dashboard';
-import DocumentPage from './pages/DocumentPage';
-import LoginPage from './pages/LoginPage';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { authAPI } from './utils/api';
 import './App.css';
 
+// Lazy load komponenti za bolje performanse
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const DocumentPage = lazy(() => import('./pages/DocumentPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+
 function App() {
-  const [currentPage, setCurrentPage] = useState('documents');
+  const [currentPage, setCurrentPage] = useState('home');
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -55,8 +59,8 @@ function App() {
     );
   }
 
-  // Prikaz stranice za prijavu ako korisnik nije autentifikovan
-  if (!isAuthenticated) {
+  // Prikaz login stranice SAMO ako korisnik eksplicitno traži login
+  if (!isAuthenticated && currentPage === 'login') {
     return (
       <div className="app">
         <Header 
@@ -66,21 +70,31 @@ function App() {
           currentPage={currentPage}
           onPageChange={setCurrentPage}
         />
-        <LoginPage onLogin={handleLogin} />
+        <main className="main-content">
+          <Suspense fallback={<div className="loading">Učitava...</div>}>
+            <LoginPage onLogin={handleLogin} />
+          </Suspense>
+        </main>
         <Footer />
       </div>
     );
   }
 
-  // Renderiranje stranica za autentifikovane korisnike
+  // Renderiranje stranica - za sve korisnike (VIEW/EDIT režim)
   const renderPage = () => {
     switch (currentPage) {
+      case 'home':
+        return <Home />;
+      case 'about':
+        return <About />;
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard user={user} />;
       case 'documents':
-        return <DocumentPage />;
+        return <DocumentPage user={user} />;
+      case 'login':
+        return <LoginPage onLogin={handleLogin} />;
       default:
-        return <DocumentPage />;
+        return <Home />;
     }
   };
 
@@ -94,7 +108,9 @@ function App() {
         onPageChange={setCurrentPage}
       />
       <main className="main-content">
-        {renderPage()}
+        <Suspense fallback={<div className="loading">Učitava stranicu...</div>}>
+          {renderPage()}
+        </Suspense>
       </main>
       <Footer />
     </div>

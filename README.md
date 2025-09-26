@@ -1,22 +1,33 @@
-# Poligon - React.js Web Aplikacija Predložak
+# Poligon - Platforma za Akademske Radove
 
-Početni predložak za full-stack web aplikacije s React.js frontend-om i Express.js backend-om.
+Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i drugih akademskih dokumenata.
 
 ## 🚀 Značajke
 
 ### Frontend (React.js):
 - React komponente i hooks
 - Moderna JavaScript (ES6+)
-- Responzivni dizajn
+- Responzivni dizajn  
 - SPA (Single Page Application)
 - Hot reloading za razvoj
+- VIEW/EDIT režimi rada
+- Automatsko spremanje
 
 ### Backend (Express.js):
-- RESTful API
+- RESTful API za dokumente i autentifikaciju
+- Cookie-based sesije
 - JSON odgovori
 - CORS podrška
 - Error handling
-- Statičko služenje React build-a
+- Perzistentno pohranjivanje podataka
+
+### Aplikacijske značajke:
+- **Napredni editor**: TipTap editor s formatiranjem teksta
+- **Organizacija poglavlja**: Strukturirano upravljanje sadržajem
+- **VIEW režim**: Pregled dokumenata bez potrebe za prijavom
+- **EDIT režim**: Puno uređivanje za prijavljene korisnike
+- **Automatsko spremanje**: Gubitak rada više nije problem
+- **Responzivni dizajn**: Radi na svim uređajima
 
 ## 📋 Ovisnosti
 
@@ -85,17 +96,32 @@ poligon/
 ├── .babelrc           # Babel konfiguracija
 ├── README.md          # Dokumentacija
 ├── .gitignore         # Git ignore pravila
+├── server/            # Backend kod
+│   ├── routes/        # API rute
+│   │   ├── auth.js    # Autentifikacijske rute
+│   │   └── theses.js  # Dokumenti API
+│   └── data/          # Podaci
+│       ├── sessions.json  # Korisničke sesije  
+│       ├── theses.json    # Dokumenti
+│       └── users.json     # Korisnici
 ├── src/               # React source kod
 │   ├── index.js       # React entry point
 │   ├── App.js         # Glavna React komponenta
 │   ├── index.html     # HTML template
 │   ├── components/    # React komponente
 │   │   ├── Header.js  # Header komponenta
-│   │   └── Footer.js  # Footer komponenta
+│   │   ├── Footer.js  # Footer komponenta
+│   │   ├── ChapterEditor.js    # Editor poglavlja
+│   │   ├── DocumentSelector.js # Selektor dokumenata
+│   │   └── DocumentManager.js  # Upravljanje dokumentima
 │   ├── pages/         # React stranice
-│   │   ├── Home.js    # Početna stranica
-│   │   ├── About.js   # O nama stranica
-│   │   └── NotFound.js # 404 stranica
+│   │   ├── Home.js          # Početna stranica
+│   │   ├── About.js         # O nama stranica
+│   │   ├── DocumentPage.js  # Glavna stranica s dokumentima
+│   │   ├── LoginPage.js     # Stranica za prijavu
+│   │   └── Dashboard.js     # Dashboard
+│   ├── utils/         # Pomoćne funkcije
+│   │   └── api.js     # API helper funkcije
 │   └── styles/        # CSS stilovi
 │       └── main.css   # Glavni CSS
 └── dist/              # Webpack build output (generiran)
@@ -103,13 +129,21 @@ poligon/
 
 ## 🛣️ API Rute
 
-## 🛣️ API Rute
+### Autentifikacija
+- `POST /api/auth/login` - Prijava korisnika
+- `POST /api/auth/logout` - Odjava korisnika  
+- `GET /api/auth/status` - Status autentifikacije
 
-- `GET /api/status` - Status API endpoint
-- `GET /api/about` - Podaci za O nama stranicu
+### Dokumenti (Thesis)
+- `GET /api/theses` - Dohvaćanje svih dokumenata
+- `GET /api/theses/:id` - Dohvaćanje specifičnog dokumenta
+- `POST /api/theses` - Kreiranje novog dokumenta
+- `PUT /api/theses/:id` - Ažuriranje dokumenta
+- `DELETE /api/theses/:id` - Brisanje dokumenta
+- `PATCH /api/theses/:id/autosave` - Automatsko spremanje
+
+### Ostalo
 - `GET /*` - Služi React aplikaciju (SPA routing)
-- `GET /api/about` - Podaci o aplikaciji
-- `GET /*` - Služi React aplikaciju (catch-all)
 
 ## 🎨 Prilagođavanje
 
@@ -121,23 +155,29 @@ Možete lako prilagoditi aplikaciju:
 4. **Webpack konfiguracija**: Uredite `webpack.config.js`
 5. **Build proces**: Prilagodite npm skripte u `package.json`
 
-## ⚛️ React Features
+## ⚛️ Aplikacijska Arhitektura
 
-- Funkcionalne komponente s Hooks
-- State management s useState i useEffect
-- API pozivi s fetch
-- Jednostavan SPA routing
-- Komponente za ponovno korištenje
-- Modern JavaScript (ES6+)
-
-## 🎯 React Features
-
+### Frontend (React.js)
 - **Komponente**: Modularne i ponovne komponente
-- **Hooks**: useState, useEffect za state management
-- **Event handling**: Interaktivni elementi
-- **API pozivi**: Fetch za komunikaciju s backend-om
+- **Hooks**: useState, useEffect za state management  
+- **Routing**: SPA navigacija između stranica
+- **API pozivi**: Centralizirane funkcije u utils/api.js
 - **Kondicionalno renderiranje**: Dinamični sadržaj
 - **Hot reloading**: Instant feedback tijekom razvoja
+
+### Backend (Express.js + Node.js)
+- **Cookie-based autentifikacija**: Sigurne sesije
+- **File-based baza**: JSON datoteke za jednostavnost
+- **RESTful API**: Standardizirani pristup podacima
+- **Middleware**: Provjera autentifikacije i CORS
+- **Error handling**: Centralizirano rukovanje greškama
+
+### Značajke aplikacije
+- **Dual režim**: VIEW (neautentificirani) i EDIT (autentificirani) 
+- **Real-time editor**: TipTap s bogatim formatiranjem
+- **Strukturirani sadržaj**: Organizacija po poglavljima
+- **Automatsko spremanje**: Bez straha od gubitka rada
+- **Responzivni dizajn**: Optimiziran za sve uređaje
 
 ## 📝 Licenca
 

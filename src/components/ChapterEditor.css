@@ -1,3 +1,168 @@
+/* Hijerarhijska struktura poglavlja */
+.hierarchical-chapters {
+    padding: 0;
+}
+
+.chapter-group {
+    margin-bottom: 2px;
+}
+
+.chapter-item.level-1 {
+    margin-left: 20px;
+    position: relative;
+}
+
+.chapter-item.level-1::before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    background: #ccc;
+    transform: translateY(-50%);
+}
+
+.chapter-item.level-2 {
+    margin-left: 40px;
+    position: relative;
+}
+
+.chapter-item.level-2::before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    background: #ccc;
+    transform: translateY(-50%);
+}
+
+.chapter-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.chapter-item:hover .chapter-actions {
+    opacity: 1;
+}
+
+.add-subchapter-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 3px;
+    background: #28a745;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.add-subchapter-btn:hover {
+    background: #218838;
+    transform: scale(1.1);
+}
+
+.delete-chapter-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 3px;
+    background: #dc3545;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.delete-chapter-btn:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* Modal za potvrdu brisanja */
+.delete-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.delete-confirm-modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+}
+
+.delete-confirm-modal h3 {
+    margin: 0 0 1rem 0;
+    color: #dc3545;
+}
+
+.delete-confirm-modal p {
+    margin: 0 0 1.5rem 0;
+    line-height: 1.5;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.confirm-delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.confirm-delete-btn:hover:not(:disabled) {
+    background: #c82333;
+}
+
+.confirm-delete-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancel-delete-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.cancel-delete-btn:hover {
+    background: #5a6268;
+}
+
 .chapter-editor {
     display: flex;
     height: calc(100vh - 200px);
@@ -5,6 +170,7 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
 .editor-sidebar {

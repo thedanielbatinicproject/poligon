@@ -1,12 +1,12 @@
 import React from 'react';
 
-function Header({ currentPage, setCurrentPage, user, onLogout }) {
+function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) {
   return (
     <header>
       <nav>
         <div className="nav-container">
           <h1>
-            <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onPageChange('home'); }}>
               Poligon
             </a>
           </h1>
@@ -15,7 +15,7 @@ function Header({ currentPage, setCurrentPage, user, onLogout }) {
               <a 
                 href="#" 
                 className={currentPage === 'home' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
+                onClick={(e) => { e.preventDefault(); onPageChange('home'); }}
               >
                 Početna
               </a>
@@ -24,7 +24,7 @@ function Header({ currentPage, setCurrentPage, user, onLogout }) {
               <a 
                 href="#" 
                 className={currentPage === 'documents' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); setCurrentPage('documents'); }}
+                onClick={(e) => { e.preventDefault(); onPageChange('documents'); }}
               >
                 Dokumenti
               </a>
@@ -33,7 +33,7 @@ function Header({ currentPage, setCurrentPage, user, onLogout }) {
               <a 
                 href="#" 
                 className={currentPage === 'about' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); setCurrentPage('about'); }}
+                onClick={(e) => { e.preventDefault(); onPageChange('about'); }}
               >
                 O nama
               </a>
@@ -49,7 +49,7 @@ function Header({ currentPage, setCurrentPage, user, onLogout }) {
               </div>
             ) : (
               <button 
-                onClick={() => setCurrentPage('login')}
+                onClick={() => onPageChange('login')}
                 className="login-btn"
               >
                 Prijavi se

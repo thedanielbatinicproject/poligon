@@ -19,7 +19,12 @@ const DocumentPage = ({ user }) => {
     
     useEffect(() => {
         setMode(user ? 'EDIT' : 'VIEW');
-    }, [user]); // Promeni mode kada se user promeni
+        
+        // U VIEW režimu (bez korisnika), prikaži selektor ako nema dokumenta
+        if (!user && !loading) {
+            setShowDocumentSelector(true);
+        }
+    }, [user, loading]); // Promeni mode kada se user ili loading promeni
 
     // Uklanjamo getAuthHeaders jer API helper automatski rukuje cookies
 
@@ -38,12 +43,15 @@ const DocumentPage = ({ user }) => {
                 }
             }
 
-            // Inače učitaj prvi dostupni dokument
-            const result = await thesesAPI.getAll();
-            if (result.success && result.data.length > 0) {
-                setCurrentThesis(result.data[0]);
-                localStorage.setItem('selectedDocumentId', result.data[0].id);
+            // U EDIT režimu, učitaj prvi dostupni dokument automatski
+            if (user) {
+                const result = await thesesAPI.getAll();
+                if (result.success && result.data.length > 0) {
+                    setCurrentThesis(result.data[0]);
+                    localStorage.setItem('selectedDocumentId', result.data[0].id);
+                }
             }
+            // U VIEW režimu, ne učitavaj automatski - korisnik mora odabrati
         } catch (error) {
             console.error('Error loading document:', error);
         } finally {
@@ -164,14 +172,25 @@ const DocumentPage = ({ user }) => {
 
             {!currentThesis ? (
                 <div className="no-document">
-                    <h2>Nema dostupnih dokumenata</h2>
-                    <p>Trenutno nema diplomskog rada za prikaz.</p>
-                    <button 
-                        onClick={() => setShowDocumentSelector(true)}
-                        className="primary-btn"
-                    >
-                        Odaberi dokument
-                    </button>
+                    <h2>{mode === 'VIEW' ? 'Odaberite dokument za pregled' : 'Nema dostupnih dokumenata'}</h2>
+                    <p>{mode === 'VIEW' ? 'Odaberite diplomski rad koji želite pregledati.' : 'Trenutno nema diplomskog rada za prikaz.'}</p>
+                    <div className="no-document-actions">
+                        <button 
+                            onClick={() => setShowDocumentSelector(true)}
+                            className="primary-btn"
+                        >
+                            📁 Odaberi dokument
+                        </button>
+                        {mode === 'EDIT' && user && (
+                            <button 
+                                onClick={createNewThesis}
+                                className="primary-btn"
+                                style={{marginLeft: '15px'}}
+                            >
+                                + Kreiraj novi dokument
+                            </button>
+                        )}
+                    </div>
                 </div>
             ) : (
                 <div className="document-content">

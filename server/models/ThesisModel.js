@@ -2,7 +2,10 @@ const { JsonDB, Config } = require('node-json-db');
 
 class ThesisModel {
     constructor() {
-        this.db = new JsonDB(new Config("server/data/theses", true, false, '/'));
+        // Apsolutna putanja bez .json ekstenzije (node-json-db će je dodati)
+        const path = require('path');
+        const dbPath = path.join(__dirname, '../data/theses');
+        this.db = new JsonDB(new Config(dbPath, true, false, '/'));
     }
 
     async getAll() {
@@ -67,18 +70,46 @@ class ThesisModel {
                 throw new Error('Thesis not found');
             }
 
-            theses[index] = {
+            const updatedThesis = {
                 ...theses[index],
                 ...updates,
                 updated: new Date().toISOString(),
                 version: theses[index].version + 1
             };
 
+            // Automatski izračunaj statistike
+            updatedThesis.stats = this.calculateStats(updatedThesis.chapters || []);
+
+            theses[index] = updatedThesis;
             await this.db.push("/theses", theses);
             return theses[index];
         } catch (error) {
             throw error;
         }
+    }
+
+    // Funkcija za računanje statistika
+    calculateStats(chapters) {
+        let totalWords = 0;
+        let totalCharacters = 0;
+
+        chapters.forEach(chapter => {
+            const content = chapter.content || '';
+            // Uklanjamo HTML tagove za čisto brojanje
+            const textContent = content.replace(/<[^>]*>/g, '').trim();
+            
+            if (textContent) {
+                const words = textContent.split(/\s+/).length;
+                totalWords += words;
+                totalCharacters += textContent.length;
+            }
+        });
+
+        return {
+            totalWords,
+            totalCharacters,
+            totalPages: Math.ceil(totalWords / 250) // Procjena: ~250 riječi po stranici
+        };
     }
 
     async delete(id) {
@@ -100,11 +131,45 @@ class ThesisModel {
             }
 
             const chapterId = `chapter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Izračunaj redni broj na osnovu hijerarhije
+            let order = 0;
+            if (chapterData.parentId) {
+                // Za potpoglavlje, nađi maksimalni order među children
+                const siblings = thesis.chapters.filter(ch => ch.parentId === chapterData.parentId);
+                order = siblings.length;
+            } else {
+                // Za glavno poglavlje, nađi maksimalni order među glavnim poglavljima
+                const mainChapters = thesis.chapters.filter(ch => !ch.parentId);
+                order = mainChapters.length;
+            }
+            
+            // Definiši default word goals na osnovu level-a
+            let defaultWordGoal;
+            const level = chapterData.level || 0;
+            switch(level) {
+                case 0: // Glavno poglavlje
+                    defaultWordGoal = 2000;
+                    break;
+                case 1: // Sub-poglavlje
+                    defaultWordGoal = 800;
+                    break;
+                case 2: // Sub-sub-poglavlje
+                    defaultWordGoal = 400;
+                    break;
+                default:
+                    defaultWordGoal = 200;
+            }
+
             const chapter = {
                 id: chapterId,
                 title: chapterData.title || 'Untitled Chapter',
                 content: chapterData.content || '',
-                order: thesis.chapters.length,
+                order: order,
+                parentId: chapterData.parentId || null,
+                level: level,
+                wordGoal: chapterData.wordGoal || defaultWordGoal,
+                wordCount: 0, // Počinje s 0, bit će ažurirano kada se doda sadržaj
                 created: new Date().toISOString(),
                 updated: new Date().toISOString()
             };
@@ -128,10 +193,15 @@ class ThesisModel {
                 throw new Error('Chapter not found');
             }
 
+            // Ako se ažurira content, izračunaj novi word count
+            let updatedChapterData = { ...chapterData, updated: new Date().toISOString() };
+            if (chapterData.content !== undefined) {
+                updatedChapterData.wordCount = this.calculateChapterWordCount(chapterData.content);
+            }
+
             thesis.chapters[chapterIndex] = {
                 ...thesis.chapters[chapterIndex],
-                ...chapterData,
-                updated: new Date().toISOString()
+                ...updatedChapterData
             };
 
             return await this.update(thesisId, { chapters: thesis.chapters });
@@ -147,7 +217,14 @@ class ThesisModel {
                 throw new Error('Thesis not found');
             }
 
-            thesis.chapters = thesis.chapters.filter(ch => ch.id !== chapterId);
+            // Rekurzivno briši poglavlje i svu njegovu djecu
+            const deleteRecursively = (id) => {
+                const children = thesis.chapters.filter(ch => ch.parentId === id);
+                children.forEach(child => deleteRecursively(child.id));
+                thesis.chapters = thesis.chapters.filter(ch => ch.id !== id);
+            };
+            
+            deleteRecursively(chapterId);
             return await this.update(thesisId, { chapters: thesis.chapters });
         } catch (error) {
             throw error;
