@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ScientificEditor from './ScientificEditor';
 import './ChapterEditor.css';
 
 const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelect, mode, user }) => {
@@ -432,22 +433,15 @@ const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
             </div>
 
             <div className="content-body">
-                {mode === 'EDIT' && user ? (
-                    <textarea
-                        value={content}
-                        onChange={handleContentChange}
-                        className="content-textarea"
-                        placeholder="Sadržaj poglavlja..."
-                    />
-                ) : (
-                    <div className="content-display">
-                        {content ? (
-                            <pre className="content-text">{content}</pre>
-                        ) : (
-                            <p className="no-content">Poglavlje nema sadržaj</p>
-                        )}
-                    </div>
-                )}
+                <ScientificEditor
+                    value={content}
+                    onChange={handleContentChange}
+                    chapter={chapter}
+                    thesis={thesis}
+                    mode={mode}
+                    user={user}
+                    disabled={!(mode === 'EDIT' && user)}
+                />
             </div>
 
             {/* Word Statistics */}

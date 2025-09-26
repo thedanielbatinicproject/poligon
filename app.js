@@ -29,9 +29,14 @@ app.use((req, res, next) => {
 // API rute
 const authRoutes = require('./server/routes/auth');
 const thesesRoutes = require('./server/routes/theses');
+const uploadRoutes = require('./server/routes/upload');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/theses', thesesRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Serviranje uploaded datoteka
+app.use('/uploads', express.static(path.join(__dirname, 'server/uploads')));
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'success',

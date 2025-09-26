@@ -65,12 +65,13 @@ module.exports = (env, argv) => {
     compress: true,
     port: 3001,
     hot: true,
-    proxy: {
-      '/api': {
+    proxy: [
+      {
+        context: '/api',
         target: 'http://localhost:3000',
         changeOrigin: true
       }
-    }
+    ]
   },
   resolve: {
     extensions: ['.js', '.jsx']

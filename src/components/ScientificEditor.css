@@ -1,0 +1,377 @@
+.scientific-editor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.editor-toolbar {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.toolbar-section {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toolbar-btn {
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.toolbar-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.element-counters {
+    display: flex;
+    gap: 1rem;
+}
+
+.element-counters span {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+/* Quill Editor Customization */
+.quill-scientific-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.quill-scientific-editor .ql-toolbar {
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    padding: 0.5rem 1rem;
+}
+
+.quill-scientific-editor .ql-container {
+    flex: 1;
+    border: none;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.6;
+}
+
+.quill-scientific-editor .ql-editor {
+    padding: 1.5rem;
+    min-height: 400px;
+}
+
+.quill-scientific-editor .ql-editor.ql-blank::before {
+    color: var(--text-muted);
+    font-style: italic;
+    left: 1.5rem;
+    right: 1.5rem;
+}
+
+/* Scientific Table Styling */
+.scientific-table-container {
+    margin: 1.5em 0;
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+    padding: 1em;
+}
+
+.scientific-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5em 0;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    background: white;
+}
+
+.scientific-table th,
+.scientific-table td {
+    border: 1px solid #333;
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.scientific-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    text-align: center;
+}
+
+.scientific-table caption {
+    caption-side: bottom;
+    margin-top: 0.5em;
+    text-align: left;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #333;
+}
+
+.table-caption {
+    font-style: italic;
+}
+
+.table-caption:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 2px;
+    background: rgba(0, 123, 255, 0.05);
+}
+
+/* Scientific Figure Styling */
+.scientific-figure-container {
+    margin: 1.5em 0;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+    padding: 1em;
+}
+
+.scientific-figure {
+    display: inline-block;
+    margin: 0;
+    max-width: 100%;
+}
+
+.scientific-figure img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+}
+
+.scientific-figure figcaption {
+    margin-top: 0.75em;
+    font-size: 10pt;
+    text-align: left;
+    line-height: 1.4;
+    color: #333;
+}
+
+.figure-caption {
+    font-style: italic;
+}
+
+.figure-caption:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 2px;
+    background: rgba(0, 123, 255, 0.05);
+}
+
+/* Scientific Equation Styling */
+.scientific-equation-container {
+    margin: 1.5em 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background: white;
+    padding: 1em;
+}
+
+.scientific-equation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 100%;
+}
+
+.equation-content {
+    flex: 1;
+    text-align: center;
+    padding: 0.5em;
+}
+
+.equation-latex {
+    font-size: 1.2em;
+    font-style: italic;
+    font-family: 'Times New Roman', Times, serif;
+    padding: 0.25em 0.5em;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    min-width: 100px;
+    display: inline-block;
+}
+
+.equation-latex:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.equation-number {
+    font-weight: bold;
+    margin-left: 2em;
+    color: #333;
+    white-space: nowrap;
+    font-size: 1em;
+}
+
+/* Quill Content Enhancements */
+.ql-editor h1, .ql-editor h2, .ql-editor h3 {
+    margin: 1.5em 0 0.5em 0;
+    font-weight: bold;
+}
+
+.ql-editor h1 { font-size: 1.4em; }
+.ql-editor h2 { font-size: 1.2em; }
+.ql-editor h3 { font-size: 1.1em; }
+
+.ql-editor p {
+    margin: 0 0 1em 0;
+}
+
+.ql-editor ul, .ql-editor ol {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.ql-editor li {
+    margin: 0.25em 0;
+}
+
+.ql-editor blockquote {
+    border-left: 3px solid var(--primary-color);
+    margin: 1em 0;
+    padding-left: 1em;
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+.ql-editor pre {
+    background: #f4f4f4;
+    padding: 1em;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1em 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+/* Quill Toolbar Customization */
+.ql-toolbar .ql-formats {
+    margin-right: 15px;
+}
+
+.ql-toolbar button {
+    padding: 5px;
+    margin: 2px;
+}
+
+.ql-toolbar button:hover {
+    color: var(--primary-color);
+}
+
+.ql-toolbar button.ql-active {
+    color: var(--primary-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .editor-toolbar {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+    
+    .toolbar-section {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .element-counters {
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+    
+    .quill-scientific-editor .ql-editor {
+        padding: 1rem;
+        font-size: 11pt;
+    }
+    
+    .scientific-table {
+        font-size: 10pt;
+    }
+    
+    .scientific-table th,
+    .scientific-table td {
+        padding: 6px 8px;
+    }
+    
+    .scientific-equation {
+        flex-direction: column;
+        gap: 0.5em;
+        text-align: center;
+    }
+    
+    .equation-number {
+        margin-left: 0 !important;
+    }
+    
+    .ql-toolbar {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .ql-toolbar .ql-formats {
+        margin-right: 8px;
+    }
+}
+
+/* Print Styling */
+@media print {
+    .editor-toolbar {
+        display: none;
+    }
+    
+    .scientific-editor {
+        border: none;
+    }
+    
+    .quill-scientific-editor .ql-toolbar {
+        display: none;
+    }
+    
+    .quill-scientific-editor .ql-container {
+        border: none;
+    }
+    
+    .scientific-table-container,
+    .scientific-figure-container,
+    .scientific-equation-container {
+        page-break-inside: avoid;
+        border: none;
+        background: none;
+        box-shadow: none;
+    }
+    
+    .scientific-table {
+        page-break-inside: avoid;
+    }
+    
+    .scientific-figure {
+        page-break-inside: avoid;
+    }
+}

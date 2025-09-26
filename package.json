@@ -41,9 +41,12 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "node-json-db": "^2.3.1",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "quill": "^2.0.3",
+    "quill-table-ui": "^1.0.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-hook-form": "^7.63.0",
+    "react-quill": "^2.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
