@@ -115,6 +115,23 @@ router.post('/:id/chapters', authenticateUser, async (req, res) => {
     }
 });
 
+// PATCH /api/theses/:id/chapters/:chapterId/goal - Ažuriraj word goal poglavlja (bez autentifikacije)
+router.patch('/:id/chapters/:chapterId/goal', async (req, res) => {
+    try {
+        const { wordGoal } = req.body;
+        
+        if (typeof wordGoal !== 'number' || wordGoal < 0) {
+            return res.status(400).json({ error: 'Word goal must be a non-negative number' });
+        }
+        
+        const thesis = await ThesisModel.updateChapter(req.params.id, req.params.chapterId, { wordGoal });
+        res.json(thesis);
+    } catch (error) {
+        console.error('Error updating chapter word goal:', error);
+        res.status(500).json({ error: 'Error updating chapter word goal' });
+    }
+});
+
 // PUT /api/theses/:id/chapters/:chapterId - Ažuriraj poglavlje
 router.put('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
     try {

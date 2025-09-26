@@ -452,6 +452,89 @@
     font-size: 1.1rem;
 }
 
+/* Word Statistics */
+.word-statistics {
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+}
+
+.word-count-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.current-words {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.word-goal {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.goal-input {
+    width: 80px;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.goal-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.goal-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.updating {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    border-radius: 4px;
+}
+
+.progress-text {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.goal-achieved {
+    color: var(--success-color);
+}
+
+.goal-remaining {
+    color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
     .chapter-editor {
         flex-direction: column;
@@ -471,5 +554,15 @@
     
     .content-body {
         min-height: 300px;
+    }
+
+    .word-count-display {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .word-goal {
+        justify-content: space-between;
     }
 }

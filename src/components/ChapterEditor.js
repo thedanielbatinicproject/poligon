@@ -215,6 +215,7 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                 {selectedChapter ? (
                     <ChapterContent
                         chapter={selectedChapter}
+                        thesis={thesis}
                         onUpdate={(updates) => updateChapter(selectedChapter.id, updates)}
                         mode={mode}
                         user={user}
@@ -337,16 +338,59 @@ const ChapterList = ({
     );
 };
 
-const ChapterContent = ({ chapter, onUpdate, mode, user }) => {
+const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
     const [title, setTitle] = useState(chapter.title || '');
     const [content, setContent] = useState(chapter.content || '');
+    const [wordGoal, setWordGoal] = useState(chapter.wordGoal || 0);
     const [isDirty, setIsDirty] = useState(false);
+    const [isUpdatingGoal, setIsUpdatingGoal] = useState(false);
 
     useEffect(() => {
         setTitle(chapter.title || '');
         setContent(chapter.content || '');
+        setWordGoal(chapter.wordGoal || 0);
         setIsDirty(false);
     }, [chapter]);
+
+    // Funkcija za računanje trenutnog broja riječi
+    const calculateWordCount = (text) => {
+        if (!text) return 0;
+        const textContent = text.replace(/<[^>]*>/g, '').trim();
+        if (!textContent) return 0;
+        return textContent.split(/\s+/).filter(word => word.length > 0).length;
+    };
+
+    // Ažuriranje word goal-a
+    const updateWordGoal = async (newGoal) => {
+        if (newGoal < 0) return;
+        
+        setIsUpdatingGoal(true);
+        try {
+            const response = await fetch(`/api/theses/${thesis.id}/chapters/${chapter.id}/goal`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ wordGoal: newGoal }),
+            });
+
+            if (response.ok) {
+                const updatedThesis = await response.json();
+                setWordGoal(newGoal);
+                // Pozovi callback da ažurira thesis u parent komponenti
+                if (window.location.pathname.includes('/thesis/')) {
+                    // Refresh whole page data to get updated thesis
+                    window.location.reload();
+                }
+            } else {
+                console.error('Error updating word goal');
+            }
+        } catch (error) {
+            console.error('Error updating word goal:', error);
+        } finally {
+            setIsUpdatingGoal(false);
+        }
+    };
 
     const handleSave = () => {
         onUpdate({ title, content });
@@ -404,6 +448,63 @@ const ChapterContent = ({ chapter, onUpdate, mode, user }) => {
                         )}
                     </div>
                 )}
+            </div>
+
+            {/* Word Statistics */}
+            <div className="word-statistics">
+                <div className="word-count-display">
+                    <span className="current-words">
+                        Riječi: {calculateWordCount(content)}
+                    </span>
+                    <span className="word-goal">
+                        Cilj: 
+                        <input
+                            type="number"
+                            value={wordGoal}
+                            onChange={(e) => {
+                                const newGoal = parseInt(e.target.value) || 0;
+                                setWordGoal(newGoal);
+                            }}
+                            onBlur={(e) => {
+                                const newGoal = parseInt(e.target.value) || 0;
+                                if (newGoal !== chapter.wordGoal) {
+                                    updateWordGoal(newGoal);
+                                }
+                            }}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    const newGoal = parseInt(e.target.value) || 0;
+                                    if (newGoal !== chapter.wordGoal) {
+                                        updateWordGoal(newGoal);
+                                    }
+                                    e.target.blur();
+                                }
+                            }}
+                            className="goal-input"
+                            min="0"
+                            disabled={isUpdatingGoal}
+                        />
+                        {isUpdatingGoal && <span className="updating">...</span>}
+                    </span>
+                </div>
+                <div className="progress-bar">
+                    <div 
+                        className="progress-fill"
+                        style={{ 
+                            width: `${Math.min((calculateWordCount(content) / Math.max(wordGoal, 1)) * 100, 100)}%`,
+                            backgroundColor: calculateWordCount(content) >= wordGoal ? '#28a745' : '#007bff'
+                        }}
+                    ></div>
+                </div>
+                <div className="progress-text">
+                    {calculateWordCount(content) >= wordGoal ? (
+                        <span className="goal-achieved">✅ Cilj ostvaren!</span>
+                    ) : (
+                        <span className="goal-remaining">
+                            Potrebno još {Math.max(0, wordGoal - calculateWordCount(content))} riječi
+                        </span>
+                    )}
+                </div>
             </div>
         </div>
     );

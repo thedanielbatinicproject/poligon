@@ -23,7 +23,41 @@ class ThesisModel {
     async getById(id) {
         try {
             const theses = await this.getAll();
-            return theses.find(thesis => thesis.id === id);
+            const thesis = theses.find(thesis => thesis.id === id);
+            
+            if (thesis) {
+                // Migriraj postojeće chapters da imaju wordGoal i wordCount
+                let needsUpdate = false;
+                thesis.chapters = thesis.chapters.map(chapter => {
+                    if (chapter.wordGoal === undefined || chapter.wordCount === undefined) {
+                        needsUpdate = true;
+                        
+                        // Definiši default word goals na osnovu level-a
+                        let defaultWordGoal;
+                        const level = chapter.level || 0;
+                        switch(level) {
+                            case 0: defaultWordGoal = 2000; break;
+                            case 1: defaultWordGoal = 800; break;
+                            case 2: defaultWordGoal = 400; break;
+                            default: defaultWordGoal = 200;
+                        }
+                        
+                        return {
+                            ...chapter,
+                            wordGoal: chapter.wordGoal !== undefined ? chapter.wordGoal : defaultWordGoal,
+                            wordCount: chapter.wordCount !== undefined ? chapter.wordCount : this.calculateChapterWordCount(chapter.content || '')
+                        };
+                    }
+                    return chapter;
+                });
+                
+                // Spremi promjene ako je potrebno
+                if (needsUpdate) {
+                    await this.update(id, { chapters: thesis.chapters });
+                }
+            }
+            
+            return thesis;
         } catch (error) {
             throw error;
         }
@@ -86,6 +120,19 @@ class ThesisModel {
         } catch (error) {
             throw error;
         }
+    }
+
+    // Funkcija za računanje riječi u pojedinom poglavlju
+    calculateChapterWordCount(content) {
+        if (!content) return 0;
+        
+        // Uklanjamo HTML tagove za čisto brojanje
+        const textContent = content.replace(/<[^>]*>/g, '').trim();
+        
+        if (!textContent) return 0;
+        
+        // Brojanje riječi (slično kao u calculateStats)
+        return textContent.split(/\s+/).filter(word => word.length > 0).length;
     }
 
     // Funkcija za računanje statistika
