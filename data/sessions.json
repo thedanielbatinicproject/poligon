@@ -22,5 +22,17 @@
       "createdAt": "2025-09-26T10:09:57.426Z",
       "lastAccess": "2025-09-26T10:53:00.804Z"
     }
+  ],
+  [
+    "session_1759011098026_y1pnp67zs",
+    {
+      "sessionId": "session_1759011098026_y1pnp67zs",
+      "user": {
+        "username": "admin",
+        "role": "admin"
+      },
+      "createdAt": "2025-09-27T22:11:38.026Z",
+      "lastAccess": "2025-09-27T22:11:38.026Z"
+    }
   ]
 ]
