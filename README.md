@@ -2,7 +2,7 @@
 
 Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i drugih akademskih dokumenata.
 
-## 🚀 Značajke
+## Značajke
 
 ### Frontend (React.js):
 - React komponente i hooks
@@ -22,14 +22,17 @@ Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i d
 - Perzistentno pohranjivanje podataka
 
 ### Aplikacijske značajke:
-- **Napredni editor**: TipTap editor s formatiranjem teksta
-- **Organizacija poglavlja**: Strukturirano upravljanje sadržajem
-- **VIEW režim**: Pregled dokumenata bez potrebe za prijavom
-- **EDIT režim**: Puno uređivanje za prijavljene korisnike
+- **Znanstveni editor**: TinyMCE editor s naprednim funkcionalnostima
+- **Automatsko numeriranje**: Tablice, slike i jednadžbe s hijerarhijskim brojevima
+- **Upload slika**: Direktno uklucivanje slika u dokumente
+- **Hijerarhijska poglavlja**: 3-razinska organizacija (1, 1.1, 1.1.1)
+- **VIEW/EDIT režimi**: Potpuno odvojeni načini rada za pregled i uređivanje
+- **Čuvanje stanja**: Automatsko vraćanje na zadnju poziciju nakon refresh-a
+- **Upravljanje dokumentima**: Kreiranje, uređivanje metapodataka i brisanje
 - **Automatsko spremanje**: Gubitak rada više nije problem
-- **Responzivni dizajn**: Radi na svim uređajima
+- **Responzivni dizajn**: Optimiziran za sve uređaje
 
-## 📋 Ovisnosti
+## Ovisnosti
 
 - Node.js (v14 ili noviji)
 - npm
@@ -38,11 +41,14 @@ Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i d
 - **react** - Frontend library
 - **react-dom** - DOM rendering za React
 - **express** - Backend web okvir
+- **tinymce** - Napredni WYSIWYG editor za znanstvene radove
+- **multer** - Middleware za upload datoteka
+- **node-json-db** - JSON baza podataka
 - **webpack** - Module bundler
 - **babel** - JavaScript transpiler
 - **nodemon** - Razvojni alat za automatsko pokretanje
 
-## 🛠️ Instalacija
+## Instalacija
 
 1. Kloniraj repozitorij:
 ```bash
@@ -55,7 +61,7 @@ cd poligon
 npm install
 ```
 
-## 🏃‍♂️ Pokretanje
+## Pokretanje
 
 ### Razvojni način rada:
 
@@ -86,7 +92,21 @@ npm start
 
 Aplikacija će biti dostupna na http://localhost:3000
 
-## 📁 Struktura projekta
+### Načini Rada
+
+**VIEW Režim** (bez autentifikacije):
+- Pregled dokumenata u read-only načinu
+- Nema toolbar-a u editoru
+- Skriveni su gumbovi za uređivanje
+- Pristup svim dokumentima za čitanje
+
+**EDIT Režim** (s autentifikacijom):
+- Puno uređivanje dokumenata
+- TinyMCE s kompletnim toolbar-om
+- Kreiranje, uređivanje i brisanje poglavlja
+- Upravljanje metapodacima dokumenta
+
+## Struktura projekta
 
 ```
 poligon/
@@ -100,10 +120,14 @@ poligon/
 │   ├── routes/        # API rute
 │   │   ├── auth.js    # Autentifikacijske rute
 │   │   └── theses.js  # Dokumenti API
+│   ├── models/        # Modeli podataka
+│   │   └── ThesisModel.js # Model za rad s diplomskim radovima
 │   └── data/          # Podaci
 │       ├── sessions.json  # Korisničke sesije  
 │       ├── theses.json    # Dokumenti
 │       └── users.json     # Korisnici
+├── public/            # Statičke datoteke
+│   └── uploads/       # Uploadane slike
 ├── src/               # React source kod
 │   ├── index.js       # React entry point
 │   ├── App.js         # Glavna React komponenta
@@ -111,9 +135,10 @@ poligon/
 │   ├── components/    # React komponente
 │   │   ├── Header.js  # Header komponenta
 │   │   ├── Footer.js  # Footer komponenta
-│   │   ├── ChapterEditor.js    # Editor poglavlja
+│   │   ├── ChapterEditor.js    # Hijerarhijski editor poglavlja
+│   │   ├── ScientificEditor.js # TinyMCE znanstveni editor
 │   │   ├── DocumentSelector.js # Selektor dokumenata
-│   │   └── DocumentManager.js  # Upravljanje dokumentima
+│   │   └── DocumentManager.js  # Upravljanje metapodacima i brisanje
 │   ├── pages/         # React stranice
 │   │   ├── Home.js          # Početna stranica
 │   │   ├── About.js         # O nama stranica
@@ -127,7 +152,7 @@ poligon/
 └── dist/              # Webpack build output (generiran)
 ```
 
-## 🛣️ API Rute
+## API Rute
 
 ### Autentifikacija
 - `POST /api/auth/login` - Prijava korisnika
@@ -140,22 +165,71 @@ poligon/
 - `POST /api/theses` - Kreiranje novog dokumenta
 - `PUT /api/theses/:id` - Ažuriranje dokumenta
 - `DELETE /api/theses/:id` - Brisanje dokumenta
-- `PATCH /api/theses/:id/autosave` - Automatsko spremanje
+
+### Poglavlja
+- `POST /api/theses/:id/chapters` - Dodavanje novog poglavlja
+- `PUT /api/theses/:id/chapters/:chapterId` - Ažuriranje poglavlja
+- `DELETE /api/theses/:id/chapters/:chapterId` - Brisanje poglavlja (rekurzivno)
+
+### Upload
+- `POST /api/upload` - Upload slika za TinyMCE editor
 
 ### Ostalo
 - `GET /*` - Služi React aplikaciju (SPA routing)
 
-## 🎨 Prilagođavanje
+## Znanstveni Editor
+
+### TinyMCE Integracija
+Aplikacija koristi TinyMCE Cloud service s besplatnim API ključem za napredne funkcionalnosti uređivanja znanstvenih dokumenata.
+
+### Automatsko Numeriranje
+- **Tablice**: Automatski generirane kao "Tablica 1.2.1" prema hijerarhiji poglavlja
+- **Slike**: Numeracija "Slika 1.2.1" s automatskim caption-om
+- **Jednadžbe**: Numeracija "(1.2.1)" s matematičkim formatiranjem
+
+### Hijerarhijska Struktura
+- **3 razine dubine**: Glavno poglavlje → Potpoglavlje → Sekcija
+- **Automatska numeracija**: 1, 1.1, 1.1.1
+- **Rekurzivno brisanje**: Briše sav sadržaj uključujući djecu
+- **Drag & drop**: Reorganizacija poglavlja (planirana funkcionalnost)
+
+### Upload Funkcionalnosti  
+- **Sigurni upload**: Multer middleware s provjeram tipa datoteke
+- **Ograničenja**: Maksimalno 5MB, samo slike
+- **Automatsko imenovanje**: Jedinstvena imena datoteka
+- **Integracija s editorom**: Direktno umetanje u TinyMCE
+
+## Prilagođavanje
 
 Možete lako prilagoditi aplikaciju:
 
 1. **React komponente**: Uredite datoteke u `/src/components/` i `/src/pages/`
-2. **Stilovi**: Uredite `/src/styles/main.css`
-3. **Backend API**: Uredite `app.js` za dodavanje novih API ruta
-4. **Webpack konfiguracija**: Uredite `webpack.config.js`
-5. **Build proces**: Prilagodite npm skripte u `package.json`
+2. **Stilovi**: Uredite CSS datoteke u komponentama
+3. **TinyMCE konfiguracija**: Modificirajte `ScientificEditor.js`
+4. **Backend API**: Uredite `app.js` i `server/routes/` za nove API rute
+5. **Webpack konfiguracija**: Uredite `webpack.config.js`
+6. **Build proces**: Prilagodite npm skripte u `package.json`
 
-## ⚛️ Aplikacijska Arhitektura
+## Tehnički Detalji
+
+### State Management
+- **localStorage persistencija**: Čuva selectedDocumentId, selectedChapterId i currentPage
+- **Automatski recovery**: Vraćanje na zadnju poziciju nakon refresh-a
+- **React hooks**: useState i useEffect za lokalni state
+
+### API Design
+- **RESTful endpoints**: Standardizirani pristup podacima
+- **Cookie-based auth**: Sigurne sesije bez potrebe za tokenima
+- **Error handling**: Konzistentno rukovanje greškama
+- **File upload**: Sigurni upload s provjeram tipa i veličine
+
+### Performance
+- **Lazy loading**: React komponente se učitavaju po potrebi
+- **Code splitting**: Webpack dijeli kod u chunk-ove
+- **Image optimization**: Automatska optimizacija uploadanih slika
+- **Caching**: Browser cache za statičke resurse
+
+## Aplikacijska Arhitektura
 
 ### Frontend (React.js)
 - **Komponente**: Modularne i ponovne komponente
@@ -173,12 +247,22 @@ Možete lako prilagoditi aplikaciju:
 - **Error handling**: Centralizirano rukovanje greškama
 
 ### Značajke aplikacije
-- **Dual režim**: VIEW (neautentificirani) i EDIT (autentificirani) 
-- **Real-time editor**: TipTap s bogatim formatiranjem
-- **Strukturirani sadržaj**: Organizacija po poglavljima
-- **Automatsko spremanje**: Bez straha od gubitka rada
+- **Dual režimi rada**: 
+  - VIEW režim: Pregled dokumenata bez autentifikacije
+  - EDIT režim: Puno uređivanje za prijavljene korisnike
+- **Znanstveni editor**: TinyMCE s naprednim funkcionalnostima:
+  - Automatsko numeriranje tablica, slika i jednadžbi
+  - Hijerarhijska numeracija prema poglavljima (1.2.3.1)
+  - Upload i umetanje slika
+  - Znanstveno formatiranje (A4, Times New Roman, itd.)
+- **Hijerarhijska organizacija**: 3-razinska struktura poglavlja
+- **Persistent stanje**: Automatsko čuvanje pozicije i sadržaja
+- **Upravljanje dokumentima**: 
+  - Metaaddaci (naslov, autor, mentor, itd.)
+  - Brisanje s konfirmacijom
+  - Statistike (broj riječi, stranica)
 - **Responzivni dizajn**: Optimiziran za sve uređaje
 
-## 📝 Licenca
+## Licenca
 
 ISC
