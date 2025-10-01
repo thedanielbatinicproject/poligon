@@ -248,6 +248,7 @@
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 .chapter-item:hover {
@@ -366,6 +367,14 @@
     outline: none;
     border-color: var(--primary-color);
     background: var(--bg-secondary);
+}
+
+.chapter-title-readonly {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0.5rem;
 }
 
 .chapter-title-display {

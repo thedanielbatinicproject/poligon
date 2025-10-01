@@ -130,6 +130,12 @@ class ThesisModel {
                 throw new Error('Thesis not found');
             }
 
+            // Ograniči dubinu poglavlja na maksimalno 3 razine (0, 1, 2)
+            const level = chapterData.level || 0;
+            if (level > 2) {
+                throw new Error('Maximum chapter depth is 3 levels (cannot create level ' + level + ')');
+            }
+
             const chapterId = `chapter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             
             // Izračunaj redni broj na osnovu hijerarhije
@@ -146,7 +152,6 @@ class ThesisModel {
             
             // Definiši default word goals na osnovu level-a
             let defaultWordGoal;
-            const level = chapterData.level || 0;
             switch(level) {
                 case 0: // Glavno poglavlje
                     defaultWordGoal = 2000;
@@ -229,6 +234,23 @@ class ThesisModel {
         } catch (error) {
             throw error;
         }
+    }
+
+    // Izračunava broj riječi u HTML sadržaju
+    calculateChapterWordCount(htmlContent) {
+        if (!htmlContent) return 0;
+        
+        // Ukloni HTML tagove i entitije
+        const textContent = htmlContent
+            .replace(/<[^>]*>/g, '') // Ukloni HTML tagove
+            .replace(/&[^;]+;/g, ' ') // Ukloni HTML entitije
+            .replace(/\s+/g, ' ') // Zamijeni višestruke razmake jednim
+            .trim();
+        
+        // Podijeli po riječima i filtriraj prazne stringove
+        const words = textContent.split(/\s+/).filter(word => word.length > 0);
+        
+        return words.length;
     }
 }
 

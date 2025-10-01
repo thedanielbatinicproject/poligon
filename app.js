@@ -1,10 +1,45 @@
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Multer konfiguracija za file upload
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, 'public', 'uploads');
+        // Kreiraj direktorij ako ne postoji
+        const fs = require('fs');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Generiraj jedinstveno ime fajla
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, 'img-' + uniqueSuffix + ext);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: function (req, file, cb) {
+        // Dozvoli samo slike
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Samo slike su dozvoljene!'), false);
+        }
+    }
+});
 
 // Middleware za parsiranje JSON-a i cookies
 app.use(express.json());
@@ -13,6 +48,9 @@ app.use(cookieParser());
 
 // Serviranje React build datoteka
 app.use(express.static(path.join(__dirname, 'dist')));
+
+// Serviranje TinyMCE datoteka iz public direktorija
+app.use(express.static(path.join(__dirname, 'public')));
 
 // CORS za React development - dodajemo support za credentials
 app.use((req, res, next) => {
@@ -32,6 +70,36 @@ const thesesRoutes = require('./server/routes/theses');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/theses', thesesRoutes);
+
+// Upload endpoint za TinyMCE
+app.post('/api/upload', upload.single('image'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Nema uploadane datoteke' 
+            });
+        }
+
+        // Generiraj URL za pristup datoteci
+        const fileUrl = `/uploads/${req.file.filename}`;
+        
+        res.json({
+            success: true,
+            url: fileUrl,
+            filename: req.file.filename,
+            originalName: req.file.originalname,
+            size: req.file.size
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Greška pri uploadu datoteke' 
+        });
+    }
+});
+
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'success',

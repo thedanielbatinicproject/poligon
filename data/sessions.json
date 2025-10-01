@@ -32,7 +32,19 @@
         "role": "admin"
       },
       "createdAt": "2025-09-27T22:11:38.026Z",
-      "lastAccess": "2025-09-27T22:11:38.026Z"
+      "lastAccess": "2025-09-27T23:07:23.981Z"
+    }
+  ],
+  [
+    "session_1759355456553_qqyzga0t5",
+    {
+      "sessionId": "session_1759355456553_qqyzga0t5",
+      "user": {
+        "username": "admin",
+        "role": "admin"
+      },
+      "createdAt": "2025-10-01T21:50:56.553Z",
+      "lastAccess": "2025-10-01T22:04:04.811Z"
     }
   ]
 ]

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ChapterEditor.css';
+import ScientificEditor from './ScientificEditor';
+import { thesesAPI } from '../utils/api';
 
 const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelect, mode, user }) => {
     const [chapters, setChapters] = useState([]);
@@ -51,11 +53,6 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
         }
     };
 
-    const getAuthHeaders = () => {
-        const sessionId = localStorage.getItem('sessionId');
-        return sessionId ? { 'Authorization': `Bearer ${sessionId}` } : {};
-    };
-
     const addChapter = async (parentChapterId = null) => {
         if (!thesis || !user) return;
 
@@ -64,26 +61,18 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
 
         try {
             setLoading(true);
-            const response = await fetch(`/api/theses/${thesis.id}/chapters`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeaders()
-                },
-                body: JSON.stringify({
-                    title: level === 0 ? 'Novo poglavlje' : level === 1 ? 'Novo potpoglavlje' : 'Nova sekcija',
-                    content: '',
-                    parentId: parentChapterId,
-                    level: level
-                })
+            const result = await thesesAPI.addChapter(thesis.id, {
+                title: level === 0 ? 'Novo poglavlje' : level === 1 ? 'Novo potpoglavlje' : 'Nova sekcija',
+                content: '',
+                parentId: parentChapterId,
+                level: level
             });
 
-            if (response.ok) {
-                const updatedThesis = await response.json();
-                onThesisUpdate(updatedThesis);
-                setChapters(updatedThesis.chapters || []);
+            if (result.success) {
+                onThesisUpdate(result.data);
+                setChapters(result.data.chapters || []);
             } else {
-                console.error('Failed to add chapter:', response.status);
+                console.error('Failed to add chapter:', result.status);
             }
         } catch (error) {
             console.error('Error adding chapter:', error);
@@ -96,19 +85,12 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
         if (!thesis || !user) return;
 
         try {
-            const response = await fetch(`/api/theses/${thesis.id}/chapters/${chapterId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeaders()
-                },
-                body: JSON.stringify(updates)
-            });
-
-            if (response.ok) {
-                const updatedThesis = await response.json();
-                onThesisUpdate(updatedThesis);
-                setChapters(updatedThesis.chapters || []);
+            const result = await thesesAPI.updateChapter(thesis.id, chapterId, updates);
+            if (result.success) {
+                onThesisUpdate(result.data);
+                setChapters(result.data.chapters || []);
+            } else {
+                console.error('Failed to update chapter:', result.status);
             }
         } catch (error) {
             console.error('Error updating chapter:', error);
@@ -120,19 +102,16 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
 
         try {
             setLoading(true);
-            const response = await fetch(`/api/theses/${thesis.id}/chapters/${chapterId}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-            });
-
-            if (response.ok) {
-                const updatedThesis = await response.json();
-                onThesisUpdate(updatedThesis);
-                setChapters(updatedThesis.chapters || []);
+            const result = await thesesAPI.deleteChapter(thesis.id, chapterId);
+            if (result.success) {
+                onThesisUpdate(result.data);
+                setChapters(result.data.chapters || []);
                 if (selectedChapter && selectedChapter.id === chapterId) {
                     onChapterSelect(null);
                 }
                 setShowDeleteConfirm(null);
+            } else {
+                console.error('Failed to delete chapter:', result.status);
             }
         } catch (error) {
             console.error('Error deleting chapter:', error);
@@ -215,6 +194,7 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                 {selectedChapter ? (
                     <ChapterContent
                         chapter={selectedChapter}
+                        thesis={thesis}
                         onUpdate={(updates) => updateChapter(selectedChapter.id, updates)}
                         mode={mode}
                         user={user}
@@ -291,7 +271,7 @@ const ChapterList = ({
                         </div>
                         {mode === 'EDIT' && user && (
                             <div className="chapter-actions">
-                                {hoveredChapter === chapter.id && (chapter.level || 0) < 2 && (
+                                {(chapter.level || 0) < 2 && (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -337,7 +317,7 @@ const ChapterList = ({
     );
 };
 
-const ChapterContent = ({ chapter, onUpdate, mode, user }) => {
+const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
     const [title, setTitle] = useState(chapter.title || '');
     const [content, setContent] = useState(chapter.content || '');
     const [isDirty, setIsDirty] = useState(false);
@@ -359,7 +339,9 @@ const ChapterContent = ({ chapter, onUpdate, mode, user }) => {
     };
 
     const handleContentChange = (e) => {
-        setContent(e.target.value);
+        // TinyMCE predaje content direktno kao e.target.value
+        const newContent = e.target ? e.target.value : e;
+        setContent(newContent);
         setIsDirty(true);
     };
 
@@ -367,7 +349,9 @@ const ChapterContent = ({ chapter, onUpdate, mode, user }) => {
         <div className="chapter-content">
             <div className="content-header">
                 <div className="title-section">
-                    {mode === 'EDIT' && user ? (
+                    {mode === 'VIEW' ? (
+                        <h2 className="chapter-title-readonly">{title || 'Bez naslova'}</h2>
+                    ) : (
                         <input
                             type="text"
                             value={title}
@@ -375,12 +359,10 @@ const ChapterContent = ({ chapter, onUpdate, mode, user }) => {
                             className="chapter-title-input"
                             placeholder="Naslov poglavlja"
                         />
-                    ) : (
-                        <h2 className="chapter-title-display">{title || 'Bez naslova'}</h2>
                     )}
                 </div>
                 
-                {mode === 'EDIT' && user && isDirty && (
+                {isDirty && mode === 'EDIT' && (
                     <button onClick={handleSave} className="save-btn">
                         Spremi
                     </button>
@@ -388,22 +370,15 @@ const ChapterContent = ({ chapter, onUpdate, mode, user }) => {
             </div>
 
             <div className="content-body">
-                {mode === 'EDIT' && user ? (
-                    <textarea
-                        value={content}
-                        onChange={handleContentChange}
-                        className="content-textarea"
-                        placeholder="Sadržaj poglavlja..."
-                    />
-                ) : (
-                    <div className="content-display">
-                        {content ? (
-                            <pre className="content-text">{content}</pre>
-                        ) : (
-                            <p className="no-content">Poglavlje nema sadržaj</p>
-                        )}
-                    </div>
-                )}
+                <ScientificEditor
+                    value={content}
+                    onChange={handleContentChange}
+                    chapter={chapter}
+                    thesis={thesis}
+                    mode={mode}
+                    user={user}
+                    disabled={mode === 'VIEW'}
+                />
             </div>
         </div>
     );

@@ -72,6 +72,11 @@ export const thesesAPI = {
     // Chapter operations
     getChapters: (thesisId) => apiCall(`/api/theses/${thesisId}/chapters`),
     
+    addChapter: (thesisId, chapterData) => apiCall(`/api/theses/${thesisId}/chapters`, {
+        method: 'POST',
+        body: JSON.stringify(chapterData)
+    }),
+    
     updateChapter: (thesisId, chapterId, chapterData) => apiCall(`/api/theses/${thesisId}/chapters/${chapterId}`, {
         method: 'PUT',
         body: JSON.stringify(chapterData)
