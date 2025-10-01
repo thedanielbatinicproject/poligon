@@ -70,7 +70,7 @@ const ScientificEditor = ({
 
     // TinyMCE konfiguracija za znanstvene radove
     const editorConfig = {
-        height: 450,
+        height: 650,
         menubar: mode === 'EDIT',
         // Tvoj besplatni API ključ
         apiKey: 'z62828asb7sazqtp5t7jxtnul56kzuwkgap3xqrwh0hbes1p',

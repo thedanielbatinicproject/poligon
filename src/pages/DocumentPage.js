@@ -7,11 +7,21 @@ import './DocumentPage.css';
 
 const DocumentPage = ({ user }) => {
     const [currentThesis, setCurrentThesis] = useState(null);
-    const [selectedChapter, setSelectedChapter] = useState(null);
+    const [selectedChapter, setSelectedChapterState] = useState(null);
     const [showDocumentManager, setShowDocumentManager] = useState(false);
     const [showDocumentSelector, setShowDocumentSelector] = useState(false);
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState(user ? 'EDIT' : 'VIEW');
+
+    // Wrapper funkcija za setSelectedChapter koja automatski čuva u localStorage
+    const setSelectedChapter = (chapter) => {
+        setSelectedChapterState(chapter);
+        if (chapter) {
+            localStorage.setItem('selectedChapterId', chapter.id);
+        } else {
+            localStorage.removeItem('selectedChapterId');
+        }
+    };
 
     useEffect(() => {
         loadInitialDocument();
@@ -38,6 +48,16 @@ const DocumentPage = ({ user }) => {
                 const result = await thesesAPI.getById(savedDocId);
                 if (result.success) {
                     setCurrentThesis(result.data);
+                    
+                    // Pokušaj učitati i selectedChapter
+                    const savedChapterId = localStorage.getItem('selectedChapterId');
+                    if (savedChapterId && result.data.chapters) {
+                        const chapter = result.data.chapters.find(c => c.id === savedChapterId);
+                        if (chapter) {
+                            setSelectedChapterState(chapter);
+                        }
+                    }
+                    
                     setLoading(false);
                     return;
                 }
@@ -49,6 +69,15 @@ const DocumentPage = ({ user }) => {
                 if (result.success && result.data.length > 0) {
                     setCurrentThesis(result.data[0]);
                     localStorage.setItem('selectedDocumentId', result.data[0].id);
+                    
+                    // Pokušaj učitati i selectedChapter
+                    const savedChapterId = localStorage.getItem('selectedChapterId');
+                    if (savedChapterId && result.data[0].chapters) {
+                        const chapter = result.data[0].chapters.find(c => c.id === savedChapterId);
+                        if (chapter) {
+                            setSelectedChapterState(chapter);
+                        }
+                    }
                 }
             }
             // U VIEW režimu, ne učitavaj automatski - korisnik mora odabrati
@@ -63,6 +92,7 @@ const DocumentPage = ({ user }) => {
         setCurrentThesis(thesis);
         setSelectedChapter(null);
         setShowDocumentSelector(false);
+        localStorage.setItem('selectedDocumentId', thesis.id);
     };
 
     const createNewThesis = async () => {
@@ -197,7 +227,19 @@ const DocumentPage = ({ user }) => {
                     <ChapterEditor
                         thesis={currentThesis}
                         selectedChapter={selectedChapter}
-                        onThesisUpdate={setCurrentThesis}
+                        onThesisUpdate={(updatedThesis) => {
+                            setCurrentThesis(updatedThesis);
+                            // Ažuriraj selectedChapter ako se promijenio
+                            if (selectedChapter && updatedThesis.chapters) {
+                                const updatedChapter = updatedThesis.chapters.find(c => c.id === selectedChapter.id);
+                                if (updatedChapter) {
+                                    setSelectedChapterState(updatedChapter);
+                                } else {
+                                    // Poglavlje je obrisano
+                                    setSelectedChapter(null);
+                                }
+                            }
+                        }}
                         onChapterSelect={setSelectedChapter}
                         mode={mode}
                         user={user}
@@ -210,6 +252,12 @@ const DocumentPage = ({ user }) => {
                     thesis={currentThesis}
                     onClose={() => setShowDocumentManager(false)}
                     onThesisUpdate={setCurrentThesis}
+                    onDocumentDeleted={() => {
+                        setCurrentThesis(null);
+                        setSelectedChapter(null); 
+                        setShowDocumentManager(false);
+                        setShowDocumentSelector(true);
+                    }}
                 />
             )}
         </div>

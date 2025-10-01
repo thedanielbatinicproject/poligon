@@ -12,7 +12,10 @@ const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState(() => {
+    // Učitaj poslednju stranicu iz localStorage ili defaultuj na 'documents'
+    return localStorage.getItem('currentPage') || 'documents';
+  });
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -20,6 +23,11 @@ function App() {
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Spremi trenutnu stranicu u localStorage kada se promijeni
+  useEffect(() => {
+    localStorage.setItem('currentPage', currentPage);
+  }, [currentPage]);
 
   // Funkcija za provjeru auth statusa - koristi cookies
   const checkAuthStatus = async () => {

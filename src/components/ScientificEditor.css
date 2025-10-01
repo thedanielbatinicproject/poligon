@@ -58,7 +58,7 @@
 }
 
 .editor-container {
-    min-height: 600px;
+    height: 700px;
     padding: 20px;
 }
 
@@ -66,6 +66,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    height: 650px !important;
 }
 
 .editor-container .tox-editor-header {
@@ -79,6 +80,7 @@
 /* TinyMCE content area styling */
 .tox .tox-edit-area__iframe {
     background: white;
+    min-height: 450px !important;
 }
 
 .editor-container table {
@@ -143,4 +145,17 @@
 .tox .tox-statusbar {
     border-top: 1px solid #e9ecef !important;
     background: #f8f9fa !important;
+}
+
+/* Eksplicitni stilovi za kontroliranje visina */
+.scientific-editor .editor-container {
+    height: 700px !important;
+}
+
+.scientific-editor .tox.tox-tinymce {
+    height: 650px !important;
+}
+
+.scientific-editor .tox .tox-edit-area__iframe {
+    min-height: 450px !important;
 }

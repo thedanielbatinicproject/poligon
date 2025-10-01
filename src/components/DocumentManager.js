@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './DocumentManager.css';
+import { thesesAPI } from '../utils/api';
 
-const DocumentManager = ({ thesis, onClose, onThesisUpdate }) => {
+const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted }) => {
     const [metadata, setMetadata] = useState({
         title: '',
         author: '',
@@ -12,6 +13,8 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate }) => {
         academicYear: '',
         recommendedWordCount: 15000
     });
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (thesis && thesis.metadata) {
@@ -23,27 +26,42 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate }) => {
         if (!thesis) return;
 
         try {
-            const sessionId = localStorage.getItem('sessionId');
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-            if (sessionId) {
-                headers['Authorization'] = `Bearer ${sessionId}`;
-            }
-            
-            const response = await fetch(`/api/theses/${thesis.id}`, {
-                method: 'PUT',
-                headers,
-                body: JSON.stringify({ metadata })
-            });
-
-            if (response.ok) {
-                const updatedThesis = await response.json();
-                onThesisUpdate(updatedThesis);
+            const result = await thesesAPI.update(thesis.id, { metadata });
+            if (result.success) {
+                onThesisUpdate(result.data);
                 onClose();
+            } else {
+                console.error('Error updating metadata:', result.status);
             }
         } catch (error) {
             console.error('Error updating metadata:', error);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!thesis) return;
+
+        try {
+            setIsDeleting(true);
+            const result = await thesesAPI.delete(thesis.id);
+            if (result.success) {
+                // Obriši iz localStorage
+                localStorage.removeItem('selectedDocumentId');
+                localStorage.removeItem('selectedChapterId');
+                
+                // Obavijesti roditelja da je dokument obrisan
+                if (onDocumentDeleted) {
+                    onDocumentDeleted();
+                }
+                onClose();
+            } else {
+                console.error('Error deleting thesis:', result.status);
+            }
+        } catch (error) {
+            console.error('Error deleting thesis:', error);
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -146,14 +164,56 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate }) => {
                 </div>
 
                 <div className="manager-actions">
-                    <button onClick={onClose} className="cancel-btn">
-                        Odustani
-                    </button>
-                    <button onClick={handleSave} className="save-btn">
-                        Spremi promjene
-                    </button>
+                    <div className="left-actions">
+                        <button 
+                            onClick={() => setShowDeleteConfirm(true)} 
+                            className="delete-btn"
+                            title="Obriši ovaj dokument"
+                        >
+                            🗑️ Obriši dokument
+                        </button>
+                    </div>
+                    <div className="right-actions">
+                        <button onClick={onClose} className="cancel-btn">
+                            Odustani
+                        </button>
+                        <button onClick={handleSave} className="save-btn">
+                            Spremi promjene
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Konfirmacijski popup za brisanje */}
+            {showDeleteConfirm && (
+                <div className="delete-confirm-overlay">
+                    <div className="delete-confirm-modal">
+                        <h3>⚠️ Potvrda brisanja</h3>
+                        <p>
+                            Jeste li sigurni da želite trajno obrisati dokument <strong>"{metadata.title || 'Bez naslova'}"</strong>?
+                        </p>
+                        <p className="warning-text">
+                            Ova akcija će obrisati sav sadržaj uključujući sva poglavlja i ne može se poništiti!
+                        </p>
+                        <div className="confirm-buttons">
+                            <button 
+                                onClick={handleDelete}
+                                className="confirm-delete-btn"
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? 'Brišem...' : '🗑️ Da, obriši trajno'}
+                            </button>
+                            <button 
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="cancel-delete-btn"
+                                disabled={isDeleting}
+                            >
+                                Odustani
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
