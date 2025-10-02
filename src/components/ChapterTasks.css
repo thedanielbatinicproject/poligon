@@ -44,7 +44,14 @@
 }
 
 .task-icon {
-    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
 }
 
 .collapse-toggle {

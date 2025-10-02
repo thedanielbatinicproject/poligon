@@ -643,10 +643,12 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                                 }}
                                                 title="Uredi"
                                             >
-                                                ✏️
+                                                <img src="/icons/edit.png" alt="Edit" className="btn-icon" />
                                             </button>
                                         ) : (
-                                            <span className="no-edit" title="Nemate dozvolu za uređivanje">🔒</span>
+                                            <span className="no-edit" title="Nemate dozvolu za uređivanje">
+                                                <img src="/icons/locked.png" alt="Locked" className="btn-icon" />
+                                            </span>
                                         )}
                                     </td>
                                 </tr>

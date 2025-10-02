@@ -92,7 +92,7 @@ const DocumentSelector = ({ user, onDocumentSelect, onCreateNew }) => {
                         onClick={onCreateNew}
                         className="create-new-btn"
                     >
-                        <span className="btn-icon">+</span>
+                        <img src="/icons/add.png" alt="Add" className="btn-icon" />
                         Kreiraj novi dokument
                     </button>
                 )}
@@ -185,7 +185,7 @@ const DocumentSelector = ({ user, onDocumentSelect, onCreateNew }) => {
                                         </div>
                                         <div className="table-cell action-col">
                                             <button className="select-btn">
-                                                <span>📖</span>
+                                                <img src="/icons/open.png" alt="Open" className="btn-icon" />
                                                 Otvori
                                             </button>
                                         </div>

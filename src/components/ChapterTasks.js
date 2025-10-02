@@ -133,7 +133,7 @@ const ChapterTasks = ({ documentId, chapterId, chapterTitle, user, isAuthenticat
         <div className="chapter-tasks">
             <div className="chapter-tasks-header" onClick={() => setIsCollapsed(!isCollapsed)}>
                 <h3>
-                    <span className="task-icon">📝</span>
+                    <img src="/icons/task-list.png" alt="Task List" className="task-icon" />
                     Zadatci za poglavlje: {chapterTitle} ({allItems.length})
                 </h3>
                 <button className="collapse-toggle">
@@ -176,7 +176,7 @@ const ChapterTasks = ({ documentId, chapterId, chapterTitle, user, isAuthenticat
                                         onClick={() => showConfirmDialog(item)}
                                         title="Označi kao završeno"
                                     >
-                                        ✅
+                                        <img src="/icons/finish.png" alt="Finish" className="btn-icon" />
                                     </button>
                                 ) : (
                                     <span className="no-permission" title="Nemate dozvolu za završavanje">🔒</span>

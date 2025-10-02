@@ -147,7 +147,7 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
         <div className="document-tasks">
             <div className="document-tasks-header" onClick={() => setIsCollapsed(!isCollapsed)}>
                 <h3>
-                    <span className="task-icon">📋</span>
+                    <img src="/icons/tasks.png" alt="Tasks" className="task-icon" />
                     Zadatci za dokument ({allItems.length})
                 </h3>
                 <button className="collapse-toggle">
@@ -190,7 +190,7 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
                                         onClick={() => showConfirmDialog(item)}
                                         title="Označi kao završeno"
                                     >
-                                        ✅
+                                        <img src="/icons/finish.png" alt="Finish" className="btn-icon" />
                                     </button>
                                 ) : (
                                     <span className="no-permission" title="Nemate dozvolu za završavanje">🔒</span>

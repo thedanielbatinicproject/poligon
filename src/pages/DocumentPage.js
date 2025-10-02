@@ -178,7 +178,7 @@ const DocumentPage = ({ user }) => {
                             onClick={() => setShowDocumentSelector(true)}
                             title="Promijeni dokument"
                         >
-                            📁 Promijeni dokument
+                            <img src="/icons/change.png" alt="Change" className="btn-icon" /> Promijeni dokument
                         </button>
                         {mode === 'EDIT' && user && (
                             <>
@@ -187,14 +187,14 @@ const DocumentPage = ({ user }) => {
                                     onClick={createNewThesis}
                                     title="Kreiraj novi dokument"
                                 >
-                                    + Novi dokument
+                                    <img src="/icons/add.png" alt="Add" className="btn-icon" /> Novi dokument
                                 </button>
                                 <button 
                                     className="action-btn secondary-btn"
                                     onClick={() => setShowDocumentManager(true)}
                                     title="Upravljanje dokumentima"
                                 >
-                                    ⚙️ Upravljaj dokumentima
+                                    <img src="/icons/manage.png" alt="Manage" className="btn-icon" /> Upravljaj dokumentima
                                 </button>
                             </>
                         )}
