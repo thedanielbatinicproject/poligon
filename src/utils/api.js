@@ -1,12 +1,32 @@
 // Helper funkcija za API pozive sa cookie podrške
 export const apiCall = async (url, options = {}) => {
+    // Sigurno serijaliziranje da izbjegnemo ciklične reference
+    const safeStringify = (obj) => {
+        const seen = new Set();
+        return JSON.stringify(obj, (key, val) => {
+            if (val != null && typeof val === "object") {
+                if (seen.has(val)) {
+                    return {}; // Ukloni ciklične reference
+                }
+                seen.add(val);
+            }
+            return val;
+        });
+    };
+
+    // Ako je body string, koristi ga direktno, inače sigurno serializiraj
+    let processedOptions = { ...options };
+    if (processedOptions.body && typeof processedOptions.body !== 'string') {
+        processedOptions.body = safeStringify(processedOptions.body);
+    }
+
     const defaultOptions = {
         credentials: 'include', // Uvek uključi cookies
         headers: {
             'Content-Type': 'application/json',
             ...options.headers
         },
-        ...options
+        ...processedOptions
     };
 
     try {

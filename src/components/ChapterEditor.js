@@ -149,7 +149,7 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                     <h3>Poglavlja</h3>
                     {mode === 'EDIT' && user && (
                         <button 
-                            onClick={addChapter}
+                            onClick={() => addChapter()}
                             disabled={loading}
                             className="add-chapter-btn"
                             title="Dodaj novo poglavlje"

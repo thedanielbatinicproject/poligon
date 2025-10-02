@@ -4,42 +4,45 @@
     "title": "TODO 3 - 1.1.1.",
     "description": "TODO",
     "documentId": "thesis_1759392479817_wfb2l79p4",
-    "chapterId": "chapter_1759393293031_70mlg4hxu",
-    "dueDate": null,
+    "chapterId": "",
+    "dueDate": "",
     "createdAt": "2025-10-02T08:28:35.953Z",
     "isFinished": false,
-    "updatedAt": "2025-10-02T08:38:50.900Z"
+    "updatedAt": "2025-10-02T09:30:29.414Z"
   },
   {
     "id": "1759394162328n2e3l25k1",
     "title": "Todo2",
     "description": "wfff",
     "documentId": "thesis_1759357127617_i02cdbrpf",
-    "chapterId": null,
-    "dueDate": null,
+    "chapterId": "",
+    "dueDate": "",
     "createdAt": "2025-10-02T08:36:02.328Z",
-    "isFinished": false,
-    "updatedAt": "2025-10-02T08:37:55.975Z"
+    "isFinished": true,
+    "updatedAt": "2025-10-02T09:53:27.166Z",
+    "finishedAt": "2025-10-02T09:53:27.166Z"
   },
   {
     "id": "17593941714164qu1avg9h",
     "title": "aawf",
     "description": "wfwf",
     "documentId": "thesis_1759392479817_wfb2l79p4",
-    "chapterId": "chapter_1759393293031_70mlg4hxu",
-    "dueDate": null,
+    "chapterId": "chapter_1759393296699_vln7896lr",
+    "dueDate": "",
     "createdAt": "2025-10-02T08:36:11.416Z",
-    "isFinished": false
+    "isFinished": false,
+    "updatedAt": "2025-10-02T09:43:09.567Z"
   },
   {
     "id": "1759394177152ukzjm7kp2",
     "title": "fww",
     "description": "fwfw",
     "documentId": "thesis_1759392479817_wfb2l79p4",
-    "chapterId": null,
-    "dueDate": null,
+    "chapterId": "chapter_1759393288798_nn9xwk6c2",
+    "dueDate": "",
     "createdAt": "2025-10-02T08:36:17.152Z",
-    "isFinished": false
+    "isFinished": false,
+    "updatedAt": "2025-10-02T10:08:00.458Z"
   },
   {
     "id": "1759394182376g1snaehx6",
@@ -49,17 +52,19 @@
     "chapterId": null,
     "dueDate": null,
     "createdAt": "2025-10-02T08:36:22.376Z",
-    "isFinished": false
+    "isFinished": false,
+    "updatedAt": "2025-10-02T09:43:12.178Z"
   },
   {
     "id": "1759394191350l9qucxeiy",
     "title": "wwggg",
     "description": "wgwgw",
     "documentId": "thesis_1759392479817_wfb2l79p4",
-    "chapterId": null,
-    "dueDate": null,
+    "chapterId": "chapter_1759393295354_bt1ebi24m",
+    "dueDate": "",
     "createdAt": "2025-10-02T08:36:31.350Z",
-    "isFinished": false
+    "isFinished": false,
+    "updatedAt": "2025-10-02T10:08:04.475Z"
   },
   {
     "id": "1759394217099huznzxyrq",
@@ -70,6 +75,66 @@
     "dueDate": null,
     "createdAt": "2025-10-02T08:36:57.099Z",
     "isFinished": false,
-    "updatedAt": "2025-10-02T08:37:54.562Z"
+    "updatedAt": "2025-10-02T09:53:21.716Z"
+  },
+  {
+    "id": "1759395343713wu6i2a6ed",
+    "title": "wffw",
+    "description": "wff",
+    "documentId": null,
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-02T08:55:43.713Z",
+    "createdBy": "Anonymous",
+    "isFinished": false,
+    "updatedAt": "2025-10-02T09:43:17.282Z"
+  },
+  {
+    "id": "1759395352538kyqzq3ccx",
+    "title": "ALAAAAAAAAAA",
+    "description": "AAAAAAAAA",
+    "documentId": null,
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-02T08:55:52.538Z",
+    "createdBy": "Anonymous",
+    "isFinished": false,
+    "updatedAt": "2025-10-02T09:43:21.200Z"
+  },
+  {
+    "id": "17593958737914cu8uqtmz",
+    "title": "wfw",
+    "description": "awww",
+    "documentId": null,
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-02T09:04:33.791Z",
+    "isFinished": false,
+    "updatedAt": "2025-10-02T09:43:22.346Z"
+  },
+  {
+    "id": "17593958951451f41qbwv0",
+    "title": "DANIEL",
+    "description": "DANIEL",
+    "documentId": "thesis_1759357127617_i02cdbrpf",
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-02T09:04:55.145Z",
+    "createdBy": "Anonymous",
+    "isFinished": true,
+    "updatedAt": "2025-10-02T09:58:47.029Z",
+    "finishedAt": "2025-10-02T09:58:47.029Z"
+  },
+  {
+    "id": "17593962994908kx9zqwpi",
+    "title": "DENZEL",
+    "description": "dddaa",
+    "documentId": "",
+    "chapterId": "",
+    "dueDate": "",
+    "createdAt": "2025-10-02T09:11:39.490Z",
+    "createdBy": "Anonymous",
+    "isFinished": false,
+    "updatedAt": "2025-10-02T09:43:24.726Z"
   }
 ]

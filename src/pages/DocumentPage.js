@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ChapterEditor from '../components/ChapterEditor';
 import DocumentManager from '../components/DocumentManager';
 import DocumentSelector from '../components/DocumentSelector';
+import DocumentTasks from '../components/DocumentTasks';
+import ChapterTasks from '../components/ChapterTasks';
 import { thesesAPI } from '../utils/api';
 import './DocumentPage.css';
 
@@ -224,6 +226,11 @@ const DocumentPage = ({ user }) => {
                 </div>
             ) : (
                 <div className="document-content">
+                    <DocumentTasks 
+                        documentId={currentThesis.id}
+                        user={user}
+                        isAuthenticated={!!user}
+                    />
                     <ChapterEditor
                         thesis={currentThesis}
                         selectedChapter={selectedChapter}
@@ -244,6 +251,16 @@ const DocumentPage = ({ user }) => {
                         mode={mode}
                         user={user}
                     />
+                    
+                    {selectedChapter && (
+                        <ChapterTasks 
+                            documentId={currentThesis.id}
+                            chapterId={selectedChapter.id}
+                            chapterTitle={selectedChapter.title}
+                            user={user}
+                            isAuthenticated={!!user}
+                        />
+                    )}
                 </div>
             )}
 

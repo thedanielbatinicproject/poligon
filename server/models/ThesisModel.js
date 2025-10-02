@@ -180,7 +180,13 @@ class ThesisModel {
             };
 
             thesis.chapters.push(chapter);
-            return await this.update(thesisId, { chapters: thesis.chapters });
+            const result = await this.update(thesisId, { chapters: thesis.chapters });
+            
+            // Stvori clean kopiju bez ciklričnih referenci
+            return {
+                ...result,
+                chapters: result.chapters ? [...result.chapters] : []
+            };
         } catch (error) {
             throw error;
         }

@@ -68,11 +68,6 @@ const LoginPage = ({ onLogin }) => {
                             {loading ? 'Prijavljivanje...' : 'Prijavi se'}
                         </button>
                     </form>
-                    <div className="demo-info">
-                        <p><strong>Demo podaci:</strong></p>
-                        <p>Korisničko ime: <code>admin</code></p>
-                        <p>Lozinka: <code>admin</code></p>
-                    </div>
                 </div>
             </div>
         </div>

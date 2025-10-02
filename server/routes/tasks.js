@@ -361,8 +361,8 @@ router.get('/todos', (req, res) => {
     }
 });
 
-// POST /api/todos - Kreiraj novi todo
-router.post('/todos', authenticateUser, (req, res) => {
+// POST /api/todos - Kreiraj novi todo (dostupno svima)
+router.post('/todos', (req, res) => {
     try {
         const { title, description, documentId, chapterId, dueDate } = req.body;
 
@@ -376,6 +376,18 @@ router.post('/todos', authenticateUser, (req, res) => {
 
         const todos = loadTodos();
         
+        // Provjeri je li korisnik prijavljen
+        const sessionId = req.cookies.sessionId;
+        let createdBy = 'Anonymous';
+        
+        if (sessionId) {
+            const activeSessions = loadActiveSessions();
+            const session = activeSessions.get(sessionId);
+            if (session) {
+                createdBy = session.username;
+            }
+        }
+
         const newTodo = {
             id: generateUniqueId(),
             title: title.trim(),
@@ -384,7 +396,7 @@ router.post('/todos', authenticateUser, (req, res) => {
             chapterId: chapterId || null,
             dueDate: dueDate || null,
             createdAt: new Date().toISOString(),
-            createdBy: req.user.username,
+            createdBy: createdBy,
             isFinished: false
         };
 
@@ -411,8 +423,8 @@ router.post('/todos', authenticateUser, (req, res) => {
     }
 });
 
-// PUT /api/todos/:id - Ažuriraj todo
-router.put('/todos/:id', authenticateUser, (req, res) => {
+// PUT /api/todos/:id - Ažuriraj todo (dostupno svima)
+router.put('/todos/:id', (req, res) => {
     try {
         const { id } = req.params;
         const { title, description, documentId, chapterId, dueDate, completed } = req.body;
@@ -428,7 +440,22 @@ router.put('/todos/:id', authenticateUser, (req, res) => {
         }
 
         // Provjeri da li korisnik ima pravo urediti
-        if (todos[todoIndex].createdBy !== req.user.username) {
+        const sessionId = req.cookies.sessionId;
+        let isLoggedIn = false;
+        let currentUser = 'Anonymous';
+        
+        if (sessionId) {
+            const activeSessions = loadActiveSessions();
+            const session = activeSessions.get(sessionId);
+            if (session) {
+                currentUser = session.username;
+                isLoggedIn = true;
+            }
+        }
+
+        // Logirani korisnici mogu uređivati sve
+        // Nelogirani korisnici mogu uređivati samo Anonymous todove
+        if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
             return res.status(403).json({
                 success: false,
                 message: 'Nemate pravo uređivati ovaj todo'
@@ -468,29 +495,8 @@ router.put('/todos/:id', authenticateUser, (req, res) => {
     }
 });
 
-// PATCH /api/todos/:id/toggle-finished - Promijeni finished status
+// PATCH /api/todos/:id/toggle-finished - Promijeni finished status (dostupno svima)
 router.patch('/todos/:id/toggle-finished', (req, res) => {
-    // Provjeri autentifikaciju za sve PATCH zahtjeve
-    const sessionId = req.cookies.sessionId;
-    
-    if (!sessionId) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Niste prijavljeni' 
-        });
-    }
-
-    const activeSessions = loadActiveSessions();
-    const session = activeSessions.get(sessionId);
-    
-    if (!session) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Sesija je neispravna ili je istekla' 
-        });
-    }
-
-    req.user = session;
     try {
         const { id } = req.params;
         const todos = loadTodos();
@@ -504,7 +510,22 @@ router.patch('/todos/:id/toggle-finished', (req, res) => {
         }
 
         // Provjeri da li korisnik ima pravo urediti
-        if (todos[todoIndex].createdBy !== req.user.username) {
+        const sessionId = req.cookies.sessionId;
+        let isLoggedIn = false;
+        let currentUser = 'Anonymous';
+        
+        if (sessionId) {
+            const activeSessions = loadActiveSessions();
+            const session = activeSessions.get(sessionId);
+            if (session) {
+                currentUser = session.username;
+                isLoggedIn = true;
+            }
+        }
+
+        // Logirani korisnici mogu uređivati sve
+        // Nelogirani korisnici mogu uređivati samo Anonymous todove
+        if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
             return res.status(403).json({
                 success: false,
                 message: 'Nemate pravo uređivati ovaj todo'
@@ -541,8 +562,8 @@ router.patch('/todos/:id/toggle-finished', (req, res) => {
     }
 });
 
-// DELETE /api/todos/:id - Obriši todo
-router.delete('/todos/:id', authenticateUser, (req, res) => {
+// DELETE /api/todos/:id - Obriši todo (dostupno svima)
+router.delete('/todos/:id', (req, res) => {
     try {
         const { id } = req.params;
         const todos = loadTodos();
@@ -556,7 +577,22 @@ router.delete('/todos/:id', authenticateUser, (req, res) => {
         }
 
         // Provjeri da li korisnik ima pravo obrisati
-        if (todos[todoIndex].createdBy !== req.user.username) {
+        const sessionId = req.cookies.sessionId;
+        let isLoggedIn = false;
+        let currentUser = 'Anonymous';
+        
+        if (sessionId) {
+            const activeSessions = loadActiveSessions();
+            const session = activeSessions.get(sessionId);
+            if (session) {
+                currentUser = session.username;
+                isLoggedIn = true;
+            }
+        }
+
+        // Logirani korisnici mogu obrisati sve
+        // Nelogirani korisnici mogu obrisati samo Anonymous todove
+        if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
             return res.status(403).json({
                 success: false,
                 message: 'Nemate pravo obrisati ovaj todo'

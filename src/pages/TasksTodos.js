@@ -26,6 +26,19 @@ const TasksTodos = ({ user, isAuthenticated }) => {
     
     // Custom notification state
     const [notification, setNotification] = useState(null);
+    
+    // Edit form state
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
+    const [editForm, setEditForm] = useState({
+        title: '',
+        description: '',
+        documentId: '',
+        chapterId: '',
+        dueDate: ''
+    });
+    const [originalEditForm, setOriginalEditForm] = useState({});
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
     // Form state za tasks
     const [taskForm, setTaskForm] = useState({
@@ -305,6 +318,120 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         }, 4000);
     };
 
+    const openEditForm = (item) => {
+        setEditingItem(item);
+        setEditForm({
+            title: item.title || '',
+            description: item.description || '',
+            documentId: item.documentId || '',
+            chapterId: item.chapterId || '',
+            dueDate: item.dueDate || ''
+        });
+        
+        // Load chapters if document is selected
+        if (item.documentId) {
+            loadChapters(item.documentId);
+        }
+        
+        // Store original form data for comparison
+        const originalForm = {
+            title: item.title || '',
+            description: item.description || '',
+            documentId: item.documentId || '',
+            chapterId: item.chapterId || '',
+            dueDate: item.dueDate || ''
+        };
+        setOriginalEditForm(originalForm);
+        
+        setShowEditForm(true);
+    };
+
+    const hasFormChanges = () => {
+        return JSON.stringify(editForm) !== JSON.stringify(originalEditForm);
+    };
+
+    const closeEditForm = () => {
+        if (hasFormChanges()) {
+            setShowCancelConfirm(true);
+        } else {
+            forceCloseEditForm();
+        }
+    };
+
+    const forceCloseEditForm = () => {
+        setShowEditForm(false);
+        setEditingItem(null);
+        setEditForm({
+            title: '',
+            description: '',
+            documentId: '',
+            chapterId: '',
+            dueDate: ''
+        });
+        setOriginalEditForm({});
+        setAvailableChapters([]);
+        setShowCancelConfirm(false);
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        if (!editingItem) return;
+
+        // Basic validation
+        if (!editForm.title.trim()) {
+            showNotification('Naziv je obavezan', 'error');
+            return;
+        }
+
+        if (editingItem.type === 'task' && !editForm.dueDate) {
+            showNotification('Krajnji rok je obavezan za taskove', 'error');
+            return;
+        }
+
+        if (editForm.dueDate && new Date(editForm.dueDate) < new Date()) {
+            showNotification('Krajnji rok ne može biti u prošlosti', 'error');
+            return;
+        }
+
+        try {
+            const endpoint = editingItem.type === 'task' ? 'tasks' : 'todos';
+            const response = await fetch(`/api/${endpoint}/${editingItem.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(editForm)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // Update state with edited item
+                    if (editingItem.type === 'task') {
+                        setTasks(prev => prev.map(task => 
+                            task.id === editingItem.id ? result.data : task
+                        ));
+                    } else {
+                        setTodos(prev => prev.map(todo => 
+                            todo.id === editingItem.id ? result.data : todo
+                        ));
+                    }
+                    
+                    forceCloseEditForm();
+                    showNotification(`${editingItem.type.toUpperCase()} je uspješno ažuriran!`, 'success');
+                } else {
+                    showNotification('Greška: ' + result.message, 'error');
+                }
+            } else {
+                const error = await response.json();
+                showNotification('Greška: ' + error.message, 'error');
+            }
+        } catch (error) {
+            console.error('Greška pri ažuriranju:', error);
+            showNotification('Greška pri ažuriranju', 'error');
+        }
+    };
+
     const getItemDisplayInfo = (item) => {
         if (!item.documentId) {
             return { document: 'GLOBAL', chapter: '' };
@@ -356,6 +483,23 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         };
         
         return getNumber(chapter);
+    };
+
+    const canEditItem = (item) => {
+        if (item.type === 'task') {
+            // Taskovi mogu biti uređivani samo od prijavljenih korisnika
+            // Logirani korisnici mogu uređivati sve taskove
+            return isAuthenticated && user;
+        } else {
+            // Todovi - logirani korisnici mogu uređivati sve
+            // Nelogirani korisnici mogu uređivati samo Anonymous todove
+            if (isAuthenticated && user) {
+                return true; // Logirani mogu uređivati sve todove
+            } else {
+                // Nelogirani korisnici mogu uređivati samo Anonymous todove
+                return item.createdBy === 'Anonymous';
+            }
+        }
     };
 
     return (
@@ -444,7 +588,8 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                 <th>NAZIV</th>
                                 <th>DOKUMENT/POGLAVLJE</th>
                                 <th>KRAJNJI ROK</th>
-                                <th>AKCIJA</th>
+                                <th>STATUS</th>
+                                <th>UREDI</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -488,6 +633,22 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                             {item.isFinished ? '↻ Reaktiviraj' : '✓ Završi'}
                                         </span>
                                     </td>
+                                    <td className="edit-cell">
+                                        {canEditItem(item) ? (
+                                            <button 
+                                                className="edit-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent row click
+                                                    openEditForm(item);
+                                                }}
+                                                title="Uredi"
+                                            >
+                                                ✏️
+                                            </button>
+                                        ) : (
+                                            <span className="no-edit" title="Nemate dozvolu za uređivanje">🔒</span>
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -503,28 +664,35 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             {/* Forme za kreiranje */}
             <div className="creation-section">
                 <div className="form-buttons">
-                    <button 
-                        className="create-btn task-btn"
-                        onClick={() => {
-                            setShowTaskForm(!showTaskForm);
-                            if (!showTaskForm) setShowTodoForm(false); // Sakrij todo formu kada prikazuješ task formu
-                        }}
-                    >
-                        {showTaskForm ? 'Sakrij' : 'Kreiraj Task'}
-                    </button>
+                    {isAuthenticated && (
+                        <button 
+                            className="create-btn task-btn"
+                            onClick={() => {
+                                setShowTaskForm(!showTaskForm);
+                                if (!showTaskForm) setShowTodoForm(false); // Sakrij todo formu kada prikazuješ task formu
+                            }}
+                        >
+                            {showTaskForm ? 'Sakrij' : 'Kreiraj Task'}
+                        </button>
+                    )}
                     <button 
                         className="create-btn todo-btn"
                         onClick={() => {
                             setShowTodoForm(!showTodoForm);
-                            if (!showTodoForm) setShowTaskForm(false); // Sakrij task formu kada prikazuješ todo formu
+                            if (!showTodoForm && isAuthenticated) setShowTaskForm(false); // Sakrij task formu kada prikazuješ todo formu
                         }}
                     >
                         {showTodoForm ? 'Sakrij' : 'Kreiraj Todo'}
                     </button>
+                    {!isAuthenticated && (
+                        <div className="auth-notice">
+                            <p>💡 <strong>Napomena:</strong> Taskovi su dostupni samo prijavljenim korisnicima. Todovi su dostupni svima!</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Task forma */}
-                {showTaskForm && (
+                {showTaskForm && isAuthenticated && (
                     <form className="task-form" onSubmit={handleTaskSubmit}>
                         <h4>Novi Task</h4>
                         <div className="form-group">
@@ -690,6 +858,131 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                 onClick={handleConfirmReactivate}
                             >
                                 Reaktiviraj
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Fullscreen Edit Form */}
+            {showEditForm && editingItem && (
+                <div className="fullscreen-overlay">
+                    <div className="fullscreen-form">
+                        <div className="fullscreen-header">
+                            <h2>Uredi {editingItem.type.toUpperCase()}</h2>
+                            <button 
+                                className="close-btn"
+                                onClick={closeEditForm}
+                                title="Zatvori"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleEditSubmit} className="edit-form-content">
+                            <div className="form-group">
+                                <label>Naziv *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editForm.title}
+                                    onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Opis</label>
+                                <textarea
+                                    rows="4"
+                                    value={editForm.description}
+                                    onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Dokument</label>
+                                    <select
+                                        value={editForm.documentId}
+                                        onChange={(e) => {
+                                            const docId = e.target.value;
+                                            setEditForm({...editForm, documentId: docId, chapterId: ''});
+                                            loadChapters(docId);
+                                        }}
+                                    >
+                                        <option value="">GLOBAL (bez dokumenta)</option>
+                                        {documents.map(doc => (
+                                            <option key={doc.id} value={doc.id}>
+                                                {doc.metadata?.title || 'Nepoznat dokument'}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {editForm.documentId && (
+                                    <div className="form-group">
+                                        <label>Poglavlje</label>
+                                        <select
+                                            value={editForm.chapterId}
+                                            onChange={(e) => setEditForm({...editForm, chapterId: e.target.value})}
+                                        >
+                                            <option value="">Cijeli dokument (bez poglavlja)</option>
+                                            {availableChapters.map(chapter => (
+                                                <option key={chapter.id} value={chapter.id}>
+                                                    {chapter.displayTitle}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="form-group">
+                                <label>Krajnji rok {editingItem.type === 'task' ? '*' : '(opcionalno)'}</label>
+                                <input
+                                    type="datetime-local"
+                                    required={editingItem.type === 'task'}
+                                    value={editForm.dueDate}
+                                    onChange={(e) => setEditForm({...editForm, dueDate: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="fullscreen-actions">
+                                <button type="button" className="cancel-btn" onClick={closeEditForm}>
+                                    Otkaži
+                                </button>
+                                <button type="submit" className="submit-btn">
+                                    Spremi promjene
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Confirmation Dialog */}
+            {showCancelConfirm && (
+                <div className="confirm-overlay">
+                    <div className="confirm-dialog">
+                        <div className="confirm-header">
+                            <h3>Nespremljene promjene</h3>
+                        </div>
+                        <div className="confirm-body">
+                            <p>Imate nespremljene promjene u formi.</p>
+                            <p>Jeste li sigurni da se želite vratiti bez spremanja?</p>
+                        </div>
+                        <div className="confirm-actions">
+                            <button 
+                                className="btn-cancel" 
+                                onClick={() => setShowCancelConfirm(false)}
+                            >
+                                Nastavi uređivanje
+                            </button>
+                            <button 
+                                className="btn-confirm" 
+                                onClick={forceCloseEditForm}
+                            >
+                                Odbaci promjene
                             </button>
                         </div>
                     </div>
