@@ -15,7 +15,7 @@ const About = () => {
                 <p className="about-subtitle">Tehnički pregled i informacije o razvoju</p>
                 <div className="project-info">
                     <div className="info-item">
-                        <strong>Developer:</strong> Daniel Batinić
+                        <strong>Kreator:</strong> Daniel Batinić
                     </div>
                     <div className="info-item">
                         <strong>Institucija:</strong> Fakultet elektrotehnike i računarstva u Zagrebu
@@ -128,7 +128,7 @@ const About = () => {
                         className={`tech-header ${activeSection === 'performance' ? 'active' : ''}`}
                         onClick={() => toggleSection('performance')}
                     >
-                        <h3>Performance i sigurnost</h3>
+                        <h3>Performanse i sigurnost</h3>
                         <span className="toggle-icon">{activeSection === 'performance' ? '−' : '+'}</span>
                     </div>
                     {activeSection === 'performance' && (
@@ -140,7 +140,7 @@ const About = () => {
                                 <li>File-based pristup za jednostavno deployment</li>
                             </ul>
                             
-                            <h4>Performance optimizacije:</h4>
+                            <h4>Performanse optimizacije:</h4>
                             <ul>
                                 <li>React lazy loading za komponente</li>
                                 <li>Webpack code splitting</li>
