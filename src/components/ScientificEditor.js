@@ -1,5 +1,6 @@
 ﻿import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+import { notesAPI } from '../utils/api';
 import './ScientificEditor.css';
 
 const ScientificEditor = ({ 
@@ -18,6 +19,14 @@ const ScientificEditor = ({
         graphs: 0,
         equations: 0
     });
+    
+    // State za bilješke i selekciju
+    const [selectedText, setSelectedText] = useState('');
+    const [selectionRange, setSelectionRange] = useState(null);
+    const [showAddNoteButton, setShowAddNoteButton] = useState(false);
+    const [noteButtonPosition, setNoteButtonPosition] = useState({ top: 0, left: 0 });
+    const [showNoteForm, setShowNoteForm] = useState(false);
+    const [newNoteDescription, setNewNoteDescription] = useState('');
 
     // Generiranje brojeva prema hijerarhiji poglavlja
     const generateChapterPrefix = useCallback(() => {
@@ -156,7 +165,54 @@ const ScientificEditor = ({
         // Modern paste handling
         paste_data_images: true,
         paste_as_text: false,
-        readonly: mode === 'VIEW'
+        readonly: false, // Omogućujem selekciju u VIEW režimu
+        // Za VIEW režim - sakrivaj toolbar ali omogući selekciju
+        setup: (editor) => {
+            if (mode === 'VIEW') {
+                // Onemogući uređivanje sadržaja ali omogući selekciju
+                editor.on('init', () => {
+                    editor.getBody().setAttribute('contenteditable', 'true');
+                    editor.getBody().style.userSelect = 'text';
+                    editor.getBody().style.webkitUserSelect = 'text';
+                    editor.getBody().style.mozUserSelect = 'text';
+                    editor.getBody().style.msUserSelect = 'text';
+                });
+                
+                // Blokiraj sve tipkovnicu za uređivanje
+                editor.on('keydown', (e) => {
+                    // Dozvoljavaj samo navigacijske tipke (strelice, home, end, page up/down)
+                    const allowedKeys = [37, 38, 39, 40, 35, 36, 33, 34, 16, 17, 18]; // arrows, home, end, page up/down, shift, ctrl, alt
+                    if (!allowedKeys.includes(e.keyCode)) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                
+                // Blokiraj paste, cut, itd.
+                editor.on('paste cut', (e) => {
+                    e.preventDefault();
+                    return false;
+                });
+                
+                // Praćenje selekcije za bilješke
+                editor.on('selectionchange', handleSelectionChange);
+                editor.on('mouseup', handleSelectionChange);
+                editor.on('keyup', handleSelectionChange);
+            }
+            
+            // Za sve režime - praćenje selekcije za bilješke
+            editor.on('selectionchange', handleSelectionChange);
+            editor.on('mouseup', handleSelectionChange);
+            editor.on('keyup', handleSelectionChange);
+            
+            // Dodaj i globalni event listener
+            editor.on('init', () => {
+                const editorDoc = editor.getDoc();
+                editorDoc.addEventListener('mouseup', handleSelectionChange);
+                editorDoc.addEventListener('keyup', handleSelectionChange);
+                editorDoc.addEventListener('selectionchange', handleSelectionChange);
+            });
+        }
     };
 
     // Handle editor initialization
@@ -169,6 +225,145 @@ const ScientificEditor = ({
         onChange({ target: { value: content } });
         updateCounters(content);
     };
+
+    // Funkcija za praćenje selekcije
+    const handleSelectionChange = useCallback(() => {
+        try {
+            // Koristimo native browser selection
+            const selection = window.getSelection();
+            console.log('Selection change detected:', selection.toString());
+            
+            if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+                // Nema selekcije
+                setShowAddNoteButton(false);
+                setSelectedText('');
+                setSelectionRange(null);
+                return;
+            }
+            
+            const selectedContent = selection.toString().trim();
+            if (selectedContent.length === 0) {
+                setShowAddNoteButton(false);
+                setSelectedText('');
+                setSelectionRange(null);
+                return;
+            }
+            
+            // Provjeri da li je selekcija unutar editora
+            if (!editorRef.current) return;
+            const editorBody = editorRef.current.getBody();
+            const range = selection.getRangeAt(0);
+            if (!editorBody.contains(range.commonAncestorContainer)) {
+                setShowAddNoteButton(false);
+                return;
+            }
+            
+            // Ima valjavnu selekciju
+            console.log('Valid selection found:', selectedContent);
+            setSelectedText(selectedContent);
+            setSelectionRange(range.cloneRange());
+            
+            // Izračunaj poziciju gumba
+            calculateButtonPosition(range);
+            setShowAddNoteButton(true);
+        } catch (error) {
+            console.error('Error in handleSelectionChange:', error);
+        }
+    }, [calculateButtonPosition]);
+
+    // Funkcija za izračunavanje pozicije gumba
+    const calculateButtonPosition = useCallback((range) => {
+        if (!editorRef.current) return;
+        
+        try {
+            const editor = editorRef.current;
+            const editorContainer = editor.getContainer();
+            const editorRect = editorContainer.getBoundingClientRect();
+            
+            // Koristi native browser selection API
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+            
+            const clientRect = selection.getRangeAt(0).getBoundingClientRect();
+            
+            // Izračunaj poziciju relativno prema editoru
+            const top = clientRect.top - editorRect.top - 40; // 40px iznad selekcije
+            const left = clientRect.left - editorRect.left;
+            
+            console.log('Button position calculated:', { top, left });
+            setNoteButtonPosition({ top, left });
+        } catch (error) {
+            console.error('Error calculating button position:', error);
+        }
+    }, []);
+
+    // Funkcija za dobivanje broja linije
+    const getLineNumber = useCallback((range) => {
+        if (!editorRef.current || !range) return 1;
+        
+        const editor = editorRef.current;
+        const body = editor.getBody();
+        const allElements = body.querySelectorAll('p, h1, h2, h3, h4, h5, h6, div, li');
+        
+        let lineNumber = 1;
+        const startContainer = range.startContainer;
+        
+        // Pronađi element koji sadrži početak selekcije
+        let targetElement = startContainer.nodeType === Node.TEXT_NODE 
+            ? startContainer.parentElement 
+            : startContainer;
+            
+        for (let i = 0; i < allElements.length; i++) {
+            if (allElements[i] === targetElement || allElements[i].contains(targetElement)) {
+                lineNumber = i + 1;
+                break;
+            }
+        }
+        
+        return lineNumber;
+    }, []);
+
+    // Funkcija za kreiranje bilješke iz selekcije
+    const handleCreateNoteFromSelection = useCallback(() => {
+        if (!selectedText || !selectionRange || !thesis || !chapter) return;
+        
+        setShowNoteForm(true);
+        setShowAddNoteButton(false);
+    }, [selectedText, selectionRange, thesis, chapter]);
+
+    // Funkcija za spremanje bilješke
+    const handleSaveNote = useCallback(async () => {
+        if (!newNoteDescription.trim() || !selectedText || !selectionRange) return;
+        
+        try {
+            const lineNumber = getLineNumber(selectionRange);
+            
+            const noteData = {
+                thesisId: thesis.id,
+                chapterId: chapter.id,
+                lineNumber,
+                selectedText,
+                description: newNoteDescription.trim(),
+                author: user?.username || 'Visitor'
+            };
+            
+            await notesAPI.createNote(noteData);
+            
+            // Resetiraj form
+            setNewNoteDescription('');
+            setShowNoteForm(false);
+            setShowAddNoteButton(false);
+            setSelectedText('');
+            setSelectionRange(null);
+            
+            // Obavijesti korisnika
+            alert('Bilješka je uspješno dodana!');
+            
+        } catch (error) {
+            console.error('Error creating note:', error);
+            alert('Greška pri kreiranju bilješke');
+        }
+    }, [newNoteDescription, selectedText, selectionRange, thesis, chapter, user, getLineNumber]);
 
     // Ažuriranje brojača elemenata
     const updateCounters = useCallback((content) => {
@@ -329,6 +524,96 @@ const ScientificEditor = ({
                     init={editorConfig}
                     disabled={isReadOnly}
                 />
+                
+                {/* Gumb za dodavanje bilješke iz selekcije */}
+                {showAddNoteButton && (
+                    <div 
+                        className="add-note-button"
+                        style={{
+                            position: 'absolute',
+                            top: noteButtonPosition.top + 'px',
+                            left: noteButtonPosition.left + 'px',
+                            zIndex: 10000
+                        }}
+                    >
+                        <button 
+                            className="selection-note-btn"
+                            onClick={handleCreateNoteFromSelection}
+                            title="Dodaj bilješku za selektirani tekst"
+                        >
+                            <img src="/icons/quote.png" alt="Quote" className="quote-icon" />
+                            Dodaj bilješku
+                        </button>
+                    </div>
+                )}
+                
+                {/* Form za kreiranje bilješke */}
+                {showNoteForm && (
+                    <div className="note-form-overlay" onClick={() => setShowNoteForm(false)}>
+                        <div className="note-form-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="note-form-header">
+                                <h3>Dodaj bilješku</h3>
+                                <button 
+                                    className="close-btn"
+                                    onClick={() => setShowNoteForm(false)}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            
+                            <div className="note-form-content">
+                                <div className="note-form-info">
+                                    <div className="form-info-item">
+                                        <strong>Poglavlje:</strong> {chapter?.title}
+                                    </div>
+                                    <div className="form-info-item">
+                                        <strong>Autor:</strong> {user?.username || 'Visitor'}
+                                    </div>
+                                    <div className="form-info-item">
+                                        <strong>Linija:</strong> {selectionRange ? getLineNumber(selectionRange) : 'N/A'}
+                                    </div>
+                                    <div className="form-info-item">
+                                        <strong>Datum:</strong> {new Date().toLocaleDateString('hr-HR')}
+                                    </div>
+                                </div>
+                                
+                                <div className="selected-text-preview">
+                                    <strong>Selektirani tekst:</strong>
+                                    <em>"{selectedText}"</em>
+                                </div>
+                                
+                                <div className="form-field">
+                                    <label htmlFor="note-description"><strong>Opis bilješke *</strong></label>
+                                    <textarea
+                                        id="note-description"
+                                        value={newNoteDescription}
+                                        onChange={(e) => setNewNoteDescription(e.target.value)}
+                                        placeholder="Unesite detaljni opis bilješke..."
+                                        rows={4}
+                                        className="note-description-input"
+                                        autoFocus
+                                    />
+                                </div>
+                                
+                                <div className="note-form-actions">
+                                    <button 
+                                        className="save-note-btn"
+                                        onClick={handleSaveNote}
+                                        disabled={!newNoteDescription.trim()}
+                                    >
+                                        Spremi bilješku
+                                    </button>
+                                    <button 
+                                        className="cancel-note-btn"
+                                        onClick={() => setShowNoteForm(false)}
+                                    >
+                                        Odustani
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,0 +1,375 @@
+/* Notes Panel Styles */
+.notes-panel {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: fit-content;
+    max-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+.notes-panel.collapsed {
+    width: 40px;
+    min-width: 40px;
+}
+
+.notes-panel.collapsed .notes-header h3 {
+    display: none;
+}
+
+.notes-panel.collapsed .notes-header {
+    padding: 8px;
+    justify-content: center;
+}
+
+.notes-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.notes-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.notes-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.collapse-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.notes-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.notes-section-info {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #f8f9fa;
+}
+
+.chapter-info {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.notes-count {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.add-note-section {
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.add-note-btn {
+    width: 100%;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.add-note-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(54, 209, 220, 0.3);
+}
+
+.quote-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
+}
+
+.add-note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.note-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.note-textarea:focus {
+    outline: none;
+    border-color: #5b86e5;
+    box-shadow: 0 0 0 2px rgba(91, 134, 229, 0.2);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.save-note-btn {
+    flex: 1;
+    padding: 8px 16px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.save-note-btn:hover:not(:disabled) {
+    background: #218838;
+}
+
+.save-note-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.cancel-note-btn {
+    flex: 1;
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.cancel-note-btn:hover {
+    background: #5a6268;
+}
+
+.notes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 16px 16px;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.no-notes {
+    text-align: center;
+    padding: 24px 16px;
+    color: #666;
+}
+
+.no-notes p {
+    margin: 0 0 8px 0;
+}
+
+.no-notes-hint {
+    font-size: 12px;
+    color: #999;
+}
+
+.note-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.note-item:hover {
+    border-color: #d0d0d0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.note-item.approved {
+    background: #f8f9fa;
+    opacity: 0.8;
+    border-color: #d4edda;
+}
+
+.note-item.pending {
+    border-left: 4px solid #ffc107;
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.note-author {
+    font-weight: 600;
+    color: #333;
+}
+
+.note-date {
+    color: #666;
+}
+
+.note-selected-text {
+    background: #f0f7ff;
+    border-left: 3px solid #5b86e5;
+    padding: 6px 8px;
+    margin: 8px 0;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+}
+
+.note-line-number {
+    font-size: 11px;
+    color: #666;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.note-description {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+}
+
+.note-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.approve-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.approve-btn.pending {
+    background: #ffc107;
+    color: #000;
+}
+
+.approve-btn.pending:hover {
+    background: #e0a800;
+}
+
+.approve-btn.approved {
+    background: #28a745;
+    color: white;
+}
+
+.approve-btn.approved:hover {
+    background: #218838;
+}
+
+.delete-note-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s ease;
+}
+
+.delete-note-btn:hover {
+    background: #c82333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .notes-panel {
+        max-height: 50vh;
+    }
+    
+    .notes-header h3 {
+        font-size: 14px;
+    }
+    
+    .add-note-btn {
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+    
+    .note-item {
+        padding: 10px;
+    }
+}
+
+/* Scrollbar styling */
+.notes-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notes-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.notes-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.notes-list::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}

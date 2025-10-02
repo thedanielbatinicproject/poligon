@@ -1,0 +1,26 @@
+{
+  "notes": [
+    {
+      "id": "note_1759443304803_92uylpubm",
+      "thesisId": "thesis_1759392477513_0a5h2tk0u",
+      "chapterId": "chapter_1759434261784_gewlhk03b",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "wfwf",
+      "author": "admin",
+      "created": "2025-10-02T22:15:04.803Z",
+      "approved": false
+    },
+    {
+      "id": "note_1759443598059_78rnt519j",
+      "thesisId": "thesis_1759392477513_0a5h2tk0u",
+      "chapterId": "chapter_1759434261784_gewlhk03b",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "wfwf",
+      "author": "admin",
+      "created": "2025-10-02T22:19:58.059Z",
+      "approved": false
+    }
+  ]
+}

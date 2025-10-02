@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ChapterEditor.css';
 import ScientificEditor from './ScientificEditor';
+import NotesPanel from './NotesPanel';
 import { thesesAPI } from '../utils/api';
 
 const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelect, mode, user }) => {
@@ -8,6 +9,15 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
     const [loading, setLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
     const [hoveredChapter, setHoveredChapter] = useState(null);
+    const [notesCollapsed, setNotesCollapsed] = useState(false);
+    const contentBodyRef = useRef(null);
+
+    // Update CSS custom property for notes collapse state
+    useEffect(() => {
+        if (contentBodyRef.current) {
+            contentBodyRef.current.style.setProperty('--notes-collapsed', notesCollapsed ? '1' : '0');
+        }
+    }, [notesCollapsed]);
 
     useEffect(() => {
         if (thesis) {
@@ -369,16 +379,27 @@ const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
                 )}
             </div>
 
-            <div className="content-body">
-                <ScientificEditor
-                    value={content}
-                    onChange={handleContentChange}
-                    chapter={chapter}
-                    thesis={thesis}
-                    mode={mode}
-                    user={user}
-                    disabled={mode === 'VIEW'}
-                />
+            <div className="content-body" ref={contentBodyRef}>
+                <div className="editor-container">
+                    <ScientificEditor
+                        value={content}
+                        onChange={handleContentChange}
+                        chapter={chapter}
+                        thesis={thesis}
+                        mode={mode}
+                        user={user}
+                        disabled={mode === 'VIEW'}
+                    />
+                </div>
+                <div className="notes-container">
+                    <NotesPanel 
+                        thesis={thesis}
+                        chapter={chapter}
+                        mode={mode}
+                        user={user}
+                        onCollapsedChange={setNotesCollapsed}
+                    />
+                </div>
             </div>
         </div>
     );

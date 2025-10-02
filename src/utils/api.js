@@ -106,3 +106,44 @@ export const thesesAPI = {
         method: 'DELETE'
     })
 };
+
+// Notes API
+export const notesAPI = {
+    // Dohvati sve bilješke ili filtrirane po thesisId/chapterId
+    getNotes: (thesisId, chapterId) => {
+        let url = '/api/notes';
+        const params = new URLSearchParams();
+        
+        if (thesisId) params.append('thesisId', thesisId);
+        if (chapterId) params.append('chapterId', chapterId);
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        
+        return apiCall(url);
+    },
+    
+    // Kreiraj novu bilješku
+    createNote: (noteData) => apiCall('/api/notes', {
+        method: 'POST',
+        body: JSON.stringify(noteData)
+    }),
+    
+    // Ažuriraj bilješku
+    updateNote: (noteId, noteData) => apiCall(`/api/notes/${noteId}`, {
+        method: 'PUT',
+        body: JSON.stringify(noteData)
+    }),
+    
+    // Prihvati/odbaci bilješku
+    approveNote: (noteId, approved) => apiCall(`/api/notes/${noteId}/approve`, {
+        method: 'PATCH',
+        body: JSON.stringify({ approved })
+    }),
+    
+    // Obriši bilješku
+    deleteNote: (noteId) => apiCall(`/api/notes/${noteId}`, {
+        method: 'DELETE'
+    })
+};

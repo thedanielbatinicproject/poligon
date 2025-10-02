@@ -27,6 +27,7 @@ Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i d
 - **Upload slika**: Direktno uklucivanje slika u dokumente
 - **Hijerarhijska poglavlja**: 3-razinska organizacija (1, 1.1, 1.1.1)
 - **VIEW/EDIT režimi**: Potpuno odvojeni načini rada za pregled i uređivanje
+- **Bilješke i komentari**: Sustav za dodavanje bilješki na poglavlja i selektirani tekst
 - **Čuvanje stanja**: Automatsko vraćanje na zadnju poziciju nakon refresh-a
 - **Upravljanje dokumentima**: Kreiranje, uređivanje metapodataka i brisanje
 - **Automatsko spremanje**: Gubitak rada više nije problem
@@ -131,6 +132,7 @@ poligon/
 │       ├── theses.json    # Dokumenti
 │       ├── tasks.json     # Zadaci (Tasks)
 │       ├── todos.json     # To-do lista
+│       ├── notes.json     # Bilješke i komentari
 │       └── users.json     # Korisnici
 ├── public/            # Statičke datoteke
 │   └── uploads/       # Uploadane slike
@@ -144,7 +146,8 @@ poligon/
 │   │   ├── ChapterEditor.js    # Hijerarhijski editor poglavlja
 │   │   ├── ScientificEditor.js # TinyMCE znanstveni editor
 │   │   ├── DocumentSelector.js # Selektor dokumenata
-│   │   └── DocumentManager.js  # Upravljanje metapodacima i brisanje
+│   │   ├── DocumentManager.js  # Upravljanje metapodacima i brisanje
+│   │   └── NotesPanel.js       # Panel za bilješke i komentare
 │   ├── pages/         # React stranice
 │   │   ├── Home.js          # Početna stranica
 │   │   ├── About.js         # O nama stranica
@@ -194,6 +197,13 @@ poligon/
 - `PUT /api/todos/:id` - Ažuriranje to-do
 - `DELETE /api/todos/:id` - Brisanje to-do
 - `PATCH /api/todos/:id/toggle-finished` - Promjena finished statusa to-do
+
+### Notes Management
+- `GET /api/notes` - Dohvaćanje svih bilješki ili filtriranih po thesisId/chapterId
+- `POST /api/notes` - Kreiranje nove bilješke
+- `PUT /api/notes/:id` - Ažuriranje bilješke
+- `PATCH /api/notes/:id/approve` - Prihvaćanje/odbacivanje bilješke
+- `DELETE /api/notes/:id` - Brisanje bilješke
 
 ### Ostalo
 - `GET /*` - Služi React aplikaciju (SPA routing)
@@ -263,6 +273,52 @@ Aplikacija koristi TinyMCE Cloud service s besplatnim API ključem za napredne f
 - **Autentifikacija**: Svi CRUD pozivi zahtijevaju valid sesiju
 - **Jedinstveni ID-jevi**: Automatically generirani task i todo ID-jevi
 - **Timestamp praćenje**: Kreiranje i zadnje ažuriranje vremena
+
+## Sustav Bilješki i Komentara
+
+### Osnovna Funkcionalnost
+Aplikacija podržava napredni sustav bilješki koji omogućava korisnicima dodavanje komentara na specifične dijelove dokumenata. Sustav radi u oba režima (VIEW i EDIT) i ne zahtijeva autentifikaciju za osnovne funkcionalnosti.
+
+### Način Rada s Bilješkama
+
+**1. Dodavanje Bilješki na Poglavlja:**
+- U desnom panelu (`notes-container`) nalazi se gumb "Dodaj bilješku"
+- Svako poglavlje, potpoglavlje i sekcija ima odvojene bilješke
+- Bilješke mogu dodavati svi korisniki (registrirani i neregistrirani)
+- Neregistrirani korisnici se označavaju kao "Visitor"
+
+**2. Dodavanje Bilješki na Selektirani Tekst:**
+- U VIEW režimu omogućena je selekcija teksta (bez uređivanja)
+- Kada se selektira tekst, pojavljuje se gumb "Dodaj bilješku" iznad selekcije
+- Gumb prati scroll poziciju i nestaje kada tekst nije vidljiv
+- Automatsko povezivanje s brojem linije u dokumentu
+
+### Vizualni Prikaz
+- **Layout 3:1**: Editor zauzima 3/4 širine, notes panel 1/4
+- **Kolapsibilni panel**: Notes panel se može sakriti animacijom prema desno
+- **Moderne animacije**: Smooth prijelazi i hover efekti
+- **Responzivni dizajn**: Prilagođava se različitim veličinama ekrana
+
+### Funkcionalnosti Bilješki
+- **Opis bilješke**: Obavezno polje za sadržaj komentara
+- **Autor**: Ime korisnika ili "Visitor" za nelogirane
+- **Datum kreiranja**: Automatski timestamp
+- **Broj linije**: Automatski izračun za selektirani tekst
+- **Selektirani tekst**: Čuva se originaln selektirani sadržaj
+- **Status odobrenja**: Pending/Approved stanje s vizualnim indikatorima
+
+### Upravljanje Bilješkama
+- **Prihvaćanje**: Bilješke mogu biti odobrene (postaju sivije)
+- **Brisanje**: Mogućnost brisanja s potvrdom
+- **Sortiranje**: Najnovije bilješke prikazane prvo
+- **Filtriranje**: Automatsko filtriranje po thesis/chapter ID
+
+### Tehnička Implementacija
+- **Backend API**: Zasebne /api/notes rute za CRUD operacije
+- **JSON Storage**: notes.json datoteka u server/data/
+- **TinyMCE integracija**: Custom selection handling za VIEW režim
+- **React hooks**: useState/useEffect za state management
+- **CSS Grid/Flexbox**: Moderan responsive layout
 
 ## Prilagođavanje
 

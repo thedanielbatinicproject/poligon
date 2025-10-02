@@ -1,0 +1,164 @@
+/* Confirm Modal Styles */
+.confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.confirm-modal {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 400px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.confirm-modal-header {
+    padding: 20px 24px 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.confirm-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Tipovi modal-a */
+.confirm-modal.warning .confirm-modal-header {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.confirm-modal.danger .confirm-modal-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.confirm-modal.info .confirm-modal-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.confirm-modal.warning .confirm-modal-header h3,
+.confirm-modal.danger .confirm-modal-header h3,
+.confirm-modal.info .confirm-modal-header h3 {
+    color: white;
+}
+
+.confirm-modal-body {
+    padding: 20px 24px;
+}
+
+.confirm-modal-body p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #555;
+}
+
+.confirm-modal-actions {
+    padding: 16px 24px 24px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.confirm-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.confirm-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+/* Tipovi gumbova */
+.confirm-modal.warning .confirm-btn {
+    background: #ffc107;
+    color: #000;
+}
+
+.confirm-modal.warning .confirm-btn:hover {
+    background: #e0a800;
+}
+
+.confirm-modal.info .confirm-btn {
+    background: #17a2b8;
+}
+
+.confirm-modal.info .confirm-btn:hover {
+    background: #138496;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .confirm-modal {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .confirm-modal-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .confirm-btn,
+    .cancel-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

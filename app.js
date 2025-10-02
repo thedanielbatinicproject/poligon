@@ -68,10 +68,12 @@ app.use((req, res, next) => {
 const authRoutes = require('./server/routes/auth');
 const thesesRoutes = require('./server/routes/theses');
 const tasksRoutes = require('./server/routes/tasks');
+const notesRoutes = require('./server/routes/notes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/theses', thesesRoutes);
 app.use('/api', tasksRoutes);
+app.use('/api/notes', notesRoutes);
 
 // Upload endpoint za TinyMCE
 app.post('/api/upload', upload.single('image'), (req, res) => {
