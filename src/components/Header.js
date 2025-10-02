@@ -32,6 +32,15 @@ function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) 
             <li>
               <a 
                 href="#" 
+                className={currentPage === 'tasks-todos' ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); onPageChange('tasks-todos'); }}
+              >
+                Task & Todos
+              </a>
+            </li>
+            <li>
+              <a 
+                href="#" 
                 className={currentPage === 'about' ? 'active' : ''}
                 onClick={(e) => { e.preventDefault(); onPageChange('about'); }}
               >

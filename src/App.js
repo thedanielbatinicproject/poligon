@@ -10,6 +10,7 @@ const DocumentPage = lazy(() => import('./pages/DocumentPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
+const TasksTodos = lazy(() => import('./pages/TasksTodos'));
 
 function App() {
   const [currentPage, setCurrentPage] = useState(() => {
@@ -99,6 +100,8 @@ function App() {
         return <Dashboard user={user} />;
       case 'documents':
         return <DocumentPage user={user} />;
+      case 'tasks-todos':
+        return <TasksTodos user={user} isAuthenticated={isAuthenticated} />;
       case 'login':
         return <LoginPage onLogin={handleLogin} />;
       default:

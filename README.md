@@ -30,6 +30,7 @@ Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i d
 - **Čuvanje stanja**: Automatsko vraćanje na zadnju poziciju nakon refresh-a
 - **Upravljanje dokumentima**: Kreiranje, uređivanje metapodataka i brisanje
 - **Automatsko spremanje**: Gubitak rada više nije problem
+- **Task & Todos sustav**: Kalendarska organizacija zadataka s povezivanjem na dokumente
 - **Responzivni dizajn**: Optimiziran za sve uređaje
 
 ## Ovisnosti
@@ -44,6 +45,8 @@ Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i d
 - **tinymce** - Napredni WYSIWYG editor za znanstvene radove
 - **multer** - Middleware za upload datoteka
 - **node-json-db** - JSON baza podataka
+- **react-big-calendar** - Kalendarska komponenta za task management
+- **moment** - Manipulacija datuma i vremena
 - **webpack** - Module bundler
 - **babel** - JavaScript transpiler
 - **nodemon** - Razvojni alat za automatsko pokretanje
@@ -119,12 +122,15 @@ poligon/
 ├── server/            # Backend kod
 │   ├── routes/        # API rute
 │   │   ├── auth.js    # Autentifikacijske rute
-│   │   └── theses.js  # Dokumenti API
+│   │   ├── theses.js  # Dokumenti API
+│   │   └── tasks.js   # Task & Todos API
 │   ├── models/        # Modeli podataka
 │   │   └── ThesisModel.js # Model za rad s diplomskim radovima
 │   └── data/          # Podaci
 │       ├── sessions.json  # Korisničke sesije  
 │       ├── theses.json    # Dokumenti
+│       ├── tasks.json     # Zadaci (Tasks)
+│       ├── todos.json     # To-do lista
 │       └── users.json     # Korisnici
 ├── public/            # Statičke datoteke
 │   └── uploads/       # Uploadane slike
@@ -144,7 +150,8 @@ poligon/
 │   │   ├── About.js         # O nama stranica
 │   │   ├── DocumentPage.js  # Glavna stranica s dokumentima
 │   │   ├── LoginPage.js     # Stranica za prijavu
-│   │   └── Dashboard.js     # Dashboard
+│   │   ├── Dashboard.js     # Dashboard
+│   │   └── TasksTodos.js    # Task & Todos organizacija
 │   ├── utils/         # Pomoćne funkcije
 │   │   └── api.js     # API helper funkcije
 │   └── styles/        # CSS stilovi
@@ -174,6 +181,20 @@ poligon/
 ### Upload
 - `POST /api/upload` - Upload slika za TinyMCE editor
 
+### Task Management
+- `GET /api/tasks` - Dohvaćanje svih zadataka (Tasks)
+- `POST /api/tasks` - Kreiranje novog zadatka
+- `PUT /api/tasks/:id` - Ažuriranje zadatka
+- `DELETE /api/tasks/:id` - Brisanje zadatka
+- `PATCH /api/tasks/:id/toggle-finished` - Promjena finished statusa zadatka
+
+### Todos Management  
+- `GET /api/todos` - Dohvaćanje svih to-do stavki
+- `POST /api/todos` - Kreiranje novog to-do
+- `PUT /api/todos/:id` - Ažuriranje to-do
+- `DELETE /api/todos/:id` - Brisanje to-do
+- `PATCH /api/todos/:id/toggle-finished` - Promjena finished statusa to-do
+
 ### Ostalo
 - `GET /*` - Služi React aplikaciju (SPA routing)
 
@@ -198,6 +219,50 @@ Aplikacija koristi TinyMCE Cloud service s besplatnim API ključem za napredne f
 - **Ograničenja**: Maksimalno 5MB, samo slike
 - **Automatsko imenovanje**: Jedinstvena imena datoteka
 - **Integracija s editorom**: Direktno umetanje u TinyMCE
+
+## Task & Todos Sustav
+
+### Kalendarska Organizacija 
+- **React Big Calendar**: Moderna kalendarska komponenta s mogućnostima pregleda
+- **Moment.js lokalizacija**: Hrvatski nazivi mjeseci i dana u tjednu  
+- **Kalendarski prikazi**: Mjesec, tjedan, dan i agenda prikaz
+- **Interaktivni događaji**: Klik na događaj otvara detalje
+
+### Task Management
+- **Kreiranje zadataka**: Naslov, opis, datum, tip (Task/Todo), povezani dokument
+- **Status praćenje**: Finished/Active stanje s vizualnim indikatorima
+- **Toggle funkcionalnost**: Klik na zadatak mijenja finished status  
+- **Potvrda reaktivacije**: Dijalog za potvrdu vraćanja završenih zadataka u active stanje
+- **Filtriranje po tipu**: Prikazivanje samo Task-ova ili samo Todo-a
+
+### Povezivanje s Dokumentima
+- **Dropdown selektor**: Izbor postojećeg dokumenta iz thesis baze
+- **Metadata integracija**: Prikaz povezanih dokumenata u task detaljima
+- **Navigacija**: Direktni linkovi na povezane dokumente (planirana funkcionalnost)
+
+### Kalendarski Prikaz
+- **Vizualni indikatori**: Različite boje za Task (plava) i Todo (zelena)
+- **Finished zadaci**: Siva boja, strikethrough tekst, opacity efekt
+- **Hover efekti**: Interaktivni hover s tooltip informacijama
+- **Responsive design**: Prilagođava se veličini ekrana
+
+### Search & Filter
+- **Live pretraživanje**: Instant pretraživanje kroz naslov i opis zadataka
+- **Tip filtriranje**: Filter gumbovi za All/Tasks/Todos
+- **Kombinirana pretraživanja**: Pretraživanje + tip filter rade istovremeno
+
+### User Interface
+- **Moderna CSS**: Gradijenti, animacije, shadow efekti
+- **Table prikaz**: Sortirana lista svih zadataka s metapodacima
+- **Form validacija**: Provjera obaveznih polja prije spremanja
+- **Loading states**: Visual feedback tijekom API poziva
+- **Error handling**: User-friendly poruke o greškama
+
+### Data Persistence
+- **JSON storage**: File-based baza u server/data/ direktoriju
+- **Autentifikacija**: Svi CRUD pozivi zahtijevaju valid sesiju
+- **Jedinstveni ID-jevi**: Automatically generirani task i todo ID-jevi
+- **Timestamp praćenje**: Kreiranje i zadnje ažuriranje vremena
 
 ## Prilagođavanje
 
@@ -258,9 +323,17 @@ Možete lako prilagoditi aplikaciju:
 - **Hijerarhijska organizacija**: 3-razinska struktura poglavlja
 - **Persistent stanje**: Automatsko čuvanje pozicije i sadržaja
 - **Upravljanje dokumentima**: 
-  - Metaaddaci (naslov, autor, mentor, itd.)
+  - Metapodaci (naslov, autor, mentor, itd.)
   - Brisanje s konfirmacijom
   - Statistike (broj riječi, stranica)
+- **Task & Todos organizacija**: 
+  - Kalendarska organizacija zadataka i todo stavki
+  - React Big Calendar integracija s hrvatskom lokalizacijom
+  - Povezivanje zadataka s dokumentima iz thesis baze
+  - Live pretraživanje i filtriranje po tipu (Task/Todo)
+  - Finished/Active status s vizualnim indikatorima (strikethrough, gray boja)
+  - Toggle finished funkcionalnost s potvrdom reaktivacije
+  - Moderna responzivna UI s gradijentima i animacijama
 - **Responzivni dizajn**: Optimiziran za sve uređaje
 
 ## Licenca

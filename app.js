@@ -67,9 +67,11 @@ app.use((req, res, next) => {
 // API rute
 const authRoutes = require('./server/routes/auth');
 const thesesRoutes = require('./server/routes/theses');
+const tasksRoutes = require('./server/routes/tasks');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/theses', thesesRoutes);
+app.use('/api', tasksRoutes);
 
 // Upload endpoint za TinyMCE
 app.post('/api/upload', upload.single('image'), (req, res) => {
