@@ -7,7 +7,7 @@ import ChapterTasks from '../components/ChapterTasks';
 import { thesesAPI } from '../utils/api';
 import './DocumentPage.css';
 
-const DocumentPage = ({ user }) => {
+const DocumentPage = ({ user, onPageChange }) => {
     const [currentThesis, setCurrentThesis] = useState(null);
     const [selectedChapter, setSelectedChapterState] = useState(null);
     const [showDocumentManager, setShowDocumentManager] = useState(false);
@@ -51,6 +51,11 @@ const DocumentPage = ({ user }) => {
                 if (result.success) {
                     setCurrentThesis(result.data);
                     
+                    // Osiguraj da currentPage ostane 'documents' kada se učita dokument
+                    if (onPageChange) {
+                        onPageChange('documents');
+                    }
+                    
                     // Pokušaj učitati i selectedChapter
                     const savedChapterId = localStorage.getItem('selectedChapterId');
                     if (savedChapterId && result.data.chapters) {
@@ -71,6 +76,11 @@ const DocumentPage = ({ user }) => {
                 if (result.success && result.data.length > 0) {
                     setCurrentThesis(result.data[0]);
                     localStorage.setItem('selectedDocumentId', result.data[0].id);
+                    
+                    // Osiguraj da currentPage ostane 'documents' 
+                    if (onPageChange) {
+                        onPageChange('documents');
+                    }
                     
                     // Pokušaj učitati i selectedChapter
                     const savedChapterId = localStorage.getItem('selectedChapterId');

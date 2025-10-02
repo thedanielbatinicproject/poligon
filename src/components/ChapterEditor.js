@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ChapterEditor.css';
 import ScientificEditor from './ScientificEditor';
 import NotesPanel from './NotesPanel';
@@ -11,11 +11,20 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
     const [hoveredChapter, setHoveredChapter] = useState(null);
     const [notesCollapsed, setNotesCollapsed] = useState(false);
 
-    // Update CSS custom property for notes collapse state
+    // Update klase preko querySelector da izbjegnem webpack minifikacija probleme
     useEffect(() => {
-        const element = document.querySelector('.content-body');
+        console.log('ChapterEditor: notesCollapsed changed to:', notesCollapsed);
+        const element = document.querySelector('[data-content-body="true"]');
+        console.log('Found element:', element);
         if (element) {
-            element.style.setProperty('--notes-collapsed', notesCollapsed ? '1' : '0');
+            if (notesCollapsed) {
+                console.log('Adding notes-collapsed class');
+                element.classList.add('notes-collapsed');
+            } else {
+                console.log('Removing notes-collapsed class');
+                element.classList.remove('notes-collapsed');
+            }
+            console.log('Element classes:', element.className);
         }
     }, [notesCollapsed]);
 
@@ -379,7 +388,7 @@ const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
                 )}
             </div>
 
-            <div className="content-body">
+            <div className="content-body" data-content-body="true">
                 <div className="editor-container">
                     <ScientificEditor
                         value={content}

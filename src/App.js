@@ -99,7 +99,7 @@ function App() {
       case 'dashboard':
         return <Dashboard user={user} />;
       case 'documents':
-        return <DocumentPage user={user} />;
+        return <DocumentPage user={user} onPageChange={setCurrentPage} />;
       case 'tasks-todos':
         return <TasksTodos user={user} isAuthenticated={isAuthenticated} />;
       case 'login':

@@ -407,23 +407,35 @@
     overflow-y: auto;
     display: flex;
     gap: 20px;
-    --notes-collapsed: 0;
     height: calc(100vh - 160px); /* Fiksna visina za oba kontejnera */
 }
 
 .editor-container {
-    flex: calc(3 + (1 * var(--notes-collapsed)));
+    flex: 3;
     min-width: 0; /* Omogućava pravilno smanjivanje */
     transition: flex 0.3s ease;
     height: 100%; /* Koristi punu visinu content-body */
 }
 
 .notes-container {
-    flex: calc(1 - var(--notes-collapsed));
-    min-width: calc(280px - (240px * var(--notes-collapsed)));
-    max-width: calc(400px - (360px * var(--notes-collapsed)));
+    flex: 1;
+    min-width: 280px;
+    max-width: 400px;
     transition: flex 0.3s ease, min-width 0.3s ease, max-width 0.3s ease;
     height: 100%; /* Koristi punu visinu content-body */
+}
+
+/* Collapsed state - with higher specificity */
+.content-body.notes-collapsed .editor-container {
+    flex: 4 !important; /* Editor se proširuje kada su bilješke skupljene */
+    transition: flex 0.3s ease !important;
+}
+
+.content-body.notes-collapsed .notes-container {
+    flex: 0 0 50px !important; /* Fiksna širina 50px kada je collapsed */
+    min-width: 50px !important;
+    max-width: 50px !important;
+    transition: flex 0.3s ease, min-width 0.3s ease, max-width 0.3s ease !important;
 }
 
 .content-textarea {

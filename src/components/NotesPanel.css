@@ -11,18 +11,40 @@
     flex-direction: column;
 }
 
-.notes-panel.collapsed {
-    width: 40px;
-    min-width: 40px;
+/* Collapsed state - triggered by parent container with smooth animations */
+.content-body.notes-collapsed .notes-panel .notes-header h3 {
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.notes-panel.collapsed .notes-header h3 {
-    display: none;
-}
-
-.notes-panel.collapsed .notes-header {
+.content-body.notes-collapsed .notes-panel .notes-header {
     padding: 8px;
     justify-content: center;
+    transition: padding 0.3s ease;
+}
+
+.content-body.notes-collapsed .notes-panel .notes-content {
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: height 0.3s ease, opacity 0.3s ease;
+}
+
+/* Normal state animations */
+.notes-panel .notes-header h3 {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.notes-panel .notes-header {
+    transition: padding 0.3s ease;
+}
+
+.notes-panel .notes-content {
+    opacity: 1;
+    transition: height 0.3s ease, opacity 0.3s ease;
 }
 
 .notes-header {
