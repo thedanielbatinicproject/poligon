@@ -210,7 +210,7 @@ const About = () => {
                     </div>
                     <div className="stat-card">
                         <h3>Build vrijeme</h3>
-                        <p>~2.5 sekundi</p>
+                        <p>~4.855 sekundi</p>
                     </div>
                     <div className="stat-card">
                         <h3>Komponente</h3>

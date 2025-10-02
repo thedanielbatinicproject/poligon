@@ -56,6 +56,13 @@ header {
     align-items: center;
 }
 
+.logo {
+    height: 32px;
+    width: 32px;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
 .auth-section {
     display: flex;
     align-items: center;

@@ -9,7 +9,7 @@
     "createdAt": "2025-10-01T23:51:22.011Z",
     "completed": false,
     "isFinished": false,
-    "updatedAt": "2025-10-02T09:30:17.627Z"
+    "updatedAt": "2025-10-02T18:04:53.123Z"
   },
   {
     "id": "1759394250143ht523a5ge",
@@ -19,8 +19,9 @@
     "chapterId": "chapter_1759427415224_vfkoumlc7",
     "dueDate": "2025-10-15T12:24",
     "createdAt": "2025-10-02T08:37:30.143Z",
-    "isFinished": false,
-    "updatedAt": "2025-10-02T17:50:57.477Z"
+    "isFinished": true,
+    "updatedAt": "2025-10-02T18:04:46.540Z",
+    "finishedAt": "2025-10-02T18:04:46.540Z"
   },
   {
     "id": "1759398242146u8oc2qh7e",
@@ -30,6 +31,8 @@
     "chapterId": null,
     "dueDate": "2025-01-15T13:02",
     "createdAt": "2025-10-02T09:44:02.146Z",
-    "isFinished": false
+    "isFinished": true,
+    "updatedAt": "2025-10-02T18:04:47.037Z",
+    "finishedAt": "2025-10-02T18:04:47.037Z"
   }
 ]

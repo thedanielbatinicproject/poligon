@@ -7,6 +7,7 @@ function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) 
         <div className="nav-container">
           <h1>
             <a href="#" onClick={(e) => { e.preventDefault(); onPageChange('home'); }}>
+              <img src="/favicon.png" alt="Poligon" className="logo" />
               Poligon
             </a>
           </h1>
