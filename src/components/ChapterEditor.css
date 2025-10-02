@@ -408,12 +408,14 @@
     display: flex;
     gap: 20px;
     --notes-collapsed: 0;
+    height: calc(100vh - 160px); /* Fiksna visina za oba kontejnera */
 }
 
 .editor-container {
-    flex: calc(3 - (2 * var(--notes-collapsed)));
+    flex: calc(3 + (1 * var(--notes-collapsed)));
     min-width: 0; /* Omogućava pravilno smanjivanje */
     transition: flex 0.3s ease;
+    height: 100%; /* Koristi punu visinu content-body */
 }
 
 .notes-container {
@@ -421,6 +423,7 @@
     min-width: calc(280px - (240px * var(--notes-collapsed)));
     max-width: calc(400px - (360px * var(--notes-collapsed)));
     transition: flex 0.3s ease, min-width 0.3s ease, max-width 0.3s ease;
+    height: 100%; /* Koristi punu visinu content-body */
 }
 
 .content-textarea {

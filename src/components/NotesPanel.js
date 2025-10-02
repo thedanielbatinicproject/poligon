@@ -5,11 +5,18 @@ import ConfirmModal from './ConfirmModal';
 
 const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
     const [notes, setNotes] = useState([]);
+    const [displayedNotes, setDisplayedNotes] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showAddNoteForm, setShowAddNoteForm] = useState(false);
     const [newNoteDescription, setNewNoteDescription] = useState('');
+    const [newNoteAuthor, setNewNoteAuthor] = useState(user?.username || 'Visitor');
+    const [newNoteLineNumber, setNewNoteLineNumber] = useState('');
+    const [newNoteSelectedText, setNewNoteSelectedText] = useState('');
     const [loading, setLoading] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+    const NOTES_PER_PAGE = 5;
 
     const loadNotes = useCallback(async () => {
         if (!thesis || !chapter) return;
@@ -17,21 +24,62 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
             setLoading(true);
             console.log('Loading notes for thesis:', thesis.id, 'chapter:', chapter.id);
             const response = await notesAPI.getNotes(thesis.id, chapter.id);
-            console.log('Notes loaded:', response.notes);
-            setNotes(response.notes || []);
+            console.log('Notes API response:', response);
+            if (response.success && response.data) {
+                console.log('Notes loaded:', response.data.notes);
+                setNotes(response.data.notes || []);
+            } else {
+                console.error('Failed to load notes:', response);
+                setNotes([]);
+            }
         } catch (error) {
             console.error('Error loading notes:', error);
+            setNotes([]);
         } finally {
             setLoading(false);
         }
     }, [thesis, chapter]);
 
+    // Funkcija za sortiranje bilješki
+    const sortNotes = useCallback((notesList) => {
+        return notesList.sort((a, b) => {
+            // Prvo sortiraj po approved statusu (false prvo)
+            if (a.approved !== b.approved) {
+                return a.approved - b.approved; // false (0) prije true (1)
+            }
+            // Unutar iste grupe, sortiraj po datumu (najnovije prvo)
+            return new Date(b.created) - new Date(a.created);
+        });
+    }, []);
+
+    // Funkcija za updateiranje prikazanih bilješki s paginacijom
+    const updateDisplayedNotes = useCallback(() => {
+        const sortedNotes = sortNotes([...notes]);
+        const startIndex = 0;
+        const endIndex = currentPage * NOTES_PER_PAGE;
+        setDisplayedNotes(sortedNotes.slice(startIndex, endIndex));
+    }, [notes, currentPage, sortNotes]);
+
     // Dohvati bilješke za trenutno poglavlje
     useEffect(() => {
         if (thesis && chapter) {
             loadNotes();
+            setCurrentPage(1); // Reset paginacije kada se promijeni poglavlje
         }
     }, [thesis, chapter, loadNotes]);
+
+    // Update prikazanih bilješki kada se promijene notes ili currentPage
+    useEffect(() => {
+        updateDisplayedNotes();
+    }, [updateDisplayedNotes]);
+
+    // Funkcija za učitavanje više bilješki
+    const handleLoadMore = () => {
+        setCurrentPage(prev => prev + 1);
+    };
+
+    // Provjeri ima li još bilješki za učitati
+    const hasMoreNotes = displayedNotes.length < notes.length;
 
     const handleAddNote = async () => {
         if (!newNoteDescription.trim()) return;
@@ -42,12 +90,20 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
                 thesisId: thesis.id,
                 chapterId: chapter.id,
                 description: newNoteDescription.trim(),
-                author: user?.username || 'Visitor'
+                author: newNoteAuthor.trim() || 'Visitor',
+                lineNumber: newNoteLineNumber ? parseInt(newNoteLineNumber) : null,
+                selectedText: newNoteSelectedText.trim() || null
             };
 
-            const newNote = await notesAPI.createNote(noteData);
-            setNotes(prev => [newNote, ...prev]);
+            const response = await notesAPI.createNote(noteData);
+            if (response.success && response.data) {
+                setNotes(prev => [response.data, ...prev]);
+            }
+            // Reset form fields
             setNewNoteDescription('');
+            setNewNoteAuthor(user?.username || 'Visitor');
+            setNewNoteLineNumber('');
+            setNewNoteSelectedText('');
             setShowAddNoteForm(false);
         } catch (error) {
             console.error('Error creating note:', error);
@@ -60,13 +116,14 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
     const handleApproveNote = async (noteId, approved) => {
         try {
             console.log('Approving note:', noteId, 'approved:', approved);
-            const updatedNote = await notesAPI.approveNote(noteId, approved);
-            setNotes(prev => prev.map(note => 
-                note.id === noteId ? updatedNote : note
-            ));
+            const response = await notesAPI.approveNote(noteId, approved);
+            if (response.success && response.data) {
+                setNotes(prev => prev.map(note => 
+                    note.id === noteId ? response.data : note
+                ));
+            }
         } catch (error) {
             console.error('Error approving note:', error);
-            // TODO: Dodaj toast notifikaciju
         }
     };
 
@@ -146,13 +203,55 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
                             </button>
                         ) : (
                             <div className="add-note-form">
-                                <textarea
-                                    value={newNoteDescription}
-                                    onChange={(e) => setNewNoteDescription(e.target.value)}
-                                    placeholder="Unesite opis bilješke..."
-                                    rows={3}
-                                    className="note-textarea"
-                                />
+                                <div className="form-row">
+                                    <label>Autor:</label>
+                                    <input
+                                        type="text"
+                                        value={newNoteAuthor}
+                                        onChange={(e) => setNewNoteAuthor(e.target.value)}
+                                        placeholder="Ime autora"
+                                        className="note-input"
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label>Broj linije:</label>
+                                    <input
+                                        type="number"
+                                        value={newNoteLineNumber}
+                                        onChange={(e) => setNewNoteLineNumber(e.target.value)}
+                                        placeholder="Broj linije (opcionalno)"
+                                        className="note-input"
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label>Selektirani tekst:</label>
+                                    <input
+                                        type="text"
+                                        value={newNoteSelectedText}
+                                        onChange={(e) => setNewNoteSelectedText(e.target.value)}
+                                        placeholder="Selektirani tekst (opcionalno)"
+                                        className="note-input"
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label>Opis:</label>
+                                    <textarea
+                                        value={newNoteDescription}
+                                        onChange={(e) => setNewNoteDescription(e.target.value)}
+                                        placeholder="Unesite opis bilješke..."
+                                        rows={3}
+                                        className="note-textarea"
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label>Datum kreiranja:</label>
+                                    <input
+                                        type="text"
+                                        value={new Date().toLocaleString('hr-HR')}
+                                        disabled
+                                        className="note-input disabled"
+                                    />
+                                </div>
                                 <div className="form-buttons">
                                     <button 
                                         className="save-note-btn"
@@ -166,6 +265,9 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
                                         onClick={() => {
                                             setShowAddNoteForm(false);
                                             setNewNoteDescription('');
+                                            setNewNoteAuthor(user?.username || 'Visitor');
+                                            setNewNoteLineNumber('');
+                                            setNewNoteSelectedText('');
                                         }}
                                     >
                                         Odustani
@@ -184,7 +286,8 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
                                 <p className="no-notes-hint">Dodajte novu bilješku klikom na gumb iznad.</p>
                             </div>
                         ) : (
-                            notes.map(note => (
+                            <>
+                                {displayedNotes.map(note => (
                                 <div 
                                     key={note.id} 
                                     className={`note-item ${note.approved ? 'approved' : 'pending'}`}
@@ -228,7 +331,20 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
                                         </button>
                                     </div>
                                 </div>
-                            ))
+                                ))}
+                                
+                                {hasMoreNotes && (
+                                    <div className="load-more-container">
+                                        <button 
+                                            className="load-more-btn" 
+                                            onClick={handleLoadMore}
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Učitavam...' : 'Učitaj više'}
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

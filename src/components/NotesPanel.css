@@ -6,8 +6,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: all 0.3s ease;
-    height: fit-content;
-    max-height: calc(100vh - 200px);
+    height: 100%; /* Koristi punu visinu notes-container */
     display: flex;
     flex-direction: column;
 }
@@ -127,6 +126,41 @@
     gap: 12px;
 }
 
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 2px;
+}
+
+.note-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.note-input:focus {
+    outline: none;
+    border-color: #5b86e5;
+    box-shadow: 0 0 0 2px rgba(91, 134, 229, 0.2);
+}
+
+.note-input.disabled {
+    background-color: #f5f5f5;
+    color: #666;
+    cursor: not-allowed;
+}
+
 .note-textarea {
     width: 100%;
     padding: 8px 12px;
@@ -192,6 +226,14 @@
     flex: 1;
     overflow-y: auto;
     padding: 0 16px 16px 16px;
+    /* Sakrij scroll bar ali ostavi scrollanje */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Sakrij scroll bar za WebKit preglednike */
+.notes-list::-webkit-scrollbar {
+    display: none;
 }
 
 .loading {
@@ -355,21 +397,68 @@
     }
 }
 
-/* Scrollbar styling */
-.notes-list::-webkit-scrollbar {
-    width: 6px;
+/* Load More Button Styles */
+.load-more-container {
+    padding: 16px;
+    text-align: center;
+    border-top: 1px solid #f0f0f0;
 }
 
-.notes-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+.load-more-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 120px;
 }
 
-.notes-list::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
+.load-more-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.notes-list::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+.load-more-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Form Styles Updates */
+.form-row {
+    margin-bottom: 12px;
+}
+
+.form-row label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: #333;
+    font-size: 13px;
+}
+
+.note-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.note-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.note-input.disabled {
+    background-color: #f5f5f5;
+    color: #666;
+    cursor: not-allowed;
 }

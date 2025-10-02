@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ChapterEditor.css';
 import ScientificEditor from './ScientificEditor';
 import NotesPanel from './NotesPanel';
@@ -10,12 +10,12 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
     const [hoveredChapter, setHoveredChapter] = useState(null);
     const [notesCollapsed, setNotesCollapsed] = useState(false);
-    const contentBodyRef = useRef(null);
 
     // Update CSS custom property for notes collapse state
     useEffect(() => {
-        if (contentBodyRef.current) {
-            contentBodyRef.current.style.setProperty('--notes-collapsed', notesCollapsed ? '1' : '0');
+        const element = document.querySelector('.content-body');
+        if (element) {
+            element.style.setProperty('--notes-collapsed', notesCollapsed ? '1' : '0');
         }
     }, [notesCollapsed]);
 
@@ -379,7 +379,7 @@ const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
                 )}
             </div>
 
-            <div className="content-body" ref={contentBodyRef}>
+            <div className="content-body">
                 <div className="editor-container">
                     <ScientificEditor
                         value={content}
@@ -397,7 +397,7 @@ const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
                         chapter={chapter}
                         mode={mode}
                         user={user}
-                        onCollapsedChange={setNotesCollapsed}
+                        onCollapsedChange={(collapsed) => setNotesCollapsed(collapsed)}
                     />
                 </div>
             </div>
