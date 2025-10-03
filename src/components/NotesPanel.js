@@ -3,11 +3,10 @@ import './NotesPanel.css';
 import { notesAPI } from '../utils/api';
 import ConfirmModal from './ConfirmModal';
 
-const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
+const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapsed = false }) => {
     const [notes, setNotes] = useState([]);
     const [displayedNotes, setDisplayedNotes] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isCollapsed, setIsCollapsed] = useState(false);
     const [showAddNoteForm, setShowAddNoteForm] = useState(false);
     const [newNoteDescription, setNewNoteDescription] = useState('');
     const [newNoteAuthor, setNewNoteAuthor] = useState(user?.username || 'Visitor');
@@ -15,8 +14,23 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
     const [newNoteSelectedText, setNewNoteSelectedText] = useState('');
     const [loading, setLoading] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [collapsed, setCollapsed] = useState(isCollapsed);
 
     const NOTES_PER_PAGE = 5;
+
+    // Listen for global collapse events
+    useEffect(() => {
+        const handleCollapseChange = (event) => {
+            if (event.detail && typeof event.detail.collapsed === 'boolean') {
+                setCollapsed(event.detail.collapsed);
+            }
+        };
+
+        window.addEventListener('notesCollapsedChange', handleCollapseChange);
+        return () => {
+            window.removeEventListener('notesCollapsedChange', handleCollapseChange);
+        };
+    }, []);
 
     const loadNotes = useCallback(async () => {
         if (!thesis || !chapter) return;
@@ -159,29 +173,28 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange }) => {
     }
 
     return (
-        <div className={`notes-panel ${isCollapsed ? 'collapsed' : ''}`}>
+        <div className={`notes-panel ${collapsed ? 'collapsed' : ''}`}>
             <div className="notes-header">
-                {!isCollapsed && <h3>Bilješke</h3>}
+                {!collapsed && <h3>Bilješke</h3>}
                 <div className="notes-controls">
                     <button 
                         className="collapse-btn"
                         onClick={() => {
-                            const newCollapsed = !isCollapsed;
+                            const newCollapsed = !collapsed;
                             console.log('NotesPanel collapse change:', newCollapsed);
-                            setIsCollapsed(newCollapsed);
                             if (onCollapsedChange) {
                                 console.log('Calling onCollapsedChange with:', newCollapsed);
                                 onCollapsedChange(newCollapsed);
                             }
                         }}
-                        title={isCollapsed ? 'Proširi' : 'Smanji'}
+                        title={collapsed ? 'Proširi' : 'Smanji'}
                     >
-                        {isCollapsed ? '»' : '«'}
+                        {collapsed ? '»' : '«'}
                     </button>
                 </div>
             </div>
 
-            {!isCollapsed && (
+            {!collapsed && (
                 <div className="notes-content">
                     <div className="notes-section-info">
                         <p className="chapter-info">

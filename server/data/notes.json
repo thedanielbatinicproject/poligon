@@ -76,6 +76,17 @@
       "author": "admin",
       "created": "2025-10-02T23:19:43.244Z",
       "approved": true
+    },
+    {
+      "id": "note_1759449557695_89gi6yo8p",
+      "thesisId": "thesis_1759392477513_0a5h2tk0u",
+      "chapterId": "chapter_1759434261784_gewlhk03b",
+      "lineNumber": 1,
+      "selectedText": "AWFW",
+      "description": "WFWF",
+      "author": "admin",
+      "created": "2025-10-02T23:59:17.695Z",
+      "approved": false
     }
   ]
 }

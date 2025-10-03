@@ -9,15 +9,30 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
     const [loading, setLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
     const [hoveredChapter, setHoveredChapter] = useState(null);
-    const [notesCollapsed, setNotesCollapsed] = useState(false);
+    const [notesState, setNotesState] = useState(0); // 0 = expanded, 1 = collapsed
+
+    // Listen for notes state changes from NotesPanel
+    useEffect(() => {
+        const handleNotesStateChange = (event) => {
+            if (event.detail && typeof event.detail.collapsed === 'boolean') {
+                const newState = event.detail.collapsed ? 1 : 0;
+                setNotesState(newState);
+            }
+        };
+
+        window.addEventListener('notesStateChange', handleNotesStateChange);
+        return () => {
+            window.removeEventListener('notesStateChange', handleNotesStateChange);
+        };
+    }, []);
 
     // Update klase preko querySelector da izbjegnem webpack minifikacija probleme
     useEffect(() => {
-        console.log('ChapterEditor: notesCollapsed changed to:', notesCollapsed);
+        console.log('ChapterEditor: notesState changed to:', notesState);
         const element = document.querySelector('[data-content-body="true"]');
         console.log('Found element:', element);
         if (element) {
-            if (notesCollapsed) {
+            if (notesState === 1) {
                 console.log('Adding notes-collapsed class');
                 element.classList.add('notes-collapsed');
             } else {
@@ -26,7 +41,11 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
             }
             console.log('Element classes:', element.className);
         }
-    }, [notesCollapsed]);
+        // Update NotesPanel preko globalnog event-a da izbjegnem JSX varijable
+        window.dispatchEvent(new CustomEvent('notesCollapsedChange', { 
+            detail: { collapsed: notesState === 1 } 
+        }));
+    }, [notesState]);
 
     useEffect(() => {
         if (thesis) {
@@ -406,7 +425,12 @@ const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
                         chapter={chapter}
                         mode={mode}
                         user={user}
-                        onCollapsedChange={(collapsed) => setNotesCollapsed(collapsed)}
+                        isCollapsed={false}
+                        onCollapsedChange={(collapsed) => { 
+                            window.dispatchEvent(new CustomEvent('notesStateChange', { 
+                                detail: { collapsed: collapsed } 
+                            }));
+                        }}
                     />
                 </div>
             </div>

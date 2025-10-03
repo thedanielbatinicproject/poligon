@@ -413,7 +413,7 @@
 .editor-container {
     flex: 3;
     min-width: 0; /* Omogućava pravilno smanjivanje */
-    transition: flex 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth easing */
     height: 100%; /* Koristi punu visinu content-body */
 }
 
@@ -421,21 +421,19 @@
     flex: 1;
     min-width: 280px;
     max-width: 400px;
-    transition: flex 0.3s ease, min-width 0.3s ease, max-width 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth easing */
     height: 100%; /* Koristi punu visinu content-body */
 }
 
-/* Collapsed state - with higher specificity */
+/* Collapsed state - with smooth animation */
 .content-body.notes-collapsed .editor-container {
-    flex: 4 !important; /* Editor se proširuje kada su bilješke skupljene */
-    transition: flex 0.3s ease !important;
+    flex: 4 !important; /* Editor se proširuje kada su bilješke skupljune */
 }
 
 .content-body.notes-collapsed .notes-container {
-    flex: 0 0 50px !important; /* Fiksna širina 50px kada je collapsed */
-    min-width: 50px !important;
-    max-width: 50px !important;
-    transition: flex 0.3s ease, min-width 0.3s ease, max-width 0.3s ease !important;
+    flex: 0 0 60px !important; /* Fiksna širina 60px kada je collapsed */
+    min-width: 60px !important;
+    max-width: 60px !important;
 }
 
 .content-textarea {
