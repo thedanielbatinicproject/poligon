@@ -22,16 +22,16 @@ Moderna web aplikacija za kreiranje, uređivanje i pregled diplomskih radova i d
 - Perzistentno pohranjivanje podataka
 
 ### Aplikacijske značajke:
-- **Znanstveni editor**: TinyMCE editor s naprednim funkcionalnostima
+- **Znanstveni editor**: TinyMCE editor s naprednim funkcionalnostima i konfigurabilnim API ključem
 - **Automatsko numeriranje**: Tablice, slike i jednadžbe s hijerarhijskim brojevima
 - **Upload slika**: Direktno uklucivanje slika u dokumente
 - **Hijerarhijska poglavlja**: 3-razinska organizacija (1, 1.1, 1.1.1)
 - **VIEW/EDIT režimi**: Potpuno odvojeni načini rada za pregled i uređivanje
-- **Bilješke i komentari**: Sustav za dodavanje bilješki na poglavlja i selektirani tekst
+- **Bilješke i komentari**: Sustav za dodavanje bilješki na poglavlja i selektirani tekst s cascading delete
 - **Čuvanje stanja**: Automatsko vraćanje na zadnju poziciju nakon refresh-a
-- **Upravljanje dokumentima**: Kreiranje, uređivanje metapodataka i brisanje
+- **Upravljanje dokumentima**: Kreiranje, uređivanje metapodataka i brisanje s automatskim brisanjem povezanih bilješki
 - **Automatsko spremanje**: Gubitak rada više nije problem
-- **Task & Todos sustav**: Kalendarska organizacija zadataka s povezivanjem na dokumente
+- **Task & Todos sustav**: Kalendarska organizacija zadataka s povezivanjem na dokumente, edit/delete funkcionalnosti s korisničkim dozvolama
 - **Responzivni dizajn**: Optimiziran za sve uređaje
 
 ## Ovisnosti
@@ -64,6 +64,34 @@ cd poligon
 ```bash
 npm install
 ```
+
+## Konfiguracija
+
+### Environment Variables (.env)
+
+Aplikacija koristi environment variable za konfiguraciju. Kreirajte `.env` datoteku u root direktoriju s sljedećim postavkama:
+
+```bash
+# Server konfiguracija
+PORT=3000
+
+# Admin korisnik za autentifikaciju
+ADMIN_USERNAME=admin1
+ADMIN_PASSWORD=admin
+
+# TinyMCE konfiguracija
+TINYMCE_API_KEY=your_tinymce_api_key_here
+```
+
+### TinyMCE API Ključ
+
+Aplikacija koristi TinyMCE Cloud service za napredne funkcionalnosti editora. Za funkcioniranje aplikacije potreban je besplatni TinyMCE API ključ:
+
+1. **Registrirajte se na**: https://www.tiny.cloud/
+2. **Dohvatite besplatni API ključ** iz vašeg dashboard-a
+3. **Dodajte ključ u .env datoteku**: `TINYMCE_API_KEY=your_api_key`
+
+**Napomena**: Bez API ključa, editor neće se učitati. API ključ se automatski primjenjuje kroz cijelu aplikaciju.
 
 ## Pokretanje
 
@@ -204,6 +232,10 @@ poligon/
 - `PUT /api/notes/:id` - Ažuriranje bilješke
 - `PATCH /api/notes/:id/approve` - Prihvaćanje/odbacivanje bilješke
 - `DELETE /api/notes/:id` - Brisanje bilješke
+- `DELETE /api/notes/thesis/:thesisId` - Brisanje svih bilješki za određeni thesis (cascading delete)
+
+### Konfiguracija
+- `GET /api/tinymce-config` - Dohvaćanje TinyMCE API ključa za editor
 
 ### Ostalo
 - `GET /*` - Služi React aplikaciju (SPA routing)
@@ -244,6 +276,8 @@ Aplikacija koristi TinyMCE Cloud service s besplatnim API ključem za napredne f
 - **Toggle funkcionalnost**: Klik na zadatak mijenja finished status  
 - **Potvrda reaktivacije**: Dijalog za potvrdu vraćanja završenih zadataka u active stanje
 - **Filtriranje po tipu**: Prikazivanje samo Task-ova ili samo Todo-a
+- **Brisanje zadataka**: Edit/Delete dugmad s dozvolama prema korisničkom statusu
+- **Dozvole brisanja**: Prijavljeni korisnici mogu brisati sve, neprijavljeni samo vlastite (Anonymous) todo stavke
 
 ### Povezivanje s Dokumentima
 - **Dropdown selektor**: Izbor postojećeg dokumenta iz thesis baze

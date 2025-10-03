@@ -58,8 +58,23 @@
 }
 
 .editor-container {
-    height: 700px;
-    padding: 20px;
+    position: relative;
+}
+
+.editor-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 650px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+}
+
+.editor-loading p {
+    color: #6c757d;
+    font-size: 16px;
+    margin: 0;
 }
 
 .editor-container .tox-tinymce {

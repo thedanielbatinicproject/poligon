@@ -133,6 +133,14 @@ app.get('/api/about', (req, res) => {
     });
 });
 
+// TinyMCE konfiguracija endpoint
+app.get('/api/tinymce-config', (req, res) => {
+    res.json({
+        apiKey: process.env.TINYMCE_API_KEY || '',
+        success: true
+    });
+});
+
 // Serviranje React aplikacije za sve ostale rute
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));

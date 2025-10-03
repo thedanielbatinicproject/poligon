@@ -20,6 +20,9 @@ const ScientificEditor = ({
         equations: 0
     });
     
+    // TinyMCE API ključ state
+    const [tinymceApiKey, setTinymceApiKey] = useState('');
+    
     // State za bilješke i selekciju
     const [selectedText, setSelectedText] = useState('');
     const [selectionRange, setSelectionRange] = useState(null);
@@ -82,8 +85,8 @@ const ScientificEditor = ({
         height: 650,
         menubar: mode === 'EDIT',
         statusbar: true, // Prikaži statusbar sa pozicijom kursora
-        // Tvoj besplatni API ključ
-        apiKey: 'z62828asb7sazqtp5t7jxtnul56kzuwkgap3xqrwh0hbes1p',
+        // API ključ iz environment variable
+        apiKey: tinymceApiKey,
         plugins: mode === 'EDIT' ? [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -637,6 +640,25 @@ const ScientificEditor = ({
         }
     }, [generateChapterPrefix, counters.equations]);
 
+    // Dohvaćanje TinyMCE API ključa
+    useEffect(() => {
+        const fetchTinyMCEConfig = async () => {
+            try {
+                const response = await fetch('/api/tinymce-config');
+                if (response.ok) {
+                    const config = await response.json();
+                    setTinymceApiKey(config.apiKey || '');
+                }
+            } catch (error) {
+                console.error('Error fetching TinyMCE config:', error);
+                // Fallback to empty string if fetch fails
+                setTinymceApiKey('');
+            }
+        };
+
+        fetchTinyMCEConfig();
+    }, []);
+
     // Inicijalizacija brojača
     useEffect(() => {
         if (value) {
@@ -742,14 +764,20 @@ const ScientificEditor = ({
             )}
             
             <div className="editor-container">
-                <Editor
-                    tinymceScriptSrc="https://cdn.tiny.cloud/1/z62828asb7sazqtp5t7jxtnul56kzuwkgap3xqrwh0hbes1p/tinymce/6/tinymce.min.js"
-                    onInit={handleInit}
-                    value={value || ''}
-                    onEditorChange={handleChange}
-                    init={editorConfig}
-                    disabled={isReadOnly}
-                />
+                {tinymceApiKey ? (
+                    <Editor
+                        tinymceScriptSrc={`https://cdn.tiny.cloud/1/${tinymceApiKey}/tinymce/6/tinymce.min.js`}
+                        onInit={handleInit}
+                        value={value || ''}
+                        onEditorChange={handleChange}
+                        init={editorConfig}
+                        disabled={isReadOnly}
+                    />
+                ) : (
+                    <div className="editor-loading">
+                        <p>Učitavanje editora...</p>
+                    </div>
+                )}
                 
                 {/* Gumb za dodavanje bilješke iz selekcije */}
 {/* Floating gumb container - renderira se na vrhu stranice */}

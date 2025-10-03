@@ -48,15 +48,15 @@
     }
   ],
   [
-    "session_1759482790933_w0yw7hmts",
+    "session_1759484518692_cbhbzsu1v",
     {
-      "sessionId": "session_1759482790933_w0yw7hmts",
+      "sessionId": "session_1759484518692_cbhbzsu1v",
       "user": {
-        "username": "admin",
+        "username": "admin1",
         "role": "admin"
       },
-      "createdAt": "2025-10-03T09:13:10.933Z",
-      "lastAccess": "2025-10-03T09:38:08.393Z"
+      "createdAt": "2025-10-03T09:41:58.692Z",
+      "lastAccess": "2025-10-03T09:46:32.732Z"
     }
   ]
 ]
