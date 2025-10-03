@@ -36,11 +36,11 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
         if (!thesis || !chapter) return;
         try {
             setLoading(true);
-            console.log('Loading notes for thesis:', thesis.id, 'chapter:', chapter.id);
+
             const response = await notesAPI.getNotes(thesis.id, chapter.id);
-            console.log('Notes API response:', response);
+
             if (response.success && response.data) {
-                console.log('Notes loaded:', response.data.notes);
+
                 setNotes(response.data.notes || []);
             } else {
                 console.error('Failed to load notes:', response);
@@ -129,7 +129,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
 
     const handleApproveNote = async (noteId, approved) => {
         try {
-            console.log('Approving note:', noteId, 'approved:', approved);
+
             const response = await notesAPI.approveNote(noteId, approved);
             if (response.success && response.data) {
                 setNotes(prev => prev.map(note => 
@@ -181,7 +181,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                         className="collapse-btn"
                         onClick={() => {
                             const newCollapsed = !collapsed;
-                            console.log('NotesPanel collapse change:', newCollapsed);
+
                             if (onCollapsedChange) {
                                 console.log('Calling onCollapsedChange with:', newCollapsed);
                                 onCollapsedChange(newCollapsed);

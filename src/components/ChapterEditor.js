@@ -28,18 +28,13 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
 
     // Update klase preko querySelector da izbjegnem webpack minifikacija probleme
     useEffect(() => {
-        console.log('ChapterEditor: notesState changed to:', notesState);
         const element = document.querySelector('[data-content-body="true"]');
-        console.log('Found element:', element);
         if (element) {
             if (notesState === 1) {
-                console.log('Adding notes-collapsed class');
                 element.classList.add('notes-collapsed');
             } else {
-                console.log('Removing notes-collapsed class');
                 element.classList.remove('notes-collapsed');
             }
-            console.log('Element classes:', element.className);
         }
         // Update NotesPanel preko globalnog event-a da izbjegnem JSX varijable
         window.dispatchEvent(new CustomEvent('notesCollapsedChange', { 
