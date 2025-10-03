@@ -502,6 +502,73 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         }
     };
 
+    // Delete state
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+
+    const canDeleteItem = (item) => {
+        if (item.type === 'task') {
+            // Taskovi mogu biti obrisani samo od prijavljenih korisnika
+            // Logirani korisnici mogu brisati sve taskove
+            return isAuthenticated && user;
+        } else {
+            // Todovi - logirani korisnici mogu brisati sve
+            // Nelogirani korisnici mogu brisati samo Anonymous todove
+            if (isAuthenticated && user) {
+                return true; // Logirani mogu brisati sve todove
+            } else {
+                // Nelogirani korisnici mogu brisati samo Anonymous todove
+                return item.createdBy === 'Anonymous';
+            }
+        }
+    };
+
+    const handleDeleteClick = (item) => {
+        setItemToDelete(item);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+
+        try {
+            const endpoint = itemToDelete.type === 'task' ? 'tasks' : 'todos';
+            const response = await fetch(`/api/${endpoint}/${itemToDelete.id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // Update state by removing deleted item
+                    if (itemToDelete.type === 'task') {
+                        setTasks(prev => prev.filter(task => task.id !== itemToDelete.id));
+                    } else {
+                        setTodos(prev => prev.filter(todo => todo.id !== itemToDelete.id));
+                    }
+                    
+                    showNotification(`${itemToDelete.type.toUpperCase()} je uspješno obrisan!`, 'success');
+                } else {
+                    showNotification('Greška: ' + result.message, 'error');
+                }
+            } else {
+                const error = await response.json();
+                showNotification('Greška: ' + error.message, 'error');
+            }
+        } catch (error) {
+            console.error('Greška pri brisanju:', error);
+            showNotification('Greška pri brisanju', 'error');
+        } finally {
+            setShowDeleteConfirm(false);
+            setItemToDelete(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setItemToDelete(null);
+    };
+
     return (
         <div className="tasks-todos-page">
             <div className="page-header">
@@ -634,22 +701,41 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                         </span>
                                     </td>
                                     <td className="edit-cell">
-                                        {canEditItem(item) ? (
-                                            <button 
-                                                className="edit-btn"
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Prevent row click
-                                                    openEditForm(item);
-                                                }}
-                                                title="Uredi"
-                                            >
-                                                <img src="/icons/edit.png" alt="Edit" className="btn-icon" />
-                                            </button>
-                                        ) : (
-                                            <span className="no-edit" title="Nemate dozvolu za uređivanje">
-                                                <img src="/icons/locked.png" alt="Locked" className="btn-icon" />
-                                            </span>
-                                        )}
+                                        <div className="action-buttons">
+                                            {canEditItem(item) ? (
+                                                <button 
+                                                    className="edit-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent row click
+                                                        openEditForm(item);
+                                                    }}
+                                                    title="Uredi"
+                                                >
+                                                    <img src="/icons/edit.png" alt="Edit" className="btn-icon" />
+                                                </button>
+                                            ) : (
+                                                <span className="no-edit" title="Nemate dozvolu za uređivanje">
+                                                    <img src="/icons/locked.png" alt="Locked" className="btn-icon" />
+                                                </span>
+                                            )}
+                                            
+                                            {canDeleteItem(item) ? (
+                                                <button 
+                                                    className="delete-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent row click
+                                                        handleDeleteClick(item);
+                                                    }}
+                                                    title="Obriši"
+                                                >
+                                                    <img src="/icons/delete.png" alt="Delete" className="btn-icon" />
+                                                </button>
+                                            ) : (
+                                                <span className="no-delete" title="Nemate dozvolu za brisanje">
+                                                    <img src="/icons/locked.png" alt="Locked" className="btn-icon" />
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -985,6 +1071,36 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                 onClick={forceCloseEditForm}
                             >
                                 Odbaci promjene
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            {showDeleteConfirm && (
+                <div className="confirm-overlay">
+                    <div className="confirm-dialog">
+                        <div className="confirm-header">
+                            <h3>Potvrda brisanja</h3>
+                        </div>
+                        <div className="confirm-body">
+                            <p>Jeste li sigurni da želite obrisati ovaj {itemToDelete?.type}?</p>
+                            <p><strong>{itemToDelete?.title}</strong></p>
+                            <p className="warning-text">Ova akcija se ne može poništiti!</p>
+                        </div>
+                        <div className="confirm-actions">
+                            <button 
+                                className="btn-cancel" 
+                                onClick={cancelDelete}
+                            >
+                                Otkaži
+                            </button>
+                            <button 
+                                className="btn-confirm btn-danger" 
+                                onClick={confirmDelete}
+                            >
+                                Obriši
                             </button>
                         </div>
                     </div>

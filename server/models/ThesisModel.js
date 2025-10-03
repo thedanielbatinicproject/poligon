@@ -1,4 +1,6 @@
 const { JsonDB, Config } = require('node-json-db');
+const fs = require('fs');
+const path = require('path');
 
 class ThesisModel {
     constructor() {
@@ -116,9 +118,42 @@ class ThesisModel {
         try {
             const theses = await this.getAll();
             const filteredTheses = theses.filter(thesis => thesis.id !== id);
+            
+            // Prije brisanja thesis-a, obriši sve povezane bilješke
+            try {
+                this.deleteNotesForThesis(id);
+            } catch (notesError) {
+                console.error('Error deleting notes for thesis:', notesError.message);
+                // Nastavi s brisanjem thesis-a čak i ako brisanje bilješki ne uspije
+            }
+            
             await this.db.push("/theses", filteredTheses);
             return true;
         } catch (error) {
+            throw error;
+        }
+    }
+
+    // Funkcija za brisanje bilješki povezanih s thesis-om
+    deleteNotesForThesis(thesisId) {
+        try {
+            const notesPath = path.join(__dirname, '../data/notes.json');
+            
+            if (fs.existsSync(notesPath)) {
+                const notesData = JSON.parse(fs.readFileSync(notesPath, 'utf8'));
+                const initialCount = notesData.notes.length;
+                
+                // Filtriraj bilješke - ukloni sve koje pripadaju ovom thesis-u
+                notesData.notes = notesData.notes.filter(note => note.thesisId !== thesisId);
+                
+                const deletedCount = initialCount - notesData.notes.length;
+                
+                fs.writeFileSync(notesPath, JSON.stringify(notesData, null, 2));
+                
+                console.log(`Deleted ${deletedCount} notes for thesis ${thesisId}`);
+            }
+        } catch (error) {
+            console.error('Error deleting notes for thesis:', error);
             throw error;
         }
     }

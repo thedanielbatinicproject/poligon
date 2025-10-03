@@ -145,6 +145,34 @@ router.patch('/:id/approve', (req, res) => {
     }
 });
 
+// DELETE /api/notes/thesis/:thesisId - Brisanje svih bilješki za thesis
+router.delete('/thesis/:thesisId', (req, res) => {
+    try {
+        const thesisId = req.params.thesisId;
+
+        const data = readNotes();
+        const initialCount = data.notes.length;
+        
+        // Filtriraj bilješke - ukloni sve koje pripadaju ovom thesis-u
+        data.notes = data.notes.filter(note => note.thesisId !== thesisId);
+        
+        const deletedCount = initialCount - data.notes.length;
+
+        if (writeNotes(data)) {
+            res.json({ 
+                success: true,
+                message: `Uspješno obrisano ${deletedCount} bilješki`,
+                deletedCount: deletedCount
+            });
+        } else {
+            res.status(500).json({ error: 'Greška pri brisanju bilješki' });
+        }
+    } catch (error) {
+        console.error('Error deleting notes for thesis:', error);
+        res.status(500).json({ error: 'Greška pri brisanju bilješki' });
+    }
+});
+
 // DELETE /api/notes/:id - Brisanje bilješke
 router.delete('/:id', (req, res) => {
     try {

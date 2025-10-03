@@ -540,6 +540,13 @@
     color: #e74c3c;
 }
 
+.warning-text {
+    color: #e74c3c !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem;
+    margin-top: 1rem !important;
+}
+
 .confirm-actions {
     padding: 1.5rem 2rem 2rem;
     display: flex;
@@ -578,6 +585,18 @@
 .btn-confirm:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(231, 76, 60, 0.5);
 }
 
 @media (max-width: 480px) {
@@ -725,6 +744,53 @@
 }
 
 .no-edit {
+    font-size: 1rem;
+    color: #95a5a6;
+    opacity: 0.7;
+}
+
+/* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Button Icon Styling */
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    filter: brightness(0) invert(1); /* Makes icons white */
+}
+
+.no-edit .btn-icon,
+.no-delete .btn-icon {
+    filter: brightness(0.5); /* Makes locked icons darker */
+}
+
+/* Delete Button Styling */
+.delete-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn:hover {
+    transform: translateY(-2px) scale(1.1);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+}
+
+.no-delete {
     font-size: 1rem;
     color: #95a5a6;
     opacity: 0.7;
