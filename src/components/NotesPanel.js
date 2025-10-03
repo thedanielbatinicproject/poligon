@@ -16,7 +16,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [collapsed, setCollapsed] = useState(isCollapsed);
 
-    const NOTES_PER_PAGE = 5;
+    const NOTES_PER_PAGE = 3;
 
     // Listen for global collapse events
     useEffect(() => {
@@ -31,6 +31,24 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
             window.removeEventListener('notesCollapsedChange', handleCollapseChange);
         };
     }, []);
+
+    // Listen for new notes created from ScientificEditor
+    useEffect(() => {
+        const handleNoteCreated = (event) => {
+            const { note, thesisId, chapterId } = event.detail || {};
+            
+            // Provjeri da li je bilješka za trenutno poglavlje
+            if (note && thesisId === thesis?.id && chapterId === chapter?.id) {
+                // Dodaj novu bilješku na vrh liste
+                setNotes(prevNotes => [note, ...prevNotes]);
+            }
+        };
+
+        window.addEventListener('noteCreated', handleNoteCreated);
+        return () => {
+            window.removeEventListener('noteCreated', handleNoteCreated);
+        };
+    }, [thesis?.id, chapter?.id]);
 
     const loadNotes = useCallback(async () => {
         if (!thesis || !chapter) return;

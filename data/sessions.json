@@ -46,5 +46,17 @@
       "createdAt": "2025-10-02T09:09:07.240Z",
       "lastAccess": "2025-10-03T09:02:25.823Z"
     }
+  ],
+  [
+    "session_1759482790933_w0yw7hmts",
+    {
+      "sessionId": "session_1759482790933_w0yw7hmts",
+      "user": {
+        "username": "admin",
+        "role": "admin"
+      },
+      "createdAt": "2025-10-03T09:13:10.933Z",
+      "lastAccess": "2025-10-03T09:14:47.117Z"
+    }
   ]
 ]

@@ -469,7 +469,7 @@ const ScientificEditor = ({
                 author: user?.username || 'Visitor'
             };
             
-            await notesAPI.createNote(noteData);
+            const response = await notesAPI.createNote(noteData);
             
             // Resetiraj form
             setNewNoteDescription('');
@@ -481,12 +481,33 @@ const ScientificEditor = ({
             // Vrati scrollanje
             document.body.style.overflow = 'auto';
             
-            // Obavijesti korisnika
-            alert('Bilješka je uspješno dodana!');
+            // Obavijesti NotesPanel da se učitaju nove bilješke
+            window.dispatchEvent(new CustomEvent('noteCreated', {
+                detail: { 
+                    note: response.data,
+                    thesisId: thesis.id,
+                    chapterId: chapter.id
+                }
+            }));
+            
+            // Obavijesti korisnika pomoću TinyMCE notification sustava
+            if (editorRef.current) {
+                editorRef.current.notificationManager.open({
+                    text: 'Bilješka je uspješno dodana!',
+                    type: 'success',
+                    timeout: 3000
+                });
+            }
             
         } catch (error) {
-            // Tiho upravljanje greškama
-            alert('Greška pri kreiranju bilješke');
+            // Obavijesti o grešci pomoću TinyMCE notification sustava
+            if (editorRef.current) {
+                editorRef.current.notificationManager.open({
+                    text: 'Greška pri kreiranju bilješke',
+                    type: 'error',
+                    timeout: 4000
+                });
+            }
         }
     }, [newNoteDescription, selectedText, selectionRange, thesis, chapter, user, getLineNumber]);
 
@@ -745,7 +766,56 @@ const ScientificEditor = ({
                         zIndex: 10000
                     }}
                 >
-
+                    {/* Selection overlay - prikaži iframe-adjusted selection rect */}
+                    {editorRef.current && (() => {
+                        let selectionRect = null;
+                        try {
+                            const editor = editorRef.current;
+                            const editorContainer = editor.getContainer();
+                            const iframe = editorContainer.querySelector('iframe');
+                            
+                            let iframeRect = { top: 0, left: 0 };
+                            if (iframe) {
+                                iframeRect = iframe.getBoundingClientRect();
+                            }
+                            
+                            const currentSelection = editor.selection;
+                            const currentRange = currentSelection.getRng();
+                            if (currentRange && currentRange.getBoundingClientRect) {
+                                const rangeRect = currentRange.getBoundingClientRect();
+                                
+                                // Iframe-adjusted rect
+                                selectionRect = {
+                                    top: rangeRect.top + iframeRect.top,
+                                    left: rangeRect.left + iframeRect.left,
+                                    width: rangeRect.width,
+                                    height: rangeRect.height
+                                };
+                            }
+                        } catch (e) {
+                            // Tiho upravljanje greškama
+                        }
+                        
+                        if (selectionRect && selectionRect.width > 0 && selectionRect.height > 0) {
+                            return (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: selectionRect.top + 'px',
+                                        left: selectionRect.left + 'px',
+                                        width: selectionRect.width + 'px',
+                                        height: selectionRect.height + 'px',
+                                        background: 'rgba(150,150,150,0.2)',
+                                        pointerEvents: 'none',
+                                        borderRadius: '3px',
+                                        border: '1px solid rgba(150,150,150,0.4)'
+                                    }}
+                                />
+                            );
+                        }
+                        
+                        return null;
+                    })()}
                     
                     <div 
                         className="add-note-button"
