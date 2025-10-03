@@ -1,1 +1,45 @@
-[]
+[
+  {
+    "id": "1759488032523o1d5smrj4",
+    "title": "Definiranje teme i zadatka",
+    "description": "Mentori u dogovoru sa studentom definiraju temu, odnosno naslov zadatka te daju njegov detaljniji opis.\n\nPodatke o zadatku može unijeti mentor ili student.",
+    "documentId": "thesis_1759487728340_z4lkl5fgr",
+    "chapterId": "",
+    "dueDate": "2025-10-10T12:00",
+    "createdAt": "2025-10-03T10:40:32.523Z",
+    "isFinished": false,
+    "updatedAt": "2025-10-03T12:31:39.432Z"
+  },
+  {
+    "id": "1759488094547pkxnkq6oh",
+    "title": "Rok za rad na završnom projektu",
+    "description": "Studenti trebaju jednom tjedno (ili češće) izvještavati mentora o napretku projekta. Izvještavanje može biti na način da se na kraju tjedna nastavniku pošalje mail ili online ili uživo prezentira dosadašnji napredak.",
+    "documentId": "thesis_1759487728340_z4lkl5fgr",
+    "chapterId": "",
+    "dueDate": "2025-11-14T12:00",
+    "createdAt": "2025-10-03T10:41:34.547Z",
+    "isFinished": false,
+    "updatedAt": "2025-10-03T10:44:40.575Z"
+  },
+  {
+    "id": "17594881261071nld4ivjm",
+    "title": "Predaja izvještaja o radu na projektu",
+    "description": "U navedenom tjednu studenti trebaju dati kratak izvještaj o radu na projektu. \nod 10.11. do 14.11.2025.",
+    "documentId": "thesis_1759487728340_z4lkl5fgr",
+    "chapterId": "",
+    "dueDate": "2025-11-14T12:00",
+    "createdAt": "2025-10-03T10:42:06.107Z",
+    "isFinished": false,
+    "updatedAt": "2025-10-03T10:44:45.208Z"
+  },
+  {
+    "id": "17594882736599nihkdqty",
+    "title": "Predaja dokumentacije",
+    "description": "Putem sustava potrebno je učitati dokumentaciju koja prati Završni projekt. Dokumentacija treba biti jasna, potpuna, odnosno treba dati nedvosmisleni opis kako je zadatak Završnog projekta ostvaren. Ako se radi o konkretnome proizvodu, prototipu, softveru, i slično, dokumentacija treba obuhvaćati i upute za korištenje.\nod 26.1. do 27.2.2026.",
+    "documentId": "thesis_1759487728340_z4lkl5fgr",
+    "chapterId": null,
+    "dueDate": "2026-02-27T12:00",
+    "createdAt": "2025-10-03T10:44:33.659Z",
+    "isFinished": false
+  }
+]
