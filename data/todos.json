@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "id": "1759484887994qvsa6ox6a",
+    "title": "DOVRŠI POGLAVLJE 2",
+    "description": "DOVRŠI GA",
+    "documentId": "thesis_1759483199095_deoxt6scq",
+    "chapterId": "chapter_1759484852086_e7x8j4ec7",
+    "dueDate": "2025-10-23T12:12",
+    "createdAt": "2025-10-03T09:48:07.994Z",
+    "createdBy": "Anonymous",
+    "isFinished": false
+  },
+  {
+    "id": "175948490177073jvk3y3j",
+    "title": "www",
+    "description": "fwf",
+    "documentId": "thesis_1759483199095_deoxt6scq",
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-03T09:48:21.770Z",
+    "createdBy": "Anonymous",
+    "isFinished": false
+  }
+]

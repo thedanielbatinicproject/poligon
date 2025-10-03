@@ -1,0 +1,77 @@
+{
+  "name": "Poligon - Platforma za Akademske Radove",
+  "short_name": "Poligon",
+  "description": "Specijalizirana platforma za kreiranje znanstvenih radova, upravljanje zadacima i bilješkama",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2c3e50",
+  "theme_color": "#2c3e50",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "academic"],
+  "lang": "hr",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "favicon"
+    },
+    {
+      "src": "/poligon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/poligon.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Poligon - Glavna stranica aplikacije"
+    }
+  ],
+  "scope": "/",
+  "id": "poligon-academic-platform",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Dokumenti",
+      "short_name": "Dokumenti",
+      "description": "Upravljanje znanstvenim radovima",
+      "url": "/documents",
+      "icons": [
+        {
+          "src": "/icons/tasks.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Tasks & Todos",
+      "short_name": "Zadaci",
+      "description": "Organizacija zadataka i todo lista",
+      "url": "/tasks-todos",
+      "icons": [
+        {
+          "src": "/icons/task-list.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "web",
+      "url": "https://poligon.live"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}
