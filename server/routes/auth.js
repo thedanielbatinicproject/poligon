@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
 
-// Persistent session store
+
 const fs = require('fs');
 const path = require('path');
 
 const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json');
 
-// Ensure data directory exists
+
 const dataDir = path.dirname(SESSIONS_FILE);
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// Load sessions from file
+
 let activeSessions = new Map();
 
 function loadSessions() {
@@ -40,10 +40,10 @@ function saveSessions() {
     }
 }
 
-// Load sessions on startup
+
 loadSessions();
 
-// Helper funkcije
+
 function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
@@ -59,11 +59,11 @@ function getSessionFromCookie(req) {
     return session;
 }
 
-// Login endpoint  
+
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
     
-    // Simple auth check
+    
     const validUsername = process.env.ADMIN_USERNAME || 'admin';
     const validPassword = process.env.ADMIN_PASSWORD || 'admin';
     
@@ -77,9 +77,9 @@ router.post('/login', (req, res) => {
         };
         
         activeSessions.set(sessionId, sessionData);
-        saveSessions(); // Spremamo sesije u fajl
+        saveSessions(); 
         
-        // Postavljamo cookie sa sessionId
+        
         res.cookie('sessionId', sessionId, {
             httpOnly: true,
             secure: false,
@@ -102,15 +102,15 @@ router.post('/login', (req, res) => {
     }
 });
 
-// Status endpoint - proverava da li je korisnik ulogovan
+
 router.get('/status', (req, res) => {
     const session = getSessionFromCookie(req);
     
     if (session) {
-        // Ažuriramo last access
+        
         session.lastAccess = new Date();
         activeSessions.set(session.sessionId, session);
-        saveSessions(); // Spremamo ažuriranje u fajl
+        saveSessions(); 
         
 
         res.json({
@@ -129,13 +129,13 @@ router.get('/status', (req, res) => {
     }
 });
 
-// Logout endpoint
+
 router.post('/logout', (req, res) => {
     const sessionId = req.cookies.sessionId;
     
     if (sessionId && activeSessions.has(sessionId)) {
         activeSessions.delete(sessionId);
-        saveSessions(); // Spremamo promene u fajl
+        saveSessions(); 
     }
     
     res.clearCookie('sessionId');

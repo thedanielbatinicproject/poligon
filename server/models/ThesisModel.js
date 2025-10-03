@@ -4,7 +4,7 @@ const path = require('path');
 
 class ThesisModel {
     constructor() {
-        // Apsolutna putanja bez .json ekstenzije (node-json-db će je dodati)
+        
         const path = require('path');
         const dbPath = path.join(__dirname, '../data/theses');
         this.db = new JsonDB(new Config(dbPath, true, false, '/'));
@@ -79,7 +79,7 @@ class ThesisModel {
                 version: theses[index].version + 1
             };
 
-            // Automatski izračunaj statistike
+            
             updatedThesis.stats = this.calculateStats(updatedThesis.chapters || []);
 
             theses[index] = updatedThesis;
@@ -90,14 +90,14 @@ class ThesisModel {
         }
     }
 
-    // Funkcija za računanje statistika
+    
     calculateStats(chapters) {
         let totalWords = 0;
         let totalCharacters = 0;
 
         chapters.forEach(chapter => {
             const content = chapter.content || '';
-            // Uklanjamo HTML tagove za čisto brojanje
+            
             const textContent = content.replace(/<[^>]*>/g, '').trim();
             
             if (textContent) {
@@ -110,7 +110,7 @@ class ThesisModel {
         return {
             totalWords,
             totalCharacters,
-            totalPages: Math.ceil(totalWords / 250) // Procjena: ~250 riječi po stranici
+            totalPages: Math.ceil(totalWords / 250) 
         };
     }
 
@@ -119,7 +119,7 @@ class ThesisModel {
             const theses = await this.getAll();
             const filteredTheses = theses.filter(thesis => thesis.id !== id);
             
-            // Prije brisanja thesis-a, obriši sve povezane bilješke
+            
             try {
                 this.deleteNotesForThesis(id);
             } catch (notesError) {
@@ -134,7 +134,7 @@ class ThesisModel {
         }
     }
 
-    // Funkcija za brisanje bilješki povezanih s thesis-om
+    
     deleteNotesForThesis(thesisId) {
         try {
             const notesPath = path.join(__dirname, '../data/notes.json');
@@ -143,7 +143,7 @@ class ThesisModel {
                 const notesData = JSON.parse(fs.readFileSync(notesPath, 'utf8'));
                 const initialCount = notesData.notes.length;
                 
-                // Filtriraj bilješke - ukloni sve koje pripadaju ovom thesis-u
+                
                 notesData.notes = notesData.notes.filter(note => note.thesisId !== thesisId);
                 
                 const deletedCount = initialCount - notesData.notes.length;
@@ -165,7 +165,7 @@ class ThesisModel {
                 throw new Error('Thesis not found');
             }
 
-            // Ograniči dubinu poglavlja na maksimalno 3 razine (0, 1, 2)
+            
             const level = chapterData.level || 0;
             if (level > 2) {
                 throw new Error('Maximum chapter depth is 3 levels (cannot create level ' + level + ')');
@@ -176,25 +176,25 @@ class ThesisModel {
             // Izračunaj redni broj na osnovu hijerarhije
             let order = 0;
             if (chapterData.parentId) {
-                // Za potpoglavlje, nađi maksimalni order među children
+                
                 const siblings = thesis.chapters.filter(ch => ch.parentId === chapterData.parentId);
                 order = siblings.length;
             } else {
-                // Za glavno poglavlje, nađi maksimalni order među glavnim poglavljima
+                
                 const mainChapters = thesis.chapters.filter(ch => !ch.parentId);
                 order = mainChapters.length;
             }
             
-            // Definiši default word goals na osnovu level-a
+            
             let defaultWordGoal;
             switch(level) {
-                case 0: // Glavno poglavlje
+                case 0: 
                     defaultWordGoal = 2000;
                     break;
-                case 1: // Sub-poglavlje
+                case 1: 
                     defaultWordGoal = 800;
                     break;
-                case 2: // Sub-sub-poglavlje
+                case 2: 
                     defaultWordGoal = 400;
                     break;
                 default:
@@ -209,7 +209,7 @@ class ThesisModel {
                 parentId: chapterData.parentId || null,
                 level: level,
                 wordGoal: chapterData.wordGoal || defaultWordGoal,
-                wordCount: 0, // Počinje s 0, bit će ažurirano kada se doda sadržaj
+                wordCount: 0, 
                 created: new Date().toISOString(),
                 updated: new Date().toISOString()
             };
@@ -217,7 +217,7 @@ class ThesisModel {
             thesis.chapters.push(chapter);
             const result = await this.update(thesisId, { chapters: thesis.chapters });
             
-            // Stvori clean kopiju bez ciklričnih referenci
+            
             return {
                 ...result,
                 chapters: result.chapters ? [...result.chapters] : []
@@ -239,7 +239,7 @@ class ThesisModel {
                 throw new Error('Chapter not found');
             }
 
-            // Ako se ažurira content, izračunaj novi word count
+            
             let updatedChapterData = { ...chapterData, updated: new Date().toISOString() };
             if (chapterData.content !== undefined) {
                 updatedChapterData.wordCount = this.calculateChapterWordCount(chapterData.content);
@@ -263,7 +263,7 @@ class ThesisModel {
                 throw new Error('Thesis not found');
             }
 
-            // Rekurzivno briši poglavlje i svu njegovu djecu
+            
             const deleteRecursively = (id) => {
                 const children = thesis.chapters.filter(ch => ch.parentId === id);
                 children.forEach(child => deleteRecursively(child.id));
@@ -277,18 +277,18 @@ class ThesisModel {
         }
     }
 
-    // Izračunava broj riječi u HTML sadržaju
+    
     calculateChapterWordCount(htmlContent) {
         if (!htmlContent) return 0;
         
-        // Ukloni HTML tagove i entitije
+        
         const textContent = htmlContent
-            .replace(/<[^>]*>/g, '') // Ukloni HTML tagove
-            .replace(/&[^;]+;/g, ' ') // Ukloni HTML entitije
-            .replace(/\s+/g, ' ') // Zamijeni višestruke razmake jednim
+            .replace(/<[^>]*>/g, '') 
+            .replace(/&[^;]+;/g, ' ') 
+            .replace(/\s+/g, ' ') 
             .trim();
         
-        // Podijeli po riječima i filtriraj prazne stringove
+        
         const words = textContent.split(/\s+/).filter(word => word.length > 0);
         
         return words.length;

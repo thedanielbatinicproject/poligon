@@ -1,4 +1,4 @@
-/* Confirm Modal Styles */
+
 .confirm-modal-overlay {
     position: fixed;
     top: 0;
@@ -50,7 +50,7 @@
     color: #333;
 }
 
-/* Tipovi modal-a */
+
 .confirm-modal.warning .confirm-modal-header {
     background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
     color: white;
@@ -127,7 +127,7 @@
     transform: translateY(-1px);
 }
 
-/* Tipovi gumbova */
+
 .confirm-modal.warning .confirm-btn {
     background: #ffc107;
     color: #000;
@@ -145,7 +145,7 @@
     background: #138496;
 }
 
-/* Responsive */
+
 @media (max-width: 480px) {
     .confirm-modal {
         width: 95%;

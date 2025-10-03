@@ -9,9 +9,9 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
     const [loading, setLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
     const [hoveredChapter, setHoveredChapter] = useState(null);
-    const [notesState, setNotesState] = useState(0); // 0 = expanded, 1 = collapsed
+    const [notesState, setNotesState] = useState(0); 
 
-    // Listen for notes state changes from NotesPanel
+    
     useEffect(() => {
         const handleNotesStateChange = (event) => {
             if (event.detail && typeof event.detail.collapsed === 'boolean') {
@@ -26,7 +26,7 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
         };
     }, []);
 
-    // Update klase preko querySelector da izbjegnem webpack minifikacija probleme
+    
     useEffect(() => {
         const element = document.querySelector('[data-content-body="true"]');
         if (element) {
@@ -48,12 +48,12 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
         }
     }, [thesis]);
 
-    // Organizacija poglavlja u hijerarhiju
+    
     const organizeChapters = (chapters) => {
         const organized = [];
         const chapterMap = new Map();
         
-        // Sortiraj po order
+        
         const sortedChapters = [...chapters].sort((a, b) => (a.order || 0) - (b.order || 0));
         
         sortedChapters.forEach(chapter => {
@@ -72,7 +72,7 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
         return organized;
     };
 
-    // Generiranje brojeva poglavlja (1, 1.1, 1.1.1, itd.)
+    
     const generateChapterNumber = (chapter, parentNumber = '') => {
         const level = chapter.level || 0;
         if (level === 0) {
@@ -240,7 +240,7 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                 )}
             </div>
 
-            {/* Popup za potvrdu brisanja */}
+            {}
             {showDeleteConfirm && (
                 <div className="delete-confirm-overlay">
                     <div className="delete-confirm-modal">
@@ -268,7 +268,7 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
     );
 };
 
-// Nova komponenta za hijerarhijsko prikazivanje poglavlja
+
 const ChapterList = ({ 
     chapters, 
     selectedChapter, 
@@ -372,7 +372,7 @@ const ChapterContent = ({ chapter, thesis, onUpdate, mode, user }) => {
     };
 
     const handleContentChange = (e) => {
-        // TinyMCE predaje content direktno kao e.target.value
+        
         const newContent = e.target ? e.target.value : e;
         setContent(newContent);
         setIsDirty(true);

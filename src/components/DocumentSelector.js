@@ -7,13 +7,13 @@ const DocumentSelector = ({ user, onDocumentSelect, onCreateNew }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Funkcija za računanje ukupnog broja riječi iz svih poglavlja
+    
     const calculateTotalWords = (chapters) => {
         if (!chapters || chapters.length === 0) return 0;
         
         return chapters.reduce((total, chapter) => {
             const content = chapter.content || '';
-            // Uklanjamo HTML tagove i računamo riječi
+            
             const textContent = content.replace(/<[^>]*>/g, '').trim();
             const words = textContent ? textContent.split(/\s+/).length : 0;
             return total + words;
@@ -44,7 +44,7 @@ const DocumentSelector = ({ user, onDocumentSelect, onCreateNew }) => {
     };
 
     const handleSelect = (thesis) => {
-        // Spremimo odabrani dokument u localStorage
+        
         localStorage.setItem('selectedDocumentId', thesis.id);
         onDocumentSelect(thesis);
     };
@@ -123,7 +123,7 @@ const DocumentSelector = ({ user, onDocumentSelect, onCreateNew }) => {
                         </div>
                         <div className="table-body">
                             {theses.map(thesis => {
-                                // Izračunaj ukupan broj riječi iz svih poglavlja
+                                
                                 const totalWords = calculateTotalWords(thesis.chapters || []);
                                 
                                 return (

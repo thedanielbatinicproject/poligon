@@ -13,7 +13,7 @@ class JsonDB {
         try {
             await fs.access(this.filePath);
         } catch (error) {
-            // File doesn't exist, create initial structure
+            
             // Ensure directory exists
             const dir = path.dirname(this.filePath);
             await fs.mkdir(dir, { recursive: true });
@@ -38,11 +38,11 @@ class JsonDB {
             await fs.writeFile(tempFile, JSON.stringify(data, null, 2));
             await fs.rename(tempFile, this.filePath);
         } catch (error) {
-            // Cleanup temp file if it exists
+            
             try {
                 await fs.unlink(tempFile);
             } catch (cleanupError) {
-                // Ignore cleanup errors
+                
             }
             throw error;
         }

@@ -1,4 +1,4 @@
-/* Chapter Tasks Component */
+
 .chapter-tasks {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
@@ -242,7 +242,7 @@
     opacity: 0.5;
 }
 
-/* Confirmation Dialog */
+
 .confirm-dialog-overlay {
     position: fixed;
     top: 0;
@@ -322,7 +322,7 @@
     background: #5a6268;
 }
 
-/* Responsive design */
+
 @media (max-width: 768px) {
     .chapter-tasks-header {
         padding: 10px 12px;
@@ -360,7 +360,7 @@
     }
 }
 
-/* Scrollbar styling */
+
 .chapter-tasks-content::-webkit-scrollbar {
     width: 6px;
 }

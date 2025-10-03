@@ -1,4 +1,4 @@
-/* Document Tasks Component */
+
 .document-tasks {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
@@ -242,7 +242,7 @@
     opacity: 0.5;
 }
 
-/* Responsive design */
+
 @media (max-width: 768px) {
     .document-tasks-header {
         padding: 10px 12px;
@@ -280,7 +280,7 @@
     }
 }
 
-/* Scrollbar styling */
+
 .document-tasks-content::-webkit-scrollbar {
     width: 6px;
 }
@@ -306,7 +306,7 @@
     padding: 20px;
 }
 
-/* Confirmation Dialog */
+
 .confirm-dialog-overlay {
     position: fixed;
     top: 0;

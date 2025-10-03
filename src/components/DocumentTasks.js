@@ -18,12 +18,12 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
         try {
             setLoading(true);
             
-            // Učitaj taskove
-            // Učitaj taskove
+            
+            
             const tasksResponse = await fetch('/api/tasks');
             if (tasksResponse.ok) {
                 const tasksResult = await tasksResponse.json();
-                // Filtriraj samo taskove za ovaj dokument koji nisu vezani za poglavlje i nisu završeni
+                
                 const documentTasks = tasksResult.filter(task => 
                     task.documentId === documentId && 
                     (!task.chapterId || task.chapterId === '') &&
@@ -32,12 +32,12 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
                 setTasks(documentTasks);
             }
 
-            // Učitaj todove
-            // Učitaj todove
+            
+            
             const todosResponse = await fetch('/api/todos');
             if (todosResponse.ok) {
                 const todosResult = await todosResponse.json();
-                // Filtriraj samo todove za ovaj dokument koji nisu vezani za poglavlje i nisu završeni
+                
                 const documentTodos = todosResult.filter(todo => 
                     todo.documentId === documentId && 
                     (!todo.chapterId || todo.chapterId === '') &&
@@ -54,15 +54,15 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
 
     const canToggleItem = (item) => {
         if (item.type === 'task') {
-            // Taskovi mogu biti završavani samo od prijavljenih korisnika
+            
             return isAuthenticated && user;
         } else {
-            // Todovi - logirani korisnici mogu završavati sve
-            // Nelogirani korisnici mogu završavati samo Anonymous todove
+            
+            
             if (isAuthenticated && user) {
-                return true; // Logirani mogu završavati sve todove
+                return true; 
             } else {
-                // Nelogirani korisnici mogu završavati samo Anonymous todove
+                
                 return item.createdBy === 'Anonymous';
             }
         }
@@ -95,7 +95,7 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    // Ukloni završene taskove iz prikaza
+                    
                     if (item.type === 'task') {
                         setTasks(prevTasks => prevTasks.filter(task => task.id !== item.id));
                     } else {
@@ -140,7 +140,7 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
                     <div className="no-tasks">Nema zadataka za dokument</div>
                 </div>
             </div>
-        ); // Prikaži prazan blok za debug
+        ); 
     }
 
     return (

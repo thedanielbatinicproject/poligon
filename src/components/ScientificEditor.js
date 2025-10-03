@@ -20,10 +20,10 @@ const ScientificEditor = ({
         equations: 0
     });
     
-    // TinyMCE API ključ state
+    
     const [tinymceApiKey, setTinymceApiKey] = useState('');
     
-    // State za bilješke i selekciju
+    
     const [selectedText, setSelectedText] = useState('');
     const [selectionRange, setSelectionRange] = useState(null);
     const [showAddNoteButton, setShowAddNoteButton] = useState(false);
@@ -31,13 +31,13 @@ const ScientificEditor = ({
     const [showNoteForm, setShowNoteForm] = useState(false);
     const [newNoteDescription, setNewNoteDescription] = useState('');
 
-    // Generiranje brojeva prema hijerarhiji poglavlja
+    
     const generateChapterPrefix = useCallback(() => {
         if (!chapter || !thesis) return '1';
         
         const chapters = thesis.chapters || [];
         
-        // Rekurzivna funkcija za pronalaženje puta do root poglavlja
+        
         const getChapterPath = (chapterId, path = []) => {
             const currentChapter = chapters.find(c => c.id === chapterId);
             if (!currentChapter) return path;
@@ -53,7 +53,7 @@ const ScientificEditor = ({
         
         const chapterPath = getChapterPath(chapter.id);
         
-        // Generiranje numeracije na osnovu puta
+        
         let prefix = '';
         for (let i = 0; i < chapterPath.length; i++) {
             const currentChapter = chapterPath[i];
@@ -80,12 +80,12 @@ const ScientificEditor = ({
         return prefix || '1';
     }, [chapter, thesis]);
 
-    // TinyMCE konfiguracija za znanstvene radove
+    
     const editorConfig = {
         height: 650,
         menubar: mode === 'EDIT',
-        statusbar: true, // Prikaži statusbar sa pozicijom kursora
-        // API ključ iz environment variable
+        statusbar: true, 
+        
         apiKey: tinymceApiKey,
         plugins: mode === 'EDIT' ? [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
@@ -128,12 +128,12 @@ const ScientificEditor = ({
         table_default_styles: {
             'border-collapse': 'collapse'
         },
-        // Toolbar options
+        
         toolbar_mode: 'sliding',
-        // Table options
+        
         table_use_colgroups: true,
         table_sizing_mode: 'fixed',
-        // Upload handler za slike
+        
         images_upload_handler: (blobInfo, progress) => {
             return new Promise((resolve, reject) => {
                 const formData = new FormData();
@@ -163,17 +163,17 @@ const ScientificEditor = ({
                 });
             });
         },
-        // Basic browser paste support
+        
         browser_spellcheck: true,
         contextmenu: false,
-        // Modern paste handling
+        
         paste_data_images: true,
         paste_as_text: false,
-        readonly: false, // Omogućujem selekciju u VIEW režimu
-        // Za VIEW režim - sakrivaj toolbar ali omogući selekciju
+        readonly: false, 
+        
         setup: (editor) => {
             if (mode === 'VIEW') {
-                // Onemogući uređivanje sadržaja ali omogući selekciju
+                
                 editor.on('init', () => {
                     editor.getBody().setAttribute('contenteditable', 'true');
                     editor.getBody().style.userSelect = 'text';
@@ -182,23 +182,23 @@ const ScientificEditor = ({
                     editor.getBody().style.msUserSelect = 'text';
                 });
                 
-                // Blokiraj sve tipkovnicu za uređivanje
+                
                 editor.on('keydown', (e) => {
-                    // Dozvoljavaj samo navigacijske tipke (strelice, home, end, page up/down)
-                    const allowedKeys = [37, 38, 39, 40, 35, 36, 33, 34, 16, 17, 18]; // arrows, home, end, page up/down, shift, ctrl, alt
+                    
+                    const allowedKeys = [37, 38, 39, 40, 35, 36, 33, 34, 16, 17, 18]; 
                     if (!allowedKeys.includes(e.keyCode)) {
                         e.preventDefault();
                         return false;
                     }
                 });
                 
-                // Blokiraj paste, cut, itd.
+                
                 editor.on('paste cut', (e) => {
                     e.preventDefault();
                     return false;
                 });
                 
-                // Praćenje selekcije za bilješke - TinyMCE specifični eventi
+                
                 editor.on('selectionchange', () => {
                     setTimeout(handleSelectionChange, 10);
                 });
@@ -216,12 +216,12 @@ const ScientificEditor = ({
                 });
             }
             
-            // Za sve režime - praćenje selekcije za bilješke
+            
             editor.on('selectionchange', handleSelectionChange);
             editor.on('mouseup', handleSelectionChange);
             editor.on('keyup', handleSelectionChange);
             
-            // Dodaj i globalni event listener
+            
             editor.on('init', () => {
                 const editorDoc = editor.getDoc();
                 editorDoc.addEventListener('mouseup', handleSelectionChange);
@@ -231,26 +231,26 @@ const ScientificEditor = ({
         }
     };
 
-    // Handle editor initialization
+    
     const handleInit = (evt, editor) => {
         editorRef.current = editor;
     };
 
-    // Handle content change
+    
     const handleChange = (content, editor) => {
         onChange({ target: { value: content } });
         updateCounters(content);
     };
 
-    // Funkcija za praćenje selekcije
+    
     const handleSelectionChange = useCallback(() => {
-        // Samo u VIEW režimu
+        
         if (mode !== 'VIEW') {
             return;
         }
         
         try {
-            // Prvo pokušaj TinyMCE selekciju
+            
             let selectedContent = '';
             let range = null;
             
@@ -258,7 +258,7 @@ const ScientificEditor = ({
                 const editor = editorRef.current;
                 const editorSel = editor.selection;
                 
-                // Pokušaj dobiti selekciju iz TinyMCE
+                
                 selectedContent = editorSel.getContent({ format: 'text' }).trim();
                 
                 if (selectedContent) {
@@ -266,7 +266,7 @@ const ScientificEditor = ({
                 }
             }
             
-            // Ako TinyMCE selekcija ne radi, pokušaj window.getSelection
+            
             if (!selectedContent) {
                 const selection = window.getSelection();
                 
@@ -276,7 +276,7 @@ const ScientificEditor = ({
                 }
             }
             
-            // Ako ni jedno ne radi, pokušaj direktno iz DOM-a
+            
             if (!selectedContent && editorRef.current) {
                 const editorBody = editorRef.current.getBody();
                 const editorDoc = editorBody.ownerDocument;
@@ -295,7 +295,7 @@ const ScientificEditor = ({
                 return;
             }
             
-            // Provjeri da li je selekcija unutar editora
+            
             if (!editorRef.current) {
                 return;
             }
@@ -315,20 +315,20 @@ const ScientificEditor = ({
                 }
             }
             
-            // Ima validnu selekciju
+            
             setSelectedText(selectedContent);
             setSelectionRange(range);
             
-            // Izračunaj poziciju gumba
+            
             calculateButtonPosition(range);
             setShowAddNoteButton(true);
         } catch (error) {
-            // Tiho upravljanje greškama
+            
             setShowAddNoteButton(false);
         }
     }, [calculateButtonPosition, mode]);
 
-    // Funkcija za izračunavanje pozicije gumba
+    
     const calculateButtonPosition = useCallback((range) => {
         if (!editorRef.current) {
             return;
@@ -338,7 +338,7 @@ const ScientificEditor = ({
             const editor = editorRef.current;
             let clientRect;
             
-            // Dobij iframe poziciju
+            
             const editorBody = editor.getBody();
             const editorDoc = editor.getDoc();
             const editorContainer = editor.getContainer();
@@ -349,14 +349,14 @@ const ScientificEditor = ({
                 iframeRect = iframe.getBoundingClientRect();
             }
             
-            // Pokušaj TinyMCE selekciju
+            
             const currentSelection = editor.selection;
             const currentRange = currentSelection.getRng();
             
             if (currentRange && currentRange.getBoundingClientRect) {
                 const rangeRect = currentRange.getBoundingClientRect();
                 
-                // Dodaj iframe offset
+                
                 clientRect = {
                     top: rangeRect.top + iframeRect.top,
                     left: rangeRect.left + iframeRect.left,
@@ -373,31 +373,31 @@ const ScientificEditor = ({
                 clientRect = windowSelection.getRangeAt(0).getBoundingClientRect();
             }
             
-            // Provjeri da li je selekcija validna
+            
             if (!clientRect || clientRect.width === 0 || clientRect.height === 0) {
                 return;
             }
             
-            // Izračunaj poziciju iznad selekcije (relativno prema viewportu)
-            const buttonHeight = 40; // Procjena visine gumba
-            const margin = 10; // Margina između gumba i selekcije
+            
+            const buttonHeight = 40; 
+            const margin = 10; 
             
             let top = clientRect.top - buttonHeight - margin;
             let left = clientRect.left;
             
-            // Osiguraj da gumb ne izađe izvan viewporta
+            
             const viewport = {
                 width: window.innerWidth,
                 height: window.innerHeight
             };
             
-            // Ako je gumb previsoko, stavi ga ispod selekcije
+            
             if (top < 0) {
                 top = clientRect.bottom + margin;
             }
             
-            // Osiguraj da gumb ne izađe lijevo ili desno
-            const buttonWidth = 150; // Procjena širine gumba
+            
+            const buttonWidth = 150; 
             if (left + buttonWidth > viewport.width) {
                 left = viewport.width - buttonWidth - 10;
             }
@@ -407,11 +407,11 @@ const ScientificEditor = ({
             
             setNoteButtonPosition({ top, left });
         } catch (error) {
-            // Tiho upravljanje greškama
+            
         }
     }, []);
 
-    // Funkcija za dobivanje broja linije
+    
     const getLineNumber = useCallback((range) => {
         if (!editorRef.current || !range) return 1;
         
@@ -422,7 +422,7 @@ const ScientificEditor = ({
         let lineNumber = 1;
         const startContainer = range.startContainer;
         
-        // Pronađi element koji sadrži početak selekcije
+        
         let targetElement = startContainer.nodeType === Node.TEXT_NODE 
             ? startContainer.parentElement 
             : startContainer;
@@ -437,11 +437,11 @@ const ScientificEditor = ({
         return lineNumber;
     }, []);
 
-    // Funkcija za kreiranje bilješke iz selekcije
+    
     const handleCreateNoteFromSelection = useCallback(() => {
         if (!selectedText || !selectionRange || !thesis || !chapter) return;
         
-        // Pošalji CustomEvent da se notes panel otvori ako je zatvoren
+        
         window.dispatchEvent(new CustomEvent('openNoteForm', {
             detail: { 
                 selectedText,
@@ -449,14 +449,14 @@ const ScientificEditor = ({
             }
         }));
         
-        // Zabrani scrollanje
+        
         document.body.style.overflow = 'hidden';
         
         setShowNoteForm(true);
         setShowAddNoteButton(false);
     }, [selectedText, selectionRange, thesis, chapter, getLineNumber]);
 
-    // Funkcija za spremanje bilješke
+    
     const handleSaveNote = useCallback(async () => {
         if (!newNoteDescription.trim() || !selectedText || !selectionRange) return;
         
@@ -474,17 +474,17 @@ const ScientificEditor = ({
             
             const response = await notesAPI.createNote(noteData);
             
-            // Resetiraj form
+            
             setNewNoteDescription('');
             setShowNoteForm(false);
             setShowAddNoteButton(false);
             setSelectedText('');
             setSelectionRange(null);
             
-            // Vrati scrollanje
+            
             document.body.style.overflow = 'auto';
             
-            // Obavijesti NotesPanel da se učitaju nove bilješke
+            
             window.dispatchEvent(new CustomEvent('noteCreated', {
                 detail: { 
                     note: response.data,
@@ -493,7 +493,7 @@ const ScientificEditor = ({
                 }
             }));
             
-            // Obavijesti korisnika pomoću TinyMCE notification sustava
+            
             if (editorRef.current) {
                 editorRef.current.notificationManager.open({
                     text: 'Bilješka je uspješno dodana!',
@@ -503,7 +503,7 @@ const ScientificEditor = ({
             }
             
         } catch (error) {
-            // Obavijesti o grešci pomoću TinyMCE notification sustava
+            
             if (editorRef.current) {
                 editorRef.current.notificationManager.open({
                     text: 'Greška pri kreiranju bilješke',
@@ -514,15 +514,15 @@ const ScientificEditor = ({
         }
     }, [newNoteDescription, selectedText, selectionRange, thesis, chapter, user, getLineNumber]);
 
-    // Funkcija za zatvaranje forme
+    
     const handleCloseNoteForm = useCallback(() => {
         setShowNoteForm(false);
         setNewNoteDescription('');
-        // Vrati scrollanje
+        
         document.body.style.overflow = 'auto';
     }, []);
 
-    // Ažuriranje brojača elemenata
+    
     const updateCounters = useCallback((content) => {
         if (!content) return;
         
@@ -536,7 +536,7 @@ const ScientificEditor = ({
         setCounters({ tables, figures, graphs: 0, equations });
     }, []);
 
-    // Dodavanje tablice s automatskom numeracijom
+    
     const insertTable = useCallback(() => {
         if (editorRef.current) {
             const editor = editorRef.current;
@@ -574,213 +574,12 @@ const ScientificEditor = ({
         }
     }, [generateChapterPrefix, counters.tables]);
 
-    // Dodavanje slike s automatskom numeracijom
+    
     const insertFigure = useCallback(() => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('image', file);
-
-            try {
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                if (result.success && editorRef.current) {
-                    const editor = editorRef.current;
-                    const chapterPrefix = generateChapterPrefix();
-                    const figureNumber = counters.figures + 1;
-                    
-                    const figureHtml = `
-                        <figure>
-                            <img src="${result.url}" alt="Slika ${chapterPrefix}.${figureNumber}" style="max-width: 100%; height: auto;">
-                            <figcaption><strong>Slika ${chapterPrefix}.${figureNumber}.</strong> Opis slike</figcaption>
-                        </figure>
-                        <p>&nbsp;</p>
-                    `;
-                    
-                    editor.insertContent(figureHtml);
-                    setCounters(prev => ({ ...prev, figures: prev.figures + 1 }));
-                }
-            } catch (error) {
-                console.error('Error uploading image:', error);
-            }
-        };
-        input.click();
-    }, [generateChapterPrefix, counters.figures]);
-
-    // Dodavanje jednadžbe
-    const insertEquation = useCallback(() => {
-        if (editorRef.current) {
-            const editor = editorRef.current;
-            const chapterPrefix = generateChapterPrefix();
-            const equationNumber = counters.equations + 1;
-            
-            const equationHtml = `
-                <p style="text-align: center;" data-equation="${chapterPrefix}.${equationNumber}">
-                    <em>E = mc²</em> &nbsp;&nbsp;&nbsp;&nbsp; (${chapterPrefix}.${equationNumber})
-                </p>
-                <p>&nbsp;</p>
-            `;
-            
-            editor.insertContent(equationHtml);
-            setCounters(prev => ({ ...prev, equations: prev.equations + 1 }));
-        }
-    }, [generateChapterPrefix, counters.equations]);
-
-    // Dohvaćanje TinyMCE API ključa
-    useEffect(() => {
-        const fetchTinyMCEConfig = async () => {
-            try {
-                const response = await fetch('/api/tinymce-config');
-                if (response.ok) {
-                    const config = await response.json();
-                    setTinymceApiKey(config.apiKey || '');
-                }
-            } catch (error) {
-                console.error('Error fetching TinyMCE config:', error);
-                // Fallback to empty string if fetch fails
-                setTinymceApiKey('');
-            }
-        };
-
-        fetchTinyMCEConfig();
-    }, []);
-
-    // Inicijalizacija brojača
-    useEffect(() => {
-        if (value) {
-            updateCounters(value);
-        }
-    }, [value, updateCounters]);
-
-    // Global event listeners za selekciju
-    useEffect(() => {
-        const globalSelectionHandler = () => {
-            if (mode === 'VIEW') {
-                setTimeout(() => {
-                    handleSelectionChange();
-                }, 50);
-            }
-        };
-        
-        const globalMouseUpHandler = () => {
-            if (mode === 'VIEW') {
-                setTimeout(() => {
-                    handleSelectionChange();
-                }, 100);
-            }
-        };
-        
-        const globalScrollHandler = () => {
-            if (mode === 'VIEW' && showAddNoteButton && selectionRange) {
-                calculateButtonPosition(selectionRange);
-            }
-        };
-        
-        const globalResizeHandler = () => {
-            if (mode === 'VIEW' && showAddNoteButton && selectionRange) {
-                calculateButtonPosition(selectionRange);
-            }
-        };
-        
-        const notesCollapseHandler = (event) => {
-            if (mode === 'VIEW' && showAddNoteButton && selectionRange) {
-                // Pronađi notes panel element
-                const notesPanel = document.querySelector('.notes-panel');
-                if (notesPanel) {
-                    // Koristi transitionend event za precizno timing
-                    const handleTransitionEnd = (e) => {
-                        calculateButtonPosition(selectionRange);
-                        notesPanel.removeEventListener('transitionend', handleTransitionEnd);
-                    };
-                    
-                    notesPanel.addEventListener('transitionend', handleTransitionEnd);
-                    
-                    // Fallback timeout u slučaju da transitionend ne radi
-                    setTimeout(() => {
-                        calculateButtonPosition(selectionRange);
-                        notesPanel.removeEventListener('transitionend', handleTransitionEnd);
-                    }, 400); // 400ms fallback
-                } else {
-                    // Ako nema notes panel elementa, koristi timeout
-                    setTimeout(() => {
-                        calculateButtonPosition(selectionRange);
-                    }, 300);
-                }
-            }
-        };
-        
-        document.addEventListener('selectionchange', globalSelectionHandler);
-        document.addEventListener('mouseup', globalMouseUpHandler);
-        window.addEventListener('scroll', globalScrollHandler, true);
-        window.addEventListener('resize', globalResizeHandler);
-        window.addEventListener('notesCollapsedChange', notesCollapseHandler);
-        
-        return () => {
-            document.removeEventListener('selectionchange', globalSelectionHandler);
-            document.removeEventListener('mouseup', globalMouseUpHandler);
-            window.removeEventListener('scroll', globalScrollHandler, true);
-            window.removeEventListener('resize', globalResizeHandler);
-            window.removeEventListener('notesCollapsedChange', notesCollapseHandler);
-        };
-    }, [mode, handleSelectionChange, showAddNoteButton, selectionRange, calculateButtonPosition]);
-
-    const isReadOnly = disabled;
-
-    return (
-        <div className="scientific-editor">
-            {!isReadOnly && (
-                <div className="editor-controls">
-                    <div className="element-toolbar">
-                        <button onClick={insertTable} className="control-btn">
-                            📊 Tablica
-                        </button>
-                        <button onClick={insertFigure} className="control-btn">
-                            🖼️ Slika
-                        </button>
-                        <button onClick={insertEquation} className="control-btn">
-                            📐 Jednadžba
-                        </button>
-                    </div>
-                    <div className="element-counters">
-                        <span>Tablice: {counters.tables}</span>
-                        <span>Slike: {counters.figures}</span>
-                        <span>Jednadžbe: {counters.equations}</span>
-                    </div>
-                </div>
-            )}
-            
-            <div className="editor-container">
-                {tinymceApiKey ? (
-                    <Editor
-                        tinymceScriptSrc={`https://cdn.tiny.cloud/1/${tinymceApiKey}/tinymce/6/tinymce.min.js`}
-                        onInit={handleInit}
-                        value={value || ''}
-                        onEditorChange={handleChange}
-                        init={editorConfig}
-                        disabled={isReadOnly}
-                    />
-                ) : (
-                    <div className="editor-loading">
-                        <p>Učitavanje editora...</p>
-                    </div>
-                )}
-                
-                {/* Gumb za dodavanje bilješke iz selekcije */}
-{/* Floating gumb container - renderira se na vrhu stranice */}
+        input.accept = 'image}
+{}
             {showAddNoteButton && (
                 <div 
                     className="floating-note-button-container"
@@ -794,7 +593,7 @@ const ScientificEditor = ({
                         zIndex: 10000
                     }}
                 >
-                    {/* Selection overlay - prikaži iframe-adjusted selection rect */}
+                    {}
                     {editorRef.current && (() => {
                         let selectionRect = null;
                         try {
@@ -812,7 +611,7 @@ const ScientificEditor = ({
                             if (currentRange && currentRange.getBoundingClientRect) {
                                 const rangeRect = currentRange.getBoundingClientRect();
                                 
-                                // Iframe-adjusted rect
+                                
                                 selectionRect = {
                                     top: rangeRect.top + iframeRect.top,
                                     left: rangeRect.left + iframeRect.left,
@@ -821,7 +620,7 @@ const ScientificEditor = ({
                                 };
                             }
                         } catch (e) {
-                            // Tiho upravljanje greškama
+                            
                         }
                         
                         if (selectionRect && selectionRect.width > 0 && selectionRect.height > 0) {
@@ -871,7 +670,7 @@ const ScientificEditor = ({
                 </div>
             )}
                 
-                {/* Form za kreiranje bilješke */}
+                {}
                 {showNoteForm && (
                     <div className="note-form-overlay" onClick={handleCloseNoteForm}>
                         <div className="note-form-modal" onClick={(e) => e.stopPropagation()}>

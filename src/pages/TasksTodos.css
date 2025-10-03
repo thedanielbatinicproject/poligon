@@ -25,7 +25,7 @@
     color: #7f8c8d;
 }
 
-/* Kalendar sekcija */
+
 .calendar-section {
     background: white;
     margin: 0 2rem 3rem;
@@ -48,7 +48,7 @@
     border: 1px solid #e9ecef;
 }
 
-/* Prilagođavanje React Big Calendar stilova */
+
 .rbc-calendar {
     font-family: inherit;
     border-radius: 10px;
@@ -100,7 +100,7 @@
     background: #2c3e50;
 }
 
-/* Filter sekcija */
+
 .filter-section {
     background: white;
     margin: 0 2rem 3rem;
@@ -170,7 +170,7 @@
     font-weight: 600;
 }
 
-/* Nadolazeći zadaci sekcija */
+
 .upcoming-section {
     background: white;
     margin: 0 2rem 3rem;
@@ -256,7 +256,7 @@
     box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
 }
 
-/* Kreiranje forma sekcija */
+
 .creation-section {
     background: white;
     margin: 0 2rem;
@@ -297,7 +297,7 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-/* Forme */
+
 .task-form, .todo-form {
     background: #f8f9fa;
     padding: 2rem;
@@ -389,7 +389,7 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive design */
+
 @media (max-width: 768px) {
     .tasks-todos-page {
         padding: 1rem 0;
@@ -430,7 +430,7 @@
     }
 }
 
-/* Finished tasks styling */
+
 .task-row.finished {
     opacity: 0.7;
 }
@@ -450,14 +450,14 @@
     opacity: 0.8;
 }
 
-/* Calendar finished events styling */
+
 .rbc-event.finished {
     background-color: #95a5a6 !important;
     text-decoration: line-through;
     opacity: 0.6;
 }
 
-/* Action cell styling */
+
 .action-cell {
     text-align: center;
     font-weight: 600;
@@ -473,7 +473,7 @@
     font-style: italic;
 }
 
-/* Custom Confirmation Dialog */
+
 .confirm-overlay {
     position: fixed;
     top: 0;
@@ -625,7 +625,7 @@
     }
 }
 
-/* Custom Notification Toast */
+
 .notification-toast {
     position: fixed;
     top: 20px;
@@ -701,7 +701,7 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* Auth Notice Styling */
+
 .auth-notice {
     background: linear-gradient(135deg, #f39c12, #e67e22);
     color: white;
@@ -718,7 +718,7 @@
     line-height: 1.4;
 }
 
-/* Edit Button Styling */
+
 .edit-cell {
     text-align: center;
     padding: 0.5rem;
@@ -749,7 +749,7 @@
     opacity: 0.7;
 }
 
-/* Action Buttons Container */
+
 .action-buttons {
     display: flex;
     gap: 0.5rem;
@@ -757,20 +757,20 @@
     align-items: center;
 }
 
-/* Button Icon Styling */
+
 .btn-icon {
     width: 16px;
     height: 16px;
     object-fit: contain;
-    filter: brightness(0) invert(1); /* Makes icons white */
+    filter: brightness(0) invert(1); 
 }
 
 .no-edit .btn-icon,
 .no-delete .btn-icon {
-    filter: brightness(0.5); /* Makes locked icons darker */
+    filter: brightness(0.5); 
 }
 
-/* Delete Button Styling */
+
 .delete-btn {
     background: linear-gradient(135deg, #e74c3c, #c0392b);
     border: none;
@@ -796,7 +796,7 @@
     opacity: 0.7;
 }
 
-/* Fullscreen Edit Form */
+
 .fullscreen-overlay {
     position: fixed;
     top: 0;

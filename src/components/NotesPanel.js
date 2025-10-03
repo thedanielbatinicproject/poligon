@@ -18,7 +18,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
 
     const NOTES_PER_PAGE = 3;
 
-    // Listen for global collapse events
+    
     useEffect(() => {
         const handleCollapseChange = (event) => {
             if (event.detail && typeof event.detail.collapsed === 'boolean') {
@@ -32,14 +32,14 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
         };
     }, []);
 
-    // Listen for new notes created from ScientificEditor
+    
     useEffect(() => {
         const handleNoteCreated = (event) => {
             const { note, thesisId, chapterId } = event.detail || {};
             
-            // Provjeri da li je bilješka za trenutno poglavlje
+            
             if (note && thesisId === thesis?.id && chapterId === chapter?.id) {
-                // Dodaj novu bilješku na vrh liste
+                
                 setNotes(prevNotes => [note, ...prevNotes]);
             }
         };
@@ -72,19 +72,19 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
         }
     }, [thesis, chapter]);
 
-    // Funkcija za sortiranje bilješki
+    
     const sortNotes = useCallback((notesList) => {
         return notesList.sort((a, b) => {
-            // Prvo sortiraj po approved statusu (false prvo)
+            
             if (a.approved !== b.approved) {
-                return a.approved - b.approved; // false (0) prije true (1)
+                return a.approved - b.approved; 
             }
-            // Unutar iste grupe, sortiraj po datumu (najnovije prvo)
+            
             return new Date(b.created) - new Date(a.created);
         });
     }, []);
 
-    // Funkcija za updateiranje prikazanih bilješki s paginacijom
+    
     const updateDisplayedNotes = useCallback(() => {
         const sortedNotes = sortNotes([...notes]);
         const startIndex = 0;
@@ -92,25 +92,25 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
         setDisplayedNotes(sortedNotes.slice(startIndex, endIndex));
     }, [notes, currentPage, sortNotes]);
 
-    // Dohvati bilješke za trenutno poglavlje
+    
     useEffect(() => {
         if (thesis && chapter) {
             loadNotes();
-            setCurrentPage(1); // Reset paginacije kada se promijeni poglavlje
+            setCurrentPage(1); 
         }
     }, [thesis, chapter, loadNotes]);
 
-    // Update prikazanih bilješki kada se promijene notes ili currentPage
+    
     useEffect(() => {
         updateDisplayedNotes();
     }, [updateDisplayedNotes]);
 
-    // Funkcija za učitavanje više bilješki
+    
     const handleLoadMore = () => {
         setCurrentPage(prev => prev + 1);
     };
 
-    // Provjeri ima li još bilješki za učitati
+    
     const hasMoreNotes = displayedNotes.length < notes.length;
 
     const handleAddNote = async () => {
@@ -131,7 +131,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
             if (response.success && response.data) {
                 setNotes(prev => [response.data, ...prev]);
             }
-            // Reset form fields
+            
             setNewNoteDescription('');
             setNewNoteAuthor(user?.username || 'Visitor');
             setNewNoteLineNumber('');
@@ -139,7 +139,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
             setShowAddNoteForm(false);
         } catch (error) {
             console.error('Error creating note:', error);
-            // TODO: Dodaj toast notifikaciju
+            
         } finally {
             setLoading(false);
         }
@@ -172,7 +172,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
             setDeleteConfirm(null);
         } catch (error) {
             console.error('Error deleting note:', error);
-            // TODO: Dodaj toast notifikaciju
+            
         }
     };
 

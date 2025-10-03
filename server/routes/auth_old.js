@@ -1,20 +1,20 @@
 const express = require('express');
 const router = express.Router();
 
-// Globalni session store koji se dijeli između zahtjeva
+
 if (!global.activeSessions) {
     global.activeSessions = new Map();
 }
 const activeSessions = global.activeSessions;
 
-// GET /api/auth/status - Provjeri status prijave
+
 router.get('/status', (req, res) => {
     let sessionId = null;
     
-    // Provjeri Authorization Bearer token
+    
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
-        sessionId = authHeader.substring(7); // Ukloni "Bearer "
+        sessionId = authHeader.substring(7); 
     }
     
     console.log('Auth status check - Authorization header:', authHeader); // Debug log
@@ -23,25 +23,25 @@ router.get('/status', (req, res) => {
     
     if (sessionId && activeSessions.has(sessionId)) {
         const user = activeSessions.get(sessionId);
-        console.log('User found in session:', user); // Debug log
+        console.log('User found in session:', user); 
         return res.json({
             authenticated: true,
             user: user
         });
     }
     
-    console.log('No valid session found'); // Debug log
+    console.log('No valid session found'); 
     res.json({
         authenticated: false,
         user: null
     });
 });
 
-// POST /api/auth/login - Prijava
+
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
     
-    // Provjeri protiv .env varijabli
+    
     const adminUsername = process.env.ADMIN_USERNAME || 'admin';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
     
@@ -56,7 +56,7 @@ router.post('/login', (req, res) => {
         
         activeSessions.set(sessionId, user);
         console.log('New session created:', sessionId, 'for user:', user.username); // Debug log
-        console.log('Total active sessions:', activeSessions.size); // Debug log
+        console.log('Total active sessions:', activeSessions.size); 
         
         res.json({
             success: true,
@@ -71,7 +71,7 @@ router.post('/login', (req, res) => {
     }
 });
 
-// POST /api/auth/logout - Odjava
+
 router.post('/logout', (req, res) => {
     let sessionId = null;
     const authHeader = req.headers.authorization;

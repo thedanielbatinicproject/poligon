@@ -7,11 +7,11 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Multer konfiguracija za file upload
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = path.join(__dirname, 'public', 'uploads');
-        // Kreiraj direktorij ako ne postoji
+        
         const fs = require('fs');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-        // Generiraj jedinstveno ime fajla
+        
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
         cb(null, 'img-' + uniqueSuffix + ext);
@@ -29,10 +29,10 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
+        fileSize: 5 * 1024 * 1024 
     },
     fileFilter: function (req, file, cb) {
-        // Dozvoli samo slike
+        
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
@@ -46,13 +46,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serviranje React build datoteka
+
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Serviranje TinyMCE datoteka iz public direktorija
+
 app.use(express.static(path.join(__dirname, 'public')));
 
-// CORS za React development - dodajemo support za credentials
+
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -64,7 +64,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// API rute
+
 const authRoutes = require('./server/routes/auth');
 const thesesRoutes = require('./server/routes/theses');
 const tasksRoutes = require('./server/routes/tasks');
@@ -75,7 +75,7 @@ app.use('/api/theses', thesesRoutes);
 app.use('/api', tasksRoutes);
 app.use('/api/notes', notesRoutes);
 
-// Upload endpoint za TinyMCE
+
 app.post('/api/upload', upload.single('image'), (req, res) => {
     try {
         if (!req.file) {
@@ -133,7 +133,7 @@ app.get('/api/about', (req, res) => {
     });
 });
 
-// TinyMCE konfiguracija endpoint
+
 app.get('/api/tinymce-config', (req, res) => {
     res.json({
         apiKey: process.env.TINYMCE_API_KEY || '',
@@ -141,12 +141,12 @@ app.get('/api/tinymce-config', (req, res) => {
     });
 });
 
-// Serviranje React aplikacije za sve ostale rute
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// Error handler
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Nešto je pošlo po zlu!' });

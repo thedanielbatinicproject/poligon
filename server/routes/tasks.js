@@ -48,7 +48,7 @@ const authenticateUser = (req, res, next) => {
     next();
 };
 
-// Utility functions za učitavanje i spremanje podataka
+
 function loadTasks() {
     try {
         if (fs.existsSync(TASKS_FILE)) {
@@ -97,9 +97,9 @@ function generateUniqueId() {
     return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 }
 
-// TASKS ROUTES
 
-// GET /api/tasks - Dohvati sve taskove
+
+
 router.get('/tasks', (req, res) => {
     try {
         const tasks = loadTasks();
@@ -122,7 +122,7 @@ router.post('/tasks', authenticateUser, (req, res) => {
     try {
         const { title, description, documentId, chapterId, dueDate } = req.body;
 
-        // Validacija obaveznih polja
+        
         if (!title || !description || !dueDate) {
             return res.status(400).json({
                 success: false,
@@ -226,7 +226,7 @@ router.put('/tasks/:id', authenticateUser, (req, res) => {
 
 // PATCH /api/tasks/:id/toggle-finished - Promijeni finished status
 router.patch('/tasks/:id/toggle-finished', (req, res) => {
-    // Provjeri autentifikaciju za sve PATCH zahtjeve
+    
     const sessionId = req.cookies.sessionId;
     
     if (!sessionId) {
@@ -366,7 +366,7 @@ router.post('/todos', (req, res) => {
     try {
         const { title, description, documentId, chapterId, dueDate } = req.body;
 
-        // Validacija obaveznih polja (todo nema obavezan dueDate)
+        
         if (!title || !description) {
             return res.status(400).json({
                 success: false,
@@ -376,7 +376,7 @@ router.post('/todos', (req, res) => {
 
         const todos = loadTodos();
         
-        // Provjeri je li korisnik prijavljen
+        
         const sessionId = req.cookies.sessionId;
         let createdBy = 'Anonymous';
         
@@ -453,8 +453,8 @@ router.put('/todos/:id', (req, res) => {
             }
         }
 
-        // Logirani korisnici mogu uređivati sve
-        // Nelogirani korisnici mogu uređivati samo Anonymous todove
+        
+        
         if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
             return res.status(403).json({
                 success: false,
@@ -523,8 +523,8 @@ router.patch('/todos/:id/toggle-finished', (req, res) => {
             }
         }
 
-        // Logirani korisnici mogu uređivati sve
-        // Nelogirani korisnici mogu uređivati samo Anonymous todove
+        
+        
         if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
             return res.status(403).json({
                 success: false,
@@ -590,8 +590,8 @@ router.delete('/todos/:id', (req, res) => {
             }
         }
 
-        // Logirani korisnici mogu obrisati sve
-        // Nelogirani korisnici mogu obrisati samo Anonymous todove
+        
+        
         if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
             return res.status(403).json({
                 success: false,
@@ -626,7 +626,7 @@ router.post('/cleanup-tasks', async (req, res) => {
     try {
         const { documentId, chapterId } = req.body;
         
-        // Učitaj postojeće taskove i todove
+        
         const tasks = loadTasks();
         const todos = loadTodos();
         
@@ -634,7 +634,7 @@ router.post('/cleanup-tasks', async (req, res) => {
         let todosUpdated = false;
 
         if (documentId && !chapterId) {
-            // Briši dokument - svi taskovi/todovi vezani za taj dokument postaju globalni
+            
             tasks.forEach(task => {
                 if (task.documentId === documentId) {
                     task.documentId = '';
@@ -651,7 +651,7 @@ router.post('/cleanup-tasks', async (req, res) => {
                 }
             });
         } else if (documentId && chapterId) {
-            // Briši poglavlje - taskovi/todovi gube vezu s poglavljem ali ostaju vezani za dokument
+            
             tasks.forEach(task => {
                 if (task.documentId === documentId && task.chapterId === chapterId) {
                     task.chapterId = '';
@@ -667,7 +667,7 @@ router.post('/cleanup-tasks', async (req, res) => {
             });
         }
 
-        // Spremi promjene
+        
         if (tasksUpdated) {
             saveTasks(tasks);
         }
@@ -706,7 +706,7 @@ router.get('/chapters/:documentId', async (req, res) => {
             
             const addChapterWithChildren = (chapter, indent = 0) => {
                 const chapterNumber = getChapterNumber(chapter, chapters);
-                const indentPrefix = '    '.repeat(indent); // 4 spaces per level
+                const indentPrefix = '    '.repeat(indent); 
                 
                 result.push({
                     ...chapter,
@@ -721,7 +721,7 @@ router.get('/chapters/:documentId', async (req, res) => {
                 children.forEach(child => addChapterWithChildren(child, indent + 1));
             };
 
-            // Dodaj glavna poglavlja sortirana po order-u
+            
             const mainChapters = chapters
                 .filter(ch => !ch.parentId)
                 .sort((a, b) => a.order - b.order);
@@ -730,11 +730,11 @@ router.get('/chapters/:documentId', async (req, res) => {
             return result;
         };
 
-        // Funkcija za generiranje broja poglavlja
+        
         const getChapterNumber = (chapter, allChapters) => {
             const getNumber = (ch) => {
                 if (!ch.parentId) {
-                    // Glavno poglavlje
+                    
                     const mainChapters = allChapters
                         .filter(c => !c.parentId)
                         .sort((a, b) => a.order - b.order);
@@ -743,7 +743,7 @@ router.get('/chapters/:documentId', async (req, res) => {
                     // Potpoglavlje
                     const parent = allChapters.find(c => c.id === ch.parentId);
                     if (parent) {
-                        const parentNumber = getNumber(parent).slice(0, -1); // Ukloni zadnju točku
+                        const parentNumber = getNumber(parent).slice(0, -1); 
                         const siblings = allChapters
                             .filter(c => c.parentId === ch.parentId)
                             .sort((a, b) => a.order - b.order);

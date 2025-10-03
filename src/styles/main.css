@@ -1,4 +1,4 @@
-/* CSS Varijable */
+
 :root {
     --primary-color: #3498db;
     --accent-color: #2980b9;
@@ -19,7 +19,7 @@
     --accent-dark: #34495e;
 }
 
-/* Reset i osnovni stilovi */
+
 * {
     margin: 0;
     padding: 0;
@@ -39,7 +39,7 @@ body {
     padding: 0 20px;
 }
 
-/* Zaglavlje i navigacija */
+
 header {
     background-color: #2c3e50;
     color: white;
@@ -117,7 +117,7 @@ header {
     font-weight: bold;
 }
 
-/* Glavni sadržaj */
+
 main {
     min-height: calc(100vh - 140px);
     padding: 2rem 0;
@@ -179,7 +179,7 @@ main {
     margin-bottom: 1rem;
 }
 
-/* Gumbovi */
+
 .btn {
     display: inline-block;
     background-color: #3498db;
@@ -198,7 +198,7 @@ main {
     background-color: #2980b9;
 }
 
-/* Status rezultat */
+
 .status-result {
     margin-top: 1rem;
     padding: 1rem;
@@ -218,7 +218,7 @@ main {
     border: 1px solid #f5c6cb;
 }
 
-/* Dodatni button stilovi */
+
 .primary-btn {
     background: var(--primary-color);
     color: white;
@@ -235,7 +235,7 @@ main {
     transform: translateY(-1px);
 }
 
-/* Footer */
+
 footer {
     background-color: #34495e;
     color: white;
@@ -244,7 +244,7 @@ footer {
     margin-top: auto;
 }
 
-/* Responsivnost */
+
 @media (max-width: 768px) {
     .nav-container {
         flex-direction: column;

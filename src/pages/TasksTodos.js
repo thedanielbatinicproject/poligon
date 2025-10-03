@@ -20,14 +20,14 @@ const TasksTodos = ({ user, isAuthenticated }) => {
     const [upcomingItems, setUpcomingItems] = useState([]);
     const [visibleItems, setVisibleItems] = useState(5);
     
-    // Custom confirmation dialog state
+    
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [confirmItem, setConfirmItem] = useState(null);
     
-    // Custom notification state
+    
     const [notification, setNotification] = useState(null);
     
-    // Edit form state
+    
     const [showEditForm, setShowEditForm] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [editForm, setEditForm] = useState({
@@ -40,7 +40,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
     const [originalEditForm, setOriginalEditForm] = useState({});
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-    // Form state za tasks
+    
     const [taskForm, setTaskForm] = useState({
         title: '',
         description: '',
@@ -49,7 +49,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         dueDate: ''
     });
 
-    // Form state za todos
+    
     const [todoForm, setTodoForm] = useState({
         title: '',
         description: '',
@@ -65,7 +65,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
     }, []);
 
     useEffect(() => {
-        // Ažuriranje kalendar događaja i nadolazećih stavki kad se promijene tasks/todos ili filtri
+        
         updateCalendarEvents();
         updateUpcomingItems();
     }, [tasks, todos, selectedDocuments]);
@@ -101,7 +101,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             const response = await fetch('/api/theses');
             if (response.ok) {
                 const data = await response.json();
-                // API vraća direktno array, ne objekt s data svojstvom
+                
                 const documentsArray = Array.isArray(data) ? data : (data.data || []);
                 setDocuments(documentsArray);
             }
@@ -165,7 +165,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             )
             : allItems;
 
-        // Sortiranje po due date, prvo oni bez datuma
+        
         const sortedItems = filteredItems.sort((a, b) => {
             if (!a.dueDate && !b.dueDate) return 0;
             if (!a.dueDate) return 1;
@@ -202,7 +202,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    // Dodaj novi task u state
+                    
                     setTasks(prev => [...prev, result.data]);
                     setShowTaskForm(false);
                     setTaskForm({ title: '', description: '', documentId: '', chapterId: '', dueDate: '' });
@@ -234,7 +234,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    // Dodaj novi todo u state
+                    
                     setTodos(prev => [...prev, result.data]);
                     setShowTodoForm(false);
                     setTodoForm({ title: '', description: '', documentId: '', chapterId: '', dueDate: '' });
@@ -258,14 +258,14 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
     const toggleFinished = async (item) => {
         try {
-            // Ako je task/todo već završen, pokaži custom konfirmaciju
+            
             if (item.isFinished) {
                 setConfirmItem(item);
                 setShowConfirmDialog(true);
                 return;
             }
 
-            // Direktno završi task/todo ako nije već završen
+            
             await performToggle(item);
         } catch (error) {
             console.error('Greška pri mijenjanju statusa:', error);
@@ -284,7 +284,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             });
 
             if (response.ok) {
-                // Refreshaj podatke
+                
                 loadTasks();
                 loadTodos();
             } else {
@@ -312,7 +312,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
     const showNotification = (message, type = 'info') => {
         setNotification({ message, type });
-        // Auto-hide after 4 seconds
+        
         setTimeout(() => {
             setNotification(null);
         }, 4000);
@@ -328,12 +328,12 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             dueDate: item.dueDate || ''
         });
         
-        // Load chapters if document is selected
+        
         if (item.documentId) {
             loadChapters(item.documentId);
         }
         
-        // Store original form data for comparison
+        
         const originalForm = {
             title: item.title || '',
             description: item.description || '',
@@ -377,7 +377,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         e.preventDefault();
         if (!editingItem) return;
 
-        // Basic validation
+        
         if (!editForm.title.trim()) {
             showNotification('Naziv je obavezan', 'error');
             return;
@@ -406,7 +406,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    // Update state with edited item
+                    
                     if (editingItem.type === 'task') {
                         setTasks(prev => prev.map(task => 
                             task.id === editingItem.id ? result.data : task
@@ -444,7 +444,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             return { document: documentTitle, chapter: '' };
         }
 
-        // Za chapter info, trebamo dohvatiti poglavlje iz dokumenta
+        
         const chapter = document?.chapters?.find(ch => ch.id === item.chapterId);
         if (chapter) {
             const chapterNumber = getChapterNumber(chapter, document.chapters);
@@ -463,7 +463,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
     const getChapterNumber = (chapter, allChapters) => {
         const getNumber = (ch) => {
             if (!ch.parentId) {
-                // Glavno poglavlje
+                
                 const mainChapters = allChapters
                     .filter(c => !c.parentId)
                     .sort((a, b) => a.order - b.order);
@@ -472,7 +472,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 // Potpoglavlje
                 const parent = allChapters.find(c => c.id === ch.parentId);
                 if (parent) {
-                    const parentNumber = getNumber(parent).slice(0, -1); // Ukloni zadnju točku
+                    const parentNumber = getNumber(parent).slice(0, -1); 
                     const siblings = allChapters
                         .filter(c => c.parentId === ch.parentId)
                         .sort((a, b) => a.order - b.order);
@@ -487,37 +487,37 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
     const canEditItem = (item) => {
         if (item.type === 'task') {
-            // Taskovi mogu biti uređivani samo od prijavljenih korisnika
-            // Logirani korisnici mogu uređivati sve taskove
+            
+            
             return isAuthenticated && user;
         } else {
-            // Todovi - logirani korisnici mogu uređivati sve
-            // Nelogirani korisnici mogu uređivati samo Anonymous todove
+            
+            
             if (isAuthenticated && user) {
-                return true; // Logirani mogu uređivati sve todove
+                return true; 
             } else {
-                // Nelogirani korisnici mogu uređivati samo Anonymous todove
+                
                 return item.createdBy === 'Anonymous';
             }
         }
     };
 
-    // Delete state
+    
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
 
     const canDeleteItem = (item) => {
         if (item.type === 'task') {
-            // Taskovi mogu biti obrisani samo od prijavljenih korisnika
-            // Logirani korisnici mogu brisati sve taskove
+            
+            
             return isAuthenticated && user;
         } else {
-            // Todovi - logirani korisnici mogu brisati sve
-            // Nelogirani korisnici mogu brisati samo Anonymous todove
+            
+            
             if (isAuthenticated && user) {
-                return true; // Logirani mogu brisati sve todove
+                return true; 
             } else {
-                // Nelogirani korisnici mogu brisati samo Anonymous todove
+                
                 return item.createdBy === 'Anonymous';
             }
         }
@@ -540,7 +540,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    // Update state by removing deleted item
+                    
                     if (itemToDelete.type === 'task') {
                         setTasks(prev => prev.filter(task => task.id !== itemToDelete.id));
                     } else {
@@ -576,7 +576,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 <p>Upravljajte zadacima i planovima za vaše dokumente</p>
             </div>
 
-            {/* Kalendar sekcija */}
+            {}
             <div className="calendar-section">
                 <h2>Kalendar događaja</h2>
                 <div className="calendar-container">
@@ -592,7 +592,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                         eventPropGetter={(event) => ({
                             style: {
                                 backgroundColor: event.resource.isFinished 
-                                    ? '#95a5a6'  // Siva za završene
+                                    ? '#95a5a6'  
                                     : event.resource.type === 'task' ? '#3498db' : '#27ae60',
                                 borderRadius: '5px',
                                 opacity: event.resource.isFinished ? 0.6 : 0.8,
@@ -606,7 +606,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 </div>
             </div>
 
-            {/* Search i filter sekcija */}
+            {}
             <div className="filter-section">
                 <div className="document-search">
                     <h3>Pretraži dokumente</h3>
@@ -644,7 +644,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 </div>
             </div>
 
-            {/* Lista nadolazećih taskova i todova */}
+            {}
             <div className="upcoming-section">
                 <h3>Nadolazeći zadaci</h3>
                 <div className="upcoming-table-container">
@@ -706,7 +706,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                                 <button 
                                                     className="edit-btn"
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // Prevent row click
+                                                        e.stopPropagation(); 
                                                         openEditForm(item);
                                                     }}
                                                     title="Uredi"
@@ -723,7 +723,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                                 <button 
                                                     className="delete-btn"
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // Prevent row click
+                                                        e.stopPropagation(); 
                                                         handleDeleteClick(item);
                                                     }}
                                                     title="Obriši"
@@ -749,7 +749,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 </div>
             </div>
 
-            {/* Forme za kreiranje */}
+            {}
             <div className="creation-section">
                 <div className="form-buttons">
                     {isAuthenticated && (
@@ -757,7 +757,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                             className="create-btn task-btn"
                             onClick={() => {
                                 setShowTaskForm(!showTaskForm);
-                                if (!showTaskForm) setShowTodoForm(false); // Sakrij todo formu kada prikazuješ task formu
+                                if (!showTaskForm) setShowTodoForm(false); 
                             }}
                         >
                             {showTaskForm ? 'Sakrij' : 'Kreiraj Task'}
@@ -767,7 +767,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                         className="create-btn todo-btn"
                         onClick={() => {
                             setShowTodoForm(!showTodoForm);
-                            if (!showTodoForm && isAuthenticated) setShowTaskForm(false); // Sakrij task formu kada prikazuješ todo formu
+                            if (!showTodoForm && isAuthenticated) setShowTaskForm(false); 
                         }}
                     >
                         {showTodoForm ? 'Sakrij' : 'Kreiraj Todo'}
@@ -779,7 +779,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                     )}
                 </div>
 
-                {/* Task forma */}
+                {}
                 {showTaskForm && isAuthenticated && (
                     <form className="task-form" onSubmit={handleTaskSubmit}>
                         <h4>Novi Task</h4>
@@ -850,7 +850,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                     </form>
                 )}
 
-                {/* Todo forma */}
+                {}
                 {showTodoForm && (
                     <form className="todo-form" onSubmit={handleTodoSubmit}>
                         <h4>Novi Todo</h4>
@@ -921,7 +921,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 )}
             </div>
 
-            {/* Custom Confirmation Dialog */}
+            {}
             {showConfirmDialog && confirmItem && (
                 <div className="confirm-overlay">
                     <div className="confirm-dialog">
@@ -952,7 +952,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 </div>
             )}
 
-            {/* Fullscreen Edit Form */}
+            {}
             {showEditForm && editingItem && (
                 <div className="fullscreen-overlay">
                     <div className="fullscreen-form">
@@ -1048,7 +1048,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 </div>
             )}
 
-            {/* Cancel Confirmation Dialog */}
+            {}
             {showCancelConfirm && (
                 <div className="confirm-overlay">
                     <div className="confirm-dialog">
@@ -1077,7 +1077,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 </div>
             )}
 
-            {/* Delete Confirmation Dialog */}
+            {}
             {showDeleteConfirm && (
                 <div className="confirm-overlay">
                     <div className="confirm-dialog">
@@ -1107,7 +1107,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 </div>
             )}
 
-            {/* Custom Notification */}
+            {}
             {notification && (
                 <div className={`notification-toast ${notification.type}`}>
                     <div className="notification-content">

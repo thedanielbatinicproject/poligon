@@ -1,12 +1,12 @@
-// Helper funkcija za API pozive sa cookie podrške
+
 export const apiCall = async (url, options = {}) => {
-    // Sigurno serijaliziranje da izbjegnemo ciklične reference
+    
     const safeStringify = (obj) => {
         const seen = new Set();
         return JSON.stringify(obj, (key, val) => {
             if (val != null && typeof val === "object") {
                 if (seen.has(val)) {
-                    return {}; // Ukloni ciklične reference
+                    return {}; 
                 }
                 seen.add(val);
             }
@@ -14,14 +14,14 @@ export const apiCall = async (url, options = {}) => {
         });
     };
 
-    // Ako je body string, koristi ga direktno, inače sigurno serializiraj
+    
     let processedOptions = { ...options };
     if (processedOptions.body && typeof processedOptions.body !== 'string') {
         processedOptions.body = safeStringify(processedOptions.body);
     }
 
     const defaultOptions = {
-        credentials: 'include', // Uvek uključi cookies
+        credentials: 'include', 
         headers: {
             'Content-Type': 'application/json',
             ...options.headers
@@ -32,15 +32,15 @@ export const apiCall = async (url, options = {}) => {
     try {
         const response = await fetch(url, defaultOptions);
         
-        // Proveri da li je response JSON
+        
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
             
-            // Ako je auth error, možemo ovde da rukujemo
+            
             if (response.status === 401) {
 
-                // Ovde možemo da redirectujemo na login ili emitujemo event
+                
             }
             
             return { success: response.ok, data, status: response.status };
@@ -53,7 +53,7 @@ export const apiCall = async (url, options = {}) => {
     }
 };
 
-// Specifične helper funkcije za auth
+
 export const authAPI = {
     login: (credentials) => apiCall('/api/auth/login', {
         method: 'POST',
@@ -109,7 +109,7 @@ export const thesesAPI = {
 
 // Notes API
 export const notesAPI = {
-    // Dohvati sve bilješke ili filtrirane po thesisId/chapterId
+    
     getNotes: (thesisId, chapterId) => {
         let url = '/api/notes';
         const params = new URLSearchParams();
@@ -124,25 +124,25 @@ export const notesAPI = {
         return apiCall(url);
     },
     
-    // Kreiraj novu bilješku
+    
     createNote: (noteData) => apiCall('/api/notes', {
         method: 'POST',
         body: JSON.stringify(noteData)
     }),
     
-    // Ažuriraj bilješku
+    
     updateNote: (noteId, noteData) => apiCall(`/api/notes/${noteId}`, {
         method: 'PUT',
         body: JSON.stringify(noteData)
     }),
     
-    // Prihvati/odbaci bilješku
+    
     approveNote: (noteId, approved) => apiCall(`/api/notes/${noteId}/approve`, {
         method: 'PATCH',
         body: JSON.stringify({ approved })
     }),
     
-    // Obriši bilješku
+    
     deleteNote: (noteId) => apiCall(`/api/notes/${noteId}`, {
         method: 'DELETE'
     })

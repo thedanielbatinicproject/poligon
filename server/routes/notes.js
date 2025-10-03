@@ -5,7 +5,7 @@ const router = express.Router();
 
 const NOTES_FILE = path.join(__dirname, '..', 'data', 'notes.json');
 
-// Pomoćna funkcija za čitanje bilješki
+
 const readNotes = () => {
     try {
         const data = fs.readFileSync(NOTES_FILE, 'utf8');
@@ -16,7 +16,7 @@ const readNotes = () => {
     }
 };
 
-// Pomoćna funkcija za pisanje bilješki
+
 const writeNotes = (data) => {
     try {
         fs.writeFileSync(NOTES_FILE, JSON.stringify(data, null, 2));
@@ -33,17 +33,17 @@ router.get('/', (req, res) => {
         const data = readNotes();
         let notes = data.notes || [];
 
-        // Filtriranje po thesisId
+        
         if (req.query.thesisId) {
             notes = notes.filter(note => note.thesisId === req.query.thesisId);
         }
 
-        // Filtriranje po chapterId
+        
         if (req.query.chapterId) {
             notes = notes.filter(note => note.chapterId === req.query.chapterId);
         }
 
-        // Sortiranje po datumu kreiranja (najnoviji prvo)
+        
         notes.sort((a, b) => new Date(b.created) - new Date(a.created));
 
         res.json({ notes });
@@ -53,19 +53,19 @@ router.get('/', (req, res) => {
     }
 });
 
-// POST /api/notes - Kreiranje nove bilješke
+
 router.post('/', (req, res) => {
     try {
         const { thesisId, chapterId, lineNumber, selectedText, description, author } = req.body;
 
-        // Validacija obaveznih polja
+        
         if (!thesisId || !chapterId || !description) {
             return res.status(400).json({ error: 'Nedostaju obavezna polja (thesisId, chapterId, description)' });
         }
 
         const data = readNotes();
         
-        // Kreiranje nove bilješke
+        
         const newNote = {
             id: `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             thesisId,
@@ -91,7 +91,7 @@ router.post('/', (req, res) => {
     }
 });
 
-// PUT /api/notes/:id - Ažuriranje bilješke
+
 router.put('/:id', (req, res) => {
     try {
         const noteId = req.params.id;
@@ -104,7 +104,7 @@ router.put('/:id', (req, res) => {
             return res.status(404).json({ error: 'Bilješka nije pronađena' });
         }
 
-        // Ažuriraj bilješku
+        
         if (description !== undefined) data.notes[noteIndex].description = description;
         if (author !== undefined) data.notes[noteIndex].author = author;
 
@@ -119,7 +119,7 @@ router.put('/:id', (req, res) => {
     }
 });
 
-// PATCH /api/notes/:id/approve - Prihvaćanje/odbacivanje bilješke
+
 router.patch('/:id/approve', (req, res) => {
     try {
         const noteId = req.params.id;
@@ -153,7 +153,7 @@ router.delete('/thesis/:thesisId', (req, res) => {
         const data = readNotes();
         const initialCount = data.notes.length;
         
-        // Filtriraj bilješke - ukloni sve koje pripadaju ovom thesis-u
+        
         data.notes = data.notes.filter(note => note.thesisId !== thesisId);
         
         const deletedCount = initialCount - data.notes.length;
@@ -173,7 +173,7 @@ router.delete('/thesis/:thesisId', (req, res) => {
     }
 });
 
-// DELETE /api/notes/:id - Brisanje bilješke
+
 router.delete('/:id', (req, res) => {
     try {
         const noteId = req.params.id;

@@ -1,4 +1,4 @@
-/* Hijerarhijska struktura poglavlja */
+
 .hierarchical-chapters {
     padding: 0;
 }
@@ -91,7 +91,7 @@
     transform: scale(1.1);
 }
 
-/* Modal za potvrdu brisanja */
+
 .delete-confirm-overlay {
     position: fixed;
     top: 0;
@@ -407,31 +407,31 @@
     overflow-y: auto;
     display: flex;
     gap: 20px;
-    height: calc(100vh - 160px); /* Fiksna visina za oba kontejnera */
+    height: calc(100vh - 160px); 
 }
 
 .editor-container {
     flex: 3;
-    min-width: 0; /* Omogućava pravilno smanjivanje */
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth easing */
-    height: 100%; /* Koristi punu visinu content-body */
+    min-width: 0; 
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+    height: 100%; 
 }
 
 .notes-container {
     flex: 1;
     min-width: 280px;
     max-width: 400px;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth easing */
-    height: 100%; /* Koristi punu visinu content-body */
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+    height: 100%; 
 }
 
-/* Collapsed state - with smooth animation */
+
 .content-body.notes-collapsed .editor-container {
-    flex: 4 !important; /* Editor se proširuje kada su bilješke skupljune */
+    flex: 4 !important; 
 }
 
 .content-body.notes-collapsed .notes-container {
-    flex: 0 0 60px !important; /* Fiksna širina 60px kada je collapsed */
+    flex: 0 0 60px !important; 
     min-width: 60px !important;
     max-width: 60px !important;
 }

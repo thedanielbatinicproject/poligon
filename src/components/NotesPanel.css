@@ -1,4 +1,4 @@
-/* Notes Panel Styles */
+
 .notes-panel {
     background: #ffffff;
     border: 1px solid #e0e0e0;
@@ -6,12 +6,12 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: all 0.3s ease;
-    height: 100%; /* Koristi punu visinu notes-container */
+    height: 100%; 
     display: flex;
     flex-direction: column;
 }
 
-/* Collapsed state - triggered by parent container with smooth animations */
+
 .content-body.notes-collapsed .notes-panel .notes-header h3 {
     opacity: 0;
     transform: scale(0);
@@ -31,7 +31,7 @@
     transition: height 0.3s ease, opacity 0.3s ease;
 }
 
-/* Normal state animations */
+
 .notes-panel .notes-header h3 {
     opacity: 1;
     transform: scale(1);
@@ -248,12 +248,12 @@
     flex: 1;
     overflow-y: auto;
     padding: 0 16px 16px 16px;
-    /* Sakrij scroll bar ali ostavi scrollanje */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
 }
 
-/* Sakrij scroll bar za WebKit preglednike */
+
 .notes-list::-webkit-scrollbar {
     display: none;
 }
@@ -399,7 +399,7 @@
     background: #c82333;
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
     .notes-panel {
         max-height: 50vh;
@@ -419,7 +419,7 @@
     }
 }
 
-/* Load More Button Styles */
+
 .load-more-container {
     padding: 16px;
     text-align: center;
@@ -451,7 +451,7 @@
     box-shadow: none;
 }
 
-/* Form Styles Updates */
+
 .form-row {
     margin-bottom: 12px;
 }

@@ -155,7 +155,7 @@
     transform: translateY(-1px);
 }
 
-/* Konfirmacijski popup za brisanje */
+
 .delete-confirm-overlay {
     position: fixed;
     top: 0;

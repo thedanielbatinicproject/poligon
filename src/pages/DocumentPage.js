@@ -15,7 +15,7 @@ const DocumentPage = ({ user, onPageChange }) => {
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState(user ? 'EDIT' : 'VIEW');
 
-    // Wrapper funkcija za setSelectedChapter koja automatski čuva u localStorage
+    
     const setSelectedChapter = (chapter) => {
         setSelectedChapterState(chapter);
         if (chapter) {
@@ -27,31 +27,31 @@ const DocumentPage = ({ user, onPageChange }) => {
 
     useEffect(() => {
         loadInitialDocument();
-    }, []); // Pozovi samo jednom na mount
+    }, []); 
     
     useEffect(() => {
         setMode(user ? 'EDIT' : 'VIEW');
         
-        // U VIEW režimu (bez korisnika), prikaži selektor ako nema dokumenta I loading je završen
+        
         if (!user && !loading && !currentThesis) {
             setShowDocumentSelector(true);
         }
-    }, [user, loading, currentThesis]); // Promeni mode kada se user, loading ili currentThesis promeni
+    }, [user, loading, currentThesis]); 
 
-    // Uklanjamo getAuthHeaders jer API helper automatski rukuje cookies
+    
 
     const loadInitialDocument = async () => {
         try {
             setLoading(true);
             
-            // Pokušaj učitati dokument iz localStorage
+            
             const savedDocId = localStorage.getItem('selectedDocumentId');
             if (savedDocId) {
                 const result = await thesesAPI.getById(savedDocId);
                 if (result.success) {
                     setCurrentThesis(result.data);
                     
-                    // Pokušaj učitati i selectedChapter
+                    
                     const savedChapterId = localStorage.getItem('selectedChapterId');
                     if (savedChapterId && result.data.chapters) {
                         const chapter = result.data.chapters.find(c => c.id === savedChapterId);
@@ -65,14 +65,14 @@ const DocumentPage = ({ user, onPageChange }) => {
                 }
             }
 
-            // U EDIT režimu, učitaj prvi dostupni dokument automatski
+            
             if (user) {
                 const result = await thesesAPI.getAll();
                 if (result.success && result.data.length > 0) {
                     setCurrentThesis(result.data[0]);
                     localStorage.setItem('selectedDocumentId', result.data[0].id);
                     
-                    // Pokušaj učitati i selectedChapter
+                    
                     const savedChapterId = localStorage.getItem('selectedChapterId');
                     if (savedChapterId && result.data[0].chapters) {
                         const chapter = result.data[0].chapters.find(c => c.id === savedChapterId);
@@ -82,7 +82,7 @@ const DocumentPage = ({ user, onPageChange }) => {
                     }
                 }
             }
-            // U VIEW režimu, ne učitavaj automatski - korisnik mora odabrati
+            
         } catch (error) {
             console.error('Error loading document:', error);
         } finally {
@@ -236,13 +236,13 @@ const DocumentPage = ({ user, onPageChange }) => {
                         selectedChapter={selectedChapter}
                         onThesisUpdate={(updatedThesis) => {
                             setCurrentThesis(updatedThesis);
-                            // Ažuriraj selectedChapter ako se promijenio
+                            
                             if (selectedChapter && updatedThesis.chapters) {
                                 const updatedChapter = updatedThesis.chapters.find(c => c.id === selectedChapter.id);
                                 if (updatedChapter) {
                                     setSelectedChapterState(updatedChapter);
                                 } else {
-                                    // Poglavlje je obrisano
+                                    
                                     setSelectedChapter(null);
                                 }
                             }

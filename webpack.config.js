@@ -76,8 +76,8 @@ module.exports = (env, argv) => {
     extensions: ['.js', '.jsx']
   },
   performance: {
-    maxEntrypointSize: 400000, // 400kb
-    maxAssetSize: 400000, // 400kb
+    maxEntrypointSize: 400000, 
+    maxAssetSize: 400000, 
     hints: 'warning'
   }
   };

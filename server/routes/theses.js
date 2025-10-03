@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ThesisModel = require('../models/ThesisModel');
 
-// Import session functions from auth
+
 const fs = require('fs');
 const path = require('path');
 
@@ -23,7 +23,7 @@ function loadActiveSessions() {
 
 // Middleware za autentifikaciju - sada koristi cookies
 const authenticateUser = (req, res, next) => {
-    // Za POST/PUT/DELETE operacije zahtijevaj autentifikaciju
+    
     if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
         const sessionId = req.cookies.sessionId;
         
@@ -46,7 +46,7 @@ const authenticateUser = (req, res, next) => {
     next();
 };
 
-// GET /api/theses - Dohvati sve theses
+
 router.get('/', async (req, res) => {
     try {
         const theses = await ThesisModel.getAll();
@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /api/theses/:id - Dohvati specifični thesis
+
 router.get('/:id', async (req, res) => {
     try {
         const thesis = await ThesisModel.getById(req.params.id);
@@ -71,7 +71,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// POST /api/theses - Kreiraj novi thesis
+
 router.post('/', authenticateUser, async (req, res) => {
     try {
         const thesis = await ThesisModel.create(req.body);
@@ -82,7 +82,7 @@ router.post('/', authenticateUser, async (req, res) => {
     }
 });
 
-// PUT /api/theses/:id - Ažuriraj thesis
+
 router.put('/:id', authenticateUser, async (req, res) => {
     try {
         const thesis = await ThesisModel.update(req.params.id, req.body);
@@ -93,7 +93,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
     }
 });
 
-// DELETE /api/theses/:id - Obriši thesis
+
 router.delete('/:id', authenticateUser, async (req, res) => {
     try {
         await ThesisModel.delete(req.params.id);
@@ -104,7 +104,7 @@ router.delete('/:id', authenticateUser, async (req, res) => {
     }
 });
 
-// POST /api/theses/:id/chapters - Dodaj novo poglavlje
+
 router.post('/:id/chapters', authenticateUser, async (req, res) => {
     try {
         const thesis = await ThesisModel.addChapter(req.params.id, req.body);
@@ -115,7 +115,7 @@ router.post('/:id/chapters', authenticateUser, async (req, res) => {
     }
 });
 
-// PUT /api/theses/:id/chapters/:chapterId - Ažuriraj poglavlje
+
 router.put('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
     try {
         const thesis = await ThesisModel.updateChapter(req.params.id, req.params.chapterId, req.body);
@@ -126,7 +126,7 @@ router.put('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
     }
 });
 
-// DELETE /api/theses/:id/chapters/:chapterId - Obriši poglavlje
+
 router.delete('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
     try {
         const thesis = await ThesisModel.deleteChapter(req.params.id, req.params.chapterId);

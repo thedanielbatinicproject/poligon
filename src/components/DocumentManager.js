@@ -45,7 +45,7 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
             setIsDeleting(true);
             const result = await thesesAPI.delete(thesis.id);
             if (result.success) {
-                // Obriši iz localStorage
+                
                 localStorage.removeItem('selectedDocumentId');
                 localStorage.removeItem('selectedChapterId');
                 
@@ -184,7 +184,7 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
                 </div>
             </div>
 
-            {/* Konfirmacijski popup za brisanje */}
+            {}
             {showDeleteConfirm && (
                 <div className="delete-confirm-overlay">
                     <div className="delete-confirm-modal">

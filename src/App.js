@@ -4,7 +4,7 @@ import Footer from './components/Footer';
 import { authAPI } from './utils/api';
 import './App.css';
 
-// Lazy load komponenti za bolje performanse
+
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const DocumentPage = lazy(() => import('./pages/DocumentPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -14,7 +14,7 @@ const TasksTodos = lazy(() => import('./pages/TasksTodos'));
 
 function App() {
   const [currentPage, setCurrentPage] = useState(() => {
-    // Učitaj poslednju stranicu iz localStorage ili defaultuj na 'documents'
+    
     return localStorage.getItem('currentPage') || 'documents';
   });
   const [user, setUser] = useState(null);
@@ -24,17 +24,17 @@ function App() {
   useEffect(() => {
     checkAuthStatus();
     
-    // Provjeri da li postoji selectedDocumentId i postavi currentPage
+    
     const savedDocId = localStorage.getItem('selectedDocumentId');
     const savedCurrentPage = localStorage.getItem('currentPage');
     
-    // Ako postoji selectedDocumentId ali currentPage je 'documents', promijeni na odgovarajuću stranicu
+    
     if (savedDocId && savedCurrentPage === 'documents') {
-      setCurrentPage('documents'); // Ostavi 'documents' jer DocumentPage će prikazati dokument
+      setCurrentPage('documents'); 
     }
   }, []);
 
-  // Spremi trenutnu stranicu u localStorage kada se promijeni
+  
   useEffect(() => {
     localStorage.setItem('currentPage', currentPage);
   }, [currentPage]);
@@ -68,7 +68,7 @@ function App() {
     setCurrentPage('documents');
   };
 
-  // Loading state
+  
   if (loading) {
     return (
       <div className="app">
@@ -98,7 +98,7 @@ function App() {
     );
   }
 
-  // Renderiranje stranica - za sve korisnike (VIEW/EDIT režim)
+  
   const renderPage = () => {
     switch (currentPage) {
       case 'home':

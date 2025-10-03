@@ -9,7 +9,7 @@ const ConfirmModal = ({
     message,
     confirmText = 'Potvrdi',
     cancelText = 'Odustani',
-    type = 'warning' // warning, danger, info
+    type = 'warning' 
 }) => {
     if (!isOpen) return null;
 

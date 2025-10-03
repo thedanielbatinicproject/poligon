@@ -1,4 +1,4 @@
-﻿/* ScientificEditor.css */
+﻿
 
 .scientific-editor {
     width: 100%;
@@ -92,7 +92,7 @@
     padding: 0;
 }
 
-/* TinyMCE content area styling */
+
 .tox .tox-edit-area__iframe {
     background: white;
     min-height: 450px !important;
@@ -144,7 +144,7 @@
     font-size: 12pt;
 }
 
-/* TinyMCE custom styling overrides */
+
 .tox-tinymce {
     border-radius: 8px !important;
 }
@@ -162,7 +162,7 @@
     background: #f8f9fa !important;
 }
 
-/* Eksplicitni stilovi za kontroliranje visina */
+
 .scientific-editor .editor-container {
     height: 700px !important;
 }
@@ -175,7 +175,7 @@
     min-height: 450px !important;
 }
 
-/* Stilovi za bilješke i selekciju */
+
 .add-note-button {
     pointer-events: auto;
 }
@@ -208,7 +208,7 @@
     opacity: 0.9;
 }
 
-/* Modal stilovi za form */
+
 .note-form-overlay {
     position: fixed;
     top: 0;
