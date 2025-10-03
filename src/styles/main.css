@@ -75,6 +75,32 @@ header {
     color: white;
 }
 
+.admin-panel-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-right: 1rem;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3);
+}
+
+.admin-panel-btn:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(231, 76, 60, 0.4);
+}
+
+.admin-panel-btn.active {
+    background: #a93226;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
 .logout-btn, .login-btn {
     background: #3498db;
     color: white;
@@ -265,5 +291,10 @@ footer {
     
     .container {
         padding: 0 15px;
+    }
+    
+    /* Hide admin panel button on mobile */
+    .admin-panel-btn {
+        display: none;
     }
 }

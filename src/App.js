@@ -11,6 +11,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
 const TasksTodos = lazy(() => import('./pages/TasksTodos'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 
 function App() {
   const [currentPage, setCurrentPage] = useState(() => {
@@ -100,6 +101,16 @@ function App() {
 
   
   const renderPage = () => {
+    // Admin panel redirect logic
+    if (currentPage === 'admin') {
+      if (!isAuthenticated || !user || user.role !== 'admin') {
+        // Redirect non-admin users to home
+        setCurrentPage('documents');
+        return <DocumentPage user={user} onPageChange={setCurrentPage} />;
+      }
+      return <AdminPanel user={user} onNavigateHome={() => setCurrentPage('documents')} />;
+    }
+    
     switch (currentPage) {
       case 'home':
         return <Home />;

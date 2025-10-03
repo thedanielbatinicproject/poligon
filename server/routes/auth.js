@@ -60,24 +60,54 @@ function getSessionFromCookie(req) {
 }
 
 
+// Helper funkcija za učitavanje korisnika
+function loadUsers() {
+    try {
+        const USERS_FILE = path.join(__dirname, '../data/users.json');
+        if (fs.existsSync(USERS_FILE)) {
+            const data = fs.readFileSync(USERS_FILE, 'utf8');
+            const parsed = JSON.parse(data);
+            return parsed.users || parsed;
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+    return [];
+}
+
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
     
+    // Učitaj korisnike iz JSON baze
+    const users = loadUsers();
+    const user = users.find(u => u.username === username && u.password === password && u.isActive !== false);
     
-    const validUsername = process.env.ADMIN_USERNAME || 'admin';
-    const validPassword = process.env.ADMIN_PASSWORD || 'admin';
-    
-    if (username === validUsername && password === validPassword) {
+    if (user) {
         const sessionId = generateSessionId();
         const sessionData = {
             sessionId,
-            user: { username, role: 'admin' },
+            user: { 
+                id: user.id,
+                username: user.username, 
+                ime: user.ime,
+                prezime: user.prezime,
+                role: user.role || 'user'
+            },
             createdAt: new Date(),
             lastAccess: new Date()
         };
         
         activeSessions.set(sessionId, sessionData);
-        saveSessions(); 
+        saveSessions();
+        
+        // Ažuriraj zadnji login korisnika
+        user.lastLogin = new Date().toISOString();
+        try {
+            const USERS_FILE = path.join(__dirname, '../data/users.json');
+            fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+        } catch (error) {
+            console.error('Error updating last login:', error);
+        } 
         
         
         res.cookie('sessionId', sessionId, {
@@ -87,17 +117,15 @@ router.post('/login', (req, res) => {
             maxAge: 24 * 60 * 60 * 1000
         });
         
-
-        
         res.json({
             success: true,
             message: 'Login successful',
-            user: { username, role: 'admin' }
+            user: sessionData.user
         });
     } else {
         res.status(401).json({
             success: false,
-            message: 'Invalid credentials'
+            message: 'Neispravno korisničko ime ili lozinka'
         });
     }
 });

@@ -69,11 +69,13 @@ const authRoutes = require('./server/routes/auth');
 const thesesRoutes = require('./server/routes/theses');
 const tasksRoutes = require('./server/routes/tasks');
 const notesRoutes = require('./server/routes/notes');
+const usersRoutes = require('./server/routes/users');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/theses', thesesRoutes);
 app.use('/api', tasksRoutes);
 app.use('/api/notes', notesRoutes);
+app.use('/api/users', usersRoutes);
 
 
 app.post('/api/upload', upload.single('image'), (req, res) => {

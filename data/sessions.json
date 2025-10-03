@@ -48,18 +48,6 @@
     }
   ],
   [
-    "session_1759484518692_cbhbzsu1v",
-    {
-      "sessionId": "session_1759484518692_cbhbzsu1v",
-      "user": {
-        "username": "admin1",
-        "role": "admin"
-      },
-      "createdAt": "2025-10-03T09:41:58.692Z",
-      "lastAccess": "2025-10-03T16:00:51.712Z"
-    }
-  ],
-  [
     "session_1759487375569_fydqlboh2",
     {
       "sessionId": "session_1759487375569_fydqlboh2",
@@ -69,6 +57,36 @@
       },
       "createdAt": "2025-10-03T10:29:35.569Z",
       "lastAccess": "2025-10-03T10:33:00.127Z"
+    }
+  ],
+  [
+    "session_1759510577141_o2em98hql",
+    {
+      "sessionId": "session_1759510577141_o2em98hql",
+      "user": {
+        "id": "admin001",
+        "username": "admin",
+        "ime": "Admin",
+        "prezime": "Korisnik",
+        "role": "admin"
+      },
+      "createdAt": "2025-10-03T16:56:17.141Z",
+      "lastAccess": "2025-10-03T17:09:38.404Z"
+    }
+  ],
+  [
+    "session_1759510628472_fxf1m1hj1",
+    {
+      "sessionId": "session_1759510628472_fxf1m1hj1",
+      "user": {
+        "id": "user_1759510617402_7c2fd0ce",
+        "username": "Daniel",
+        "ime": "Daniel",
+        "prezime": "Batinić",
+        "role": "user"
+      },
+      "createdAt": "2025-10-03T16:57:08.472Z",
+      "lastAccess": "2025-10-03T16:57:08.472Z"
     }
   ]
 ]

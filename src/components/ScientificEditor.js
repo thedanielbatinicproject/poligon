@@ -578,8 +578,53 @@ const ScientificEditor = ({
     const insertFigure = useCallback(() => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = 'image}
-{}
+        input.accept = 'image/*';
+        
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const figureNumber = generateChapterPrefix() + (counters.figures + 1);
+                        const figureHtml = `
+                            <figure>
+                                <img src="${data.url}" alt="Slika ${figureNumber}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+                                <figcaption style="text-align: center; margin-top: 10px; font-style: italic;">
+                                    Slika ${figureNumber}: [Opis slike]
+                                </figcaption>
+                            </figure>
+                            <p>&nbsp;</p>
+                        `;
+                        
+                        if (editorRef.current) {
+                            editorRef.current.insertContent(figureHtml);
+                            setCounters(prev => ({ ...prev, figures: prev.figures + 1 }));
+                        }
+                    } else {
+                        alert('Greška pri uploadu slike: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Upload error:', error);
+                    alert('Greška pri uploadu slike');
+                });
+            }
+        };
+        
+        input.click();
+    }, [generateChapterPrefix, counters.figures]);
+
+    return (
+        <>
+        <div className="scientific-editor">
             {showAddNoteButton && (
                 <div 
                     className="floating-note-button-container"
@@ -593,7 +638,7 @@ const ScientificEditor = ({
                         zIndex: 10000
                     }}
                 >
-                    {}
+
                     {editorRef.current && (() => {
                         let selectionRect = null;
                         try {
@@ -669,76 +714,75 @@ const ScientificEditor = ({
                     </div>
                 </div>
             )}
+        </div>
                 
-                {}
-                {showNoteForm && (
-                    <div className="note-form-overlay" onClick={handleCloseNoteForm}>
-                        <div className="note-form-modal" onClick={(e) => e.stopPropagation()}>
-                            <div className="note-form-header">
-                                <h3>Dodaj bilješku</h3>
-                                <button 
-                                    className="close-btn"
-                                    onClick={handleCloseNoteForm}
-                                >
-                                    ×
-                                </button>
+        {showNoteForm && (
+            <div className="note-form-overlay" onClick={handleCloseNoteForm}>
+                <div className="note-form-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="note-form-header">
+                        <h3>Dodaj bilješku</h3>
+                        <button 
+                            className="close-btn"
+                            onClick={handleCloseNoteForm}
+                        >
+                            ×
+                        </button>
+                    </div>
+                    
+                    <div className="note-form-content">
+                        <div className="note-form-info">
+                            <div className="form-info-item">
+                                <strong>Poglavlje:</strong> {chapter?.title}
                             </div>
-                            
-                            <div className="note-form-content">
-                                <div className="note-form-info">
-                                    <div className="form-info-item">
-                                        <strong>Poglavlje:</strong> {chapter?.title}
-                                    </div>
-                                    <div className="form-info-item">
-                                        <strong>Autor:</strong> {user?.username || 'Visitor'}
-                                    </div>
-                                    <div className="form-info-item">
-                                        <strong>Linija:</strong> {selectionRange ? getLineNumber(selectionRange) : 'N/A'}
-                                    </div>
-                                    <div className="form-info-item">
-                                        <strong>Datum:</strong> {new Date().toLocaleDateString('hr-HR')}
-                                    </div>
-                                </div>
-                                
-                                <div className="selected-text-preview">
-                                    <strong>Selektirani tekst:</strong>
-                                    <em>"{selectedText}"</em>
-                                </div>
-                                
-                                <div className="form-field">
-                                    <label htmlFor="note-description"><strong>Opis bilješke *</strong></label>
-                                    <textarea
-                                        id="note-description"
-                                        value={newNoteDescription}
-                                        onChange={(e) => setNewNoteDescription(e.target.value)}
-                                        placeholder="Unesite detaljni opis bilješke..."
-                                        rows={4}
-                                        className="note-description-input"
-                                        autoFocus
-                                    />
-                                </div>
-                                
-                                <div className="note-form-actions">
-                                    <button 
-                                        className="save-note-btn"
-                                        onClick={handleSaveNote}
-                                        disabled={!newNoteDescription.trim()}
-                                    >
-                                        Spremi bilješku
-                                    </button>
-                                    <button 
-                                        className="cancel-note-btn"
-                                        onClick={handleCloseNoteForm}
-                                    >
-                                        Odustani
-                                    </button>
-                                </div>
+                            <div className="form-info-item">
+                                <strong>Autor:</strong> {user?.username || 'Visitor'}
+                            </div>
+                            <div className="form-info-item">
+                                <strong>Linija:</strong> {selectionRange ? getLineNumber(selectionRange) : 'N/A'}
+                            </div>
+                            <div className="form-info-item">
+                                <strong>Datum:</strong> {new Date().toLocaleDateString('hr-HR')}
                             </div>
                         </div>
+                        
+                        <div className="selected-text-preview">
+                            <strong>Selektirani tekst:</strong>
+                            <em>"{selectedText}"</em>
+                        </div>
+                        
+                        <div className="form-field">
+                            <label htmlFor="note-description"><strong>Opis bilješke *</strong></label>
+                            <textarea
+                                id="note-description"
+                                value={newNoteDescription}
+                                onChange={(e) => setNewNoteDescription(e.target.value)}
+                                placeholder="Unesite detaljni opis bilješke..."
+                                rows={4}
+                                className="note-description-input"
+                                autoFocus
+                            />
+                        </div>
+                        
+                        <div className="note-form-actions">
+                            <button 
+                                className="save-note-btn"
+                                onClick={handleSaveNote}
+                                disabled={!newNoteDescription.trim()}
+                            >
+                                Spremi bilješku
+                            </button>
+                            <button 
+                                className="cancel-note-btn"
+                                onClick={handleCloseNoteForm}
+                            >
+                                Odustani
+                            </button>
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
-        </div>
+        )}
+        </>
     );
 };
 

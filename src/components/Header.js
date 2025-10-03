@@ -50,9 +50,17 @@ function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) 
             </li>
           </ul>
           <div className="auth-section">
+            {user && user.role === 'admin' && (
+              <button 
+                className={`admin-panel-btn ${currentPage === 'admin' ? 'active' : ''}`}
+                onClick={(e) => { e.preventDefault(); onPageChange('admin'); }}
+              >
+                ADMIN PANEL
+              </button>
+            )}
             {user ? (
               <div className="user-info">
-                <span>Pozdrav, {user.username}!</span>
+                <span>Pozdrav, {user.ime ? `${user.ime} ${user.prezime}` : user.username}!</span>
                 <button onClick={onLogout} className="logout-btn">
                   Odjavi se
                 </button>
