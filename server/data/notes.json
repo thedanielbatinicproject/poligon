@@ -20,29 +20,7 @@
       "description": "wfwf",
       "author": "admin",
       "created": "2025-10-02T23:16:09.327Z",
-      "approved": false
-    },
-    {
-      "id": "note_1759447055041_xfgenrrfu",
-      "thesisId": "thesis_1759392477513_0a5h2tk0u",
-      "chapterId": "chapter_1759434260847_zb9gpytfw",
-      "lineNumber": null,
-      "selectedText": null,
-      "description": "222",
-      "author": "admin",
-      "created": "2025-10-02T23:17:35.041Z",
-      "approved": false
-    },
-    {
-      "id": "note_1759447058976_t212ozpmq",
-      "thesisId": "thesis_1759392477513_0a5h2tk0u",
-      "chapterId": "chapter_1759434260847_zb9gpytfw",
-      "lineNumber": 1,
-      "selectedText": "www",
-      "description": "3333",
-      "author": "admin",
-      "created": "2025-10-02T23:17:38.976Z",
-      "approved": false
+      "approved": true
     },
     {
       "id": "note_1759447063191_a2lxwy10r",
@@ -53,17 +31,6 @@
       "description": "44444",
       "author": "admin",
       "created": "2025-10-02T23:17:43.191Z",
-      "approved": false
-    },
-    {
-      "id": "note_1759447179772_x5rdq2awu",
-      "thesisId": "thesis_1759392477513_0a5h2tk0u",
-      "chapterId": "chapter_1759434260847_zb9gpytfw",
-      "lineNumber": 77777,
-      "selectedText": null,
-      "description": "7777",
-      "author": "admin",
-      "created": "2025-10-02T23:19:39.772Z",
       "approved": true
     },
     {

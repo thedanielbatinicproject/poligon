@@ -23,6 +23,15 @@ function App() {
 
   useEffect(() => {
     checkAuthStatus();
+    
+    // Provjeri da li postoji selectedDocumentId i postavi currentPage
+    const savedDocId = localStorage.getItem('selectedDocumentId');
+    const savedCurrentPage = localStorage.getItem('currentPage');
+    
+    // Ako postoji selectedDocumentId ali currentPage je 'documents', promijeni na odgovarajuću stranicu
+    if (savedDocId && savedCurrentPage === 'documents') {
+      setCurrentPage('documents'); // Ostavi 'documents' jer DocumentPage će prikazati dokument
+    }
   }, []);
 
   // Spremi trenutnu stranicu u localStorage kada se promijeni
