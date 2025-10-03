@@ -56,7 +56,19 @@
         "role": "admin"
       },
       "createdAt": "2025-10-03T09:41:58.692Z",
-      "lastAccess": "2025-10-03T09:48:24.366Z"
+      "lastAccess": "2025-10-03T10:31:57.656Z"
+    }
+  ],
+  [
+    "session_1759487375569_fydqlboh2",
+    {
+      "sessionId": "session_1759487375569_fydqlboh2",
+      "user": {
+        "username": "admin1",
+        "role": "admin"
+      },
+      "createdAt": "2025-10-03T10:29:35.569Z",
+      "lastAccess": "2025-10-03T10:33:00.127Z"
     }
   ]
 ]

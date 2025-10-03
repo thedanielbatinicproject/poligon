@@ -13,7 +13,14 @@ function Footer() {
             href="https://github.com/thedanielbatinicproject/poligon" 
             target="_blank" 
             rel="noopener noreferrer"
-            style={{ color: 'inherit', textDecoration: 'underline' }}
+            style={{ 
+              color: '#3498db', 
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              transition: 'color 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#2980b9'}
+            onMouseLeave={(e) => e.target.style.color = '#3498db'}
           >
             GitHub
           </a>
