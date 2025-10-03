@@ -81,6 +81,7 @@ const ScientificEditor = ({
     const editorConfig = {
         height: 650,
         menubar: mode === 'EDIT',
+        statusbar: true, // Prikaži statusbar sa pozicijom kursora
         // Tvoj besplatni API ključ
         apiKey: 'z62828asb7sazqtp5t7jxtnul56kzuwkgap3xqrwh0hbes1p',
         plugins: mode === 'EDIT' ? [
