@@ -39,7 +39,7 @@ export const apiCall = async (url, options = {}) => {
             
             // Ako je auth error, možemo ovde da rukujemo
             if (response.status === 401) {
-                console.log('🔒 Unauthorized - redirecting to login');
+
                 // Ovde možemo da redirectujemo na login ili emitujemo event
             }
             

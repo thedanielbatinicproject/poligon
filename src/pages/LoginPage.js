@@ -14,13 +14,9 @@ const LoginPage = ({ onLogin }) => {
         setError('');
 
         try {
-            console.log('🔑 Login attempt:', { username, password });
-            
             const result = await authAPI.login({ username, password });
-            console.log('🔑 Login result:', result);
 
             if (result.success && result.data.success) {
-                console.log('✅ Login successful - cookie će biti automatski postavljen');
                 onLogin(result.data.user);
             } else {
                 setError(result.data?.message || 'Login failed');

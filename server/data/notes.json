@@ -54,6 +54,39 @@
       "author": "admin",
       "created": "2025-10-02T23:59:17.695Z",
       "approved": false
+    },
+    {
+      "id": "note_1759480295257_1ndn45ey0",
+      "thesisId": "thesis_1759392477513_0a5h2tk0u",
+      "chapterId": "chapter_1759480288697_0qnkwgftd",
+      "lineNumber": 12,
+      "selectedText": "wfwfwf",
+      "description": "wfwfw",
+      "author": "admin",
+      "created": "2025-10-03T08:31:35.257Z",
+      "approved": false
+    },
+    {
+      "id": "note_1759481140102_3i88muplf",
+      "thesisId": "thesis_1759392477513_0a5h2tk0u",
+      "chapterId": "chapter_1759434261784_gewlhk03b",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "wfwf",
+      "author": "Visitor",
+      "created": "2025-10-03T08:45:40.102Z",
+      "approved": false
+    },
+    {
+      "id": "note_1759481143518_gtgzpgqih",
+      "thesisId": "thesis_1759392477513_0a5h2tk0u",
+      "chapterId": "chapter_1759434261784_gewlhk03b",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "wfwwf",
+      "author": "Visitor",
+      "created": "2025-10-03T08:45:43.518Z",
+      "approved": false
     }
   ]
 }

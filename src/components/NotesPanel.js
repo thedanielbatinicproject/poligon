@@ -183,7 +183,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                             const newCollapsed = !collapsed;
 
                             if (onCollapsedChange) {
-                                console.log('Calling onCollapsedChange with:', newCollapsed);
+
                                 onCollapsedChange(newCollapsed);
                             }
                         }}
