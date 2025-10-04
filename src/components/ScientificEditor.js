@@ -556,7 +556,7 @@ const ScientificEditor = ({
             
             if (editorRef.current) {
                 editorRef.current.notificationManager.open({
-                    text: 'Biljeöka je uspjeöno dodana!',
+                    text: 'Bilje≈°ka je uspje≈°no dodana!',
                     type: 'success',
                     timeout: 3000
                 });
@@ -566,7 +566,7 @@ const ScientificEditor = ({
             
             if (editorRef.current) {
                 editorRef.current.notificationManager.open({
-                    text: 'Greöka pri kreiranju biljeöke',
+                    text: 'Gre≈°ka pri kreiranju bilje≈°ke',
                     type: 'error',
                     timeout: 4000
                 });
@@ -669,11 +669,11 @@ const ScientificEditor = ({
                             setCounters(prev => ({ ...prev, figures: prev.figures + 1 }));
                         }
                     } else {
-                        alert('Greöka pri uploadu slike: ' + data.error);
+                        alert('Gre≈°ka pri uploadu slike: ' + data.error);
                     }
                 })
                 .catch(error => {
-                    alert('Greöka pri uploadu slike');
+                    alert('Gre≈°ka pri uploadu slike');
                 });
             }
         };
@@ -829,10 +829,10 @@ const ScientificEditor = ({
                         <button 
                             className="selection-note-btn"
                             onClick={handleCreateNoteFromSelection}
-                            title="Dodaj biljeöku za selektirani tekst"
+                            title="Dodaj bilje≈°ku za selektirani tekst"
                         >
                             <img src="/icons/quote.png" alt="Quote" className="quote-icon" />
-                            Dodaj biljeöku
+                            Dodaj bilje≈°ku
                         </button>
                     </div>
                 </div>
@@ -843,12 +843,12 @@ const ScientificEditor = ({
             <div className="note-form-overlay" onClick={handleCloseNoteForm}>
                 <div className="note-form-modal" onClick={(e) => e.stopPropagation()}>
                     <div className="note-form-header">
-                        <h3>Dodaj biljeöku</h3>
+                        <h3>Dodaj bilje≈°ku</h3>
                         <button 
                             className="close-btn"
                             onClick={handleCloseNoteForm}
                         >
-                            ◊
+                            √ó
                         </button>
                     </div>
                     
@@ -874,12 +874,12 @@ const ScientificEditor = ({
                         </div>
                         
                         <div className="form-field">
-                            <label htmlFor="note-description"><strong>Opis biljeöke *</strong></label>
+                            <label htmlFor="note-description"><strong>Opis bilje≈°ke *</strong></label>
                             <textarea
                                 id="note-description"
                                 value={newNoteDescription}
                                 onChange={(e) => setNewNoteDescription(e.target.value)}
-                                placeholder="Unesite detaljni opis biljeöke..."
+                                placeholder="Unesite detaljni opis bilje≈°ke..."
                                 rows={4}
                                 className="note-description-input"
                                 autoFocus
@@ -892,7 +892,7 @@ const ScientificEditor = ({
                                 onClick={handleSaveNote}
                                 disabled={!newNoteDescription.trim()}
                             >
-                                Spremi biljeöku
+                                Spremi bilje≈°ku
                             </button>
                             <button 
                                 className="cancel-note-btn"
