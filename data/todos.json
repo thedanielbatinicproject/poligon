@@ -1,49 +1,26 @@
 [
   {
-    "id": "1759578949691z633dk44k",
-    "title": "ADMIN TODO",
-    "description": "ADMIN TODO",
-    "documentId": null,
+    "id": "1759589030465yxfi41t37",
+    "title": "DD",
+    "description": "DDD",
+    "documentId": "thesis_1759586706154_d6no2tlc8",
+    "chapterId": "chapter_1759586774134_5sd443614",
+    "dueDate": null,
+    "createdAt": "2025-10-04T14:43:50.465Z",
+    "createdBy": "user_1759586634749_8c513fa6",
+    "isFinished": false
+  },
+  {
+    "id": "1759589042148d9ozbhi4q",
+    "title": "ww2",
+    "description": "wwwww",
+    "documentId": "thesis_1759586706154_d6no2tlc8",
     "chapterId": null,
     "dueDate": null,
-    "createdAt": "2025-10-04T11:55:49.691Z",
-    "createdBy": "admin001",
+    "createdAt": "2025-10-04T14:44:02.148Z",
+    "createdBy": "user_1759586634749_8c513fa6",
     "isFinished": true,
-    "updatedAt": "2025-10-04T11:55:51.622Z",
-    "finishedAt": "2025-10-04T11:55:51.622Z"
-  },
-  {
-    "id": "1759579413382e1649wt4p",
-    "title": "GOST TODO",
-    "description": "gt",
-    "documentId": null,
-    "chapterId": null,
-    "dueDate": null,
-    "createdAt": "2025-10-04T12:03:33.382Z",
-    "createdBy": "Anonymous",
-    "isFinished": false,
-    "updatedAt": "2025-10-04T12:03:56.851Z"
-  },
-  {
-    "id": "1759579430351ya5u1c8e8",
-    "title": "TEST TODO",
-    "description": "tt",
-    "documentId": null,
-    "chapterId": null,
-    "dueDate": null,
-    "createdAt": "2025-10-04T12:03:50.351Z",
-    "createdBy": "user_1759572154698_5a0244e7",
-    "isFinished": false
-  },
-  {
-    "id": "1759581369482ex4l6hgj4",
-    "title": "EDGE",
-    "description": "e",
-    "documentId": null,
-    "chapterId": null,
-    "dueDate": null,
-    "createdAt": "2025-10-04T12:36:09.482Z",
-    "createdBy": "user001",
-    "isFinished": false
+    "updatedAt": "2025-10-04T15:10:51.225Z",
+    "finishedAt": "2025-10-04T15:10:51.225Z"
   }
 ]

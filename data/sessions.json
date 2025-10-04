@@ -105,18 +105,33 @@
     }
   ],
   [
-    "session_1759582184141_k340q11cm",
+    "session_1759586700197_r9dalpscr",
     {
-      "sessionId": "session_1759582184141_k340q11cm",
+      "sessionId": "session_1759586700197_r9dalpscr",
       "user": {
-        "id": "user_1759511400935_a27478f3",
-        "username": "Daniel",
+        "id": "user_1759586634749_8c513fa6",
+        "username": "Daniel Batinić",
         "ime": "Daniel",
         "prezime": "Batinić",
         "role": "user"
       },
-      "createdAt": "2025-10-04T12:49:44.141Z",
-      "lastAccess": "2025-10-04T13:54:14.248Z"
+      "createdAt": "2025-10-04T14:05:00.197Z",
+      "lastAccess": "2025-10-04T14:10:28.119Z"
+    }
+  ],
+  [
+    "session_1759590686657_87thgb585",
+    {
+      "sessionId": "session_1759590686657_87thgb585",
+      "user": {
+        "id": "user_1759590681224_356462fe",
+        "username": "Gost",
+        "ime": "Gost",
+        "prezime": "Korisnik",
+        "role": "user"
+      },
+      "createdAt": "2025-10-04T15:11:26.657Z",
+      "lastAccess": "2025-10-04T15:11:26.657Z"
     }
   ]
 ]

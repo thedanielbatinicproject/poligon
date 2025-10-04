@@ -222,8 +222,8 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                                 className="add-note-btn"
                                 onClick={() => setShowAddNoteForm(true)}
                             >
-                                <img src="/icons/quote.png" alt="Dodaj bilješku" className="quote-icon" />
-                                Dodaj bilješku
+                                <img src="/icons/quote.png" alt="Dodaj biljesku" className="quote-icon" />
+                                Dodaj biljesku
                             </button>
                         ) : (
                             <div className="add-note-form">
@@ -307,7 +307,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                         ) : notes.length === 0 ? (
                             <div className="no-notes">
                                 <p>Nema bilješki za ovo poglavlje.</p>
-                                <p className="no-notes-hint">Dodajte novu bilješku klikom na gumb iznad.</p>
+                                <p className="no-notes-hint">Dodajte novu biljesku klikom na gumb iznad.</p>
                             </div>
                         ) : (
                             <>
@@ -341,7 +341,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                                         <button
                                             className={`approve-btn ${note.approved ? 'approved' : 'pending'}`}
                                             onClick={() => handleApproveNote(note.id, !note.approved)}
-                                            title={note.approved ? 'Poništi prihvaćanje' : 'Prihvati bilješku'}
+                                            title={note.approved ? 'Poništi prihvaćanje' : 'Prihvati biljesku'}
                                         >
                                             {note.approved ? '✓ Prihvaćeno' : 'Prihvati'}
                                         </button>
@@ -349,7 +349,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                                         <button
                                             className="delete-note-btn"
                                             onClick={() => handleDeleteNote(note.id)}
-                                            title="Obriši bilješku"
+                                            title="Obriši biljesku"
                                         >
                                             🗑️
                                         </button>
@@ -379,7 +379,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                 onClose={() => setDeleteConfirm(null)}
                 onConfirm={confirmDeleteNote}
                 title="Brisanje bilješke"
-                message="Jeste li sigurni da želite obrisati ovu bilješku? Ova radnja se ne može poništiti."
+                message="Jeste li sigurni da želite obrisati ovu biljesku? Ova radnja se ne može poništiti."
                 confirmText="Obriši"
                 cancelText="Odustani"
                 type="danger"

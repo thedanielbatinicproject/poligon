@@ -163,7 +163,7 @@ const ScientificEditor = ({
         
         paste_data_images: true,
         paste_as_text: false,
-        readonly: false, 
+        readonly: mode === 'VIEW', 
         
         setup: (editor) => {
             if (mode === 'VIEW') {
@@ -721,7 +721,7 @@ const ScientificEditor = ({
                 editorRef.current = null;
             }
         };
-    }, []);
+    }, [mode, user?.role, user?.id]); // Dodajemo ključne dependency-je
     useEffect(() => {
         if (mode !== 'VIEW' || !showAddNoteButton || !selectionRange) {
             return;
@@ -829,10 +829,10 @@ const ScientificEditor = ({
                         <button 
                             className="selection-note-btn"
                             onClick={handleCreateNoteFromSelection}
-                            title="Dodaj bilješku za selektirani tekst"
+                            title="Dodaj biljesku za selektirani tekst"
                         >
                             <img src="/icons/quote.png" alt="Quote" className="quote-icon" />
-                            Dodaj bilješku
+                            Dodaj biljesku
                         </button>
                     </div>
                 </div>
@@ -843,7 +843,7 @@ const ScientificEditor = ({
             <div className="note-form-overlay" onClick={handleCloseNoteForm}>
                 <div className="note-form-modal" onClick={(e) => e.stopPropagation()}>
                     <div className="note-form-header">
-                        <h3>Dodaj bilješku</h3>
+                        <h3>Dodaj biljesku</h3>
                         <button 
                             className="close-btn"
                             onClick={handleCloseNoteForm}
@@ -892,7 +892,7 @@ const ScientificEditor = ({
                                 onClick={handleSaveNote}
                                 disabled={!newNoteDescription.trim()}
                             >
-                                Spremi bilješku
+                                Spremi biljesku
                             </button>
                             <button 
                                 className="cancel-note-btn"

@@ -168,6 +168,32 @@ router.get('/', requireAdmin, (req, res) => {
     }
 });
 
+// GET /api/users/public - Dohvati javne podatke o korisnicima (bez lozinki)
+router.get('/public', (req, res) => {
+    try {
+        const users = loadUsers();
+        // Filtriramo osjetljive podatke
+        const publicUsers = users.map(user => ({
+            id: user.id,
+            username: user.username,
+            ime: user.ime,
+            prezime: user.prezime,
+            role: user.role
+        }));
+        
+        res.json({
+            success: true,
+            data: publicUsers
+        });
+    } catch (error) {
+        console.error('Error fetching public users:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Greška pri dohvaćanju korisnika'
+        });
+    }
+});
+
 // POST /api/users - Dodaj novog korisnika (samo admin)
 router.post('/', requireAdmin, (req, res) => {
     try {

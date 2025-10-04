@@ -7,12 +7,36 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
     const [loading, setLoading] = useState(true);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState(null);
+    const [users, setUsers] = useState([]);
 
     useEffect(() => {
         if (documentId) {
+            loadUsers();
             loadDocumentTasks();
         }
     }, [documentId]);
+
+    const loadUsers = async () => {
+        try {
+            const response = await fetch('/api/users/public');
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    setUsers(result.data);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    };
+
+    const getUsernameById = (userId) => {
+        if (!userId) return 'Unknown';
+        if (userId === 'Anonymous') return 'Anonymous';
+        
+        const foundUser = users.find(u => u.id === userId);
+        return foundUser ? foundUser.username : userId;
+    };
 
     const loadDocumentTasks = async () => {
         try {
@@ -173,10 +197,7 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
                                 )}
                                 <div className="task-meta">
                                     <span className="created-by">
-                                        By: {
-                                            item.createdBy || 
-                                            (item.type === 'task' ? (user?.username || 'User') : 'Anonymous')
-                                        }
+                                        By: {getUsernameById(item.createdBy)}
                                     </span>
                                 </div>
                             </div>

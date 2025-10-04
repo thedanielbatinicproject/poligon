@@ -1,3 +1,59 @@
 {
-  "notes": []
+  "notes": [
+    {
+      "id": "note_1759590833069_xdnb19tp9",
+      "thesisId": "thesis_1759586706154_d6no2tlc8",
+      "chapterId": "chapter_1759586774134_5sd443614",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "w",
+      "author": "Visitor",
+      "created": "2025-10-04T15:13:53.069Z",
+      "approved": false
+    },
+    {
+      "id": "note_1759590836106_t5fcmmkku",
+      "thesisId": "thesis_1759586706154_d6no2tlc8",
+      "chapterId": "chapter_1759586774134_5sd443614",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "wfwf",
+      "author": "Visitor",
+      "created": "2025-10-04T15:13:56.106Z",
+      "approved": false
+    },
+    {
+      "id": "note_1759590840545_t7009g3s1",
+      "thesisId": "thesis_1759586706154_d6no2tlc8",
+      "chapterId": "chapter_1759586774134_5sd443614",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "wf\nwf\nwf\nwf\nwf",
+      "author": "Visitor",
+      "created": "2025-10-04T15:14:00.545Z",
+      "approved": false
+    },
+    {
+      "id": "note_1759590846114_yljt1rf26",
+      "thesisId": "thesis_1759586706154_d6no2tlc8",
+      "chapterId": "chapter_1759586774134_5sd443614",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "d\nd\nd\nd\nd\nd\nd\nd\nd\nd\nd",
+      "author": "Visitor",
+      "created": "2025-10-04T15:14:06.114Z",
+      "approved": false
+    },
+    {
+      "id": "note_1759590854879_4rvdncq24",
+      "thesisId": "thesis_1759586706154_d6no2tlc8",
+      "chapterId": "chapter_1759586774134_5sd443614",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "d\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\ndd\nd\nd\nd\nd\nd\nd\nd\nd\nd\nd",
+      "author": "Visitor",
+      "created": "2025-10-04T15:14:14.879Z",
+      "approved": false
+    }
+  ]
 }
