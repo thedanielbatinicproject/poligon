@@ -1,4 +1,4 @@
-# Poligon - Platforma za Akadem- **Upravljanje dokumentima**: Stvaranje, uređivanje metapodataka i brisanje s automatskim brisanjem povezanih bilješki
+# Poligon - Platforma za Akademsko **Upravljanje dokumentima**: Stvaranje, uređivanje metapodataka i brisanje s automatskim brisanjem povezanih bilješki
 - **Automatsko spremanje**: Gubitak rada više nije problem
 - **Task & Todos sustav**: Kalendarska organizacija zadataka s povezivanjem na dokumente, funkcionalnosti uređivanja/brisanja s korisničkim dozvolama Radove
 
