@@ -1,0 +1,47 @@
+# Robots.txt za Poligon - Platforma za Akademske Radove
+# Poligon.live - Specijalizirana platforma za kreiranje znanstvenih radova
+# Copyright © 2025 Daniel Batinić, FER Zagreb
+
+# Glavni web crawleri
+User-agent: *
+Allow: /
+
+# Optimizacija za Google botove
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Optimizacija za Bing
+User-agent: Bingbot  
+Allow: /
+Crawl-delay: 2
+
+# Optimizacija za Yandex
+User-agent: YandexBot
+Allow: /
+Crawl-delay: 3
+
+# Blokiranje pristupa osjetljivim direktorijima
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /data/
+Disallow: /server/
+Disallow: /node_modules/
+Disallow: /dist/
+Disallow: /.env
+Disallow: /package.json
+Disallow: /webpack.config.js
+
+# Dozvoljen pristup javnim resursima
+Allow: /favicon.png
+Allow: /poligon.png
+Allow: /icons/
+Allow: /tinymce/
+
+# SEO optimizacija
+Sitemap: https://poligon.live/sitemap.xml
+
+# Kontakt informacije za web crawlere
+# Website: https://poligon.live
+# Repository: https://github.com/thedanielbatinicproject/poligon
+# Host: poligon.live

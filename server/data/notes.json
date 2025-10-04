@@ -1,0 +1,15 @@
+{
+  "notes": [
+    {
+      "id": "note_example_001",
+      "thesisId": "thesis_example_001",
+      "chapterId": "chapter_example_001",
+      "lineNumber": null,
+      "selectedText": null,
+      "description": "Sample note",
+      "author": "Visitor",
+      "created": "2025-01-01T12:00:00.000Z",
+      "approved": false
+    }
+  ]
+}
