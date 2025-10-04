@@ -71,7 +71,7 @@ export const authAPI = {
 
 // Helper funkcije za theses API
 export const thesesAPI = {
-    getAll: () => apiCall('/api/theses'),
+    getAll: () => apiCall(`/api/theses?_t=${Date.now()}`),
     
     getById: (id) => apiCall(`/api/theses/${id}`),
     

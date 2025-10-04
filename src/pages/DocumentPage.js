@@ -15,7 +15,24 @@ const DocumentPage = ({ user, onPageChange }) => {
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState(user ? 'EDIT' : 'VIEW');
 
-    
+    // Funkcija za provjeru dozvola editiranja
+    const canEditDocument = (thesis, user) => {
+        if (!user || !thesis) return false;
+        
+        // Admin može editirati sve dokumente
+        if (user.role === 'admin') return true;
+        
+        // Kreator može editirati svoj dokument (provjeri prvo authorId, zatim author username)
+        const authorId = thesis.metadata?.authorId;
+        if (authorId === user.id || thesis.metadata?.author === user.username) return true;
+        
+        // Provjeri je li korisnik dodan kao editor (provjeri prvo editorIds, zatim editors)
+        if (thesis.editorIds && thesis.editorIds.includes(user.id)) return true;
+        if (thesis.editors && thesis.editors.includes(user.username)) return true;
+        
+        return false;
+    };
+
     const setSelectedChapter = (chapter) => {
         setSelectedChapterState(chapter);
         if (chapter) {
@@ -30,15 +47,55 @@ const DocumentPage = ({ user, onPageChange }) => {
     }, []); 
     
     useEffect(() => {
-        setMode(user ? 'EDIT' : 'VIEW');
-        
+        // Određi mode na osnovu dozvola korisnika
+        if (!user) {
+            setMode('VIEW');
+        } else {
+            const hasEditPermission = canEditDocument(currentThesis, user);
+            setMode(hasEditPermission ? 'EDIT' : 'VIEW');
+        }
         
         if (!user && !loading && !currentThesis) {
             setShowDocumentSelector(true);
         }
     }, [user, loading, currentThesis]); 
 
-    
+    // Slušaj userUpdated event iz AdminPanel-a
+    useEffect(() => {
+        const handleUserUpdated = (event) => {
+            console.log('User updated, refreshing current document...', event.detail);
+            
+            // Ako imamo trenutni dokument, refresh-aj ga
+            if (currentThesis) {
+                loadDocumentById(currentThesis.id);
+            }
+        };
+
+        window.addEventListener('userUpdated', handleUserUpdated);
+        
+        return () => {
+            window.removeEventListener('userUpdated', handleUserUpdated);
+        };
+    }, [currentThesis]);
+
+    const loadDocumentById = async (documentId) => {
+        try {
+            const result = await thesesAPI.getById(documentId);
+            if (result.success) {
+                setCurrentThesis(result.data);
+                
+                // Ažuriraj dozvole
+                const hasEditPermission = canEditDocument(result.data, user);
+                setMode(hasEditPermission ? 'EDIT' : 'VIEW');
+                
+                console.log('Document refreshed successfully:', result.data.metadata?.title);
+            } else {
+                console.error('Failed to refresh document:', result.message);
+            }
+        } catch (error) {
+            console.error('Error refreshing document:', error);
+        }
+    };
 
     const loadInitialDocument = async () => {
         try {
@@ -95,6 +152,12 @@ const DocumentPage = ({ user, onPageChange }) => {
         setSelectedChapter(null);
         setShowDocumentSelector(false);
         localStorage.setItem('selectedDocumentId', thesis.id);
+        
+        // Ažuriraj mode na osnovu dozvola za novi dokument
+        if (user) {
+            const hasEditPermission = canEditDocument(thesis, user);
+            setMode(hasEditPermission ? 'EDIT' : 'VIEW');
+        }
     };
 
     const createNewThesis = async () => {
@@ -102,7 +165,8 @@ const DocumentPage = ({ user, onPageChange }) => {
             const thesisData = {
                 metadata: {
                     title: 'Novi diplomski rad',
-                    author: 'Student',
+                    author: user?.username || 'Student', // Zadržaj za backward compatibility
+                    authorId: user?.id, // Dodaj user ID za bolju integraciju
                     mentor: 'Mentor',
                     university: 'Sveučilište',
                     faculty: 'Fakultet',
@@ -118,6 +182,12 @@ const DocumentPage = ({ user, onPageChange }) => {
                 setCurrentThesis(result.data);
                 setSelectedChapter(null);
                 localStorage.setItem('selectedDocumentId', result.data.id);
+                
+                // Novi dokument - kreator ima EDIT dozvole
+                if (user) {
+                    const hasEditPermission = canEditDocument(result.data, user);
+                    setMode(hasEditPermission ? 'EDIT' : 'VIEW');
+                }
             } else {
                 console.error('Failed to create thesis:', result.status);
             }

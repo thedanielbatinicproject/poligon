@@ -42,6 +42,7 @@ class ThesisModel {
             structure: thesisData.structure || {},
             chapters: [],
             bibliography: [],
+            editors: [], // Array dodatnih editora (ne uključuje kreator-a)
             settings: {
                 theme: 'default',
                 language: 'hr'

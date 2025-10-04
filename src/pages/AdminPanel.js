@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ConfirmModal from '../components/ConfirmModal';
+import DocumentsManager from '../components/DocumentsManager';
 import './AdminPanel.css';
 
 const AdminPanel = ({ user, onNavigateHome }) => {
@@ -38,7 +39,7 @@ const AdminPanel = ({ user, onNavigateHome }) => {
 
     // Upravljaj scrollom kada su modali otvoreni
     useEffect(() => {
-        const isModalOpen = isEditModalOpen || isAddModalOpen || isPasswordModalOpen || deleteConfirm.show;
+        const isModalOpen = isEditModalOpen || isAddModalOpen || isPasswordModalOpen || isDocumentsModalOpen || deleteConfirm.show;
         
         if (isModalOpen) {
             document.body.classList.add('modal-open');
@@ -50,7 +51,7 @@ const AdminPanel = ({ user, onNavigateHome }) => {
         return () => {
             document.body.classList.remove('modal-open');
         };
-    }, [isEditModalOpen, isAddModalOpen, isPasswordModalOpen, deleteConfirm.show]);
+    }, [isEditModalOpen, isAddModalOpen, isPasswordModalOpen, isDocumentsModalOpen, deleteConfirm.show]);
 
     // Filtriraj korisnike na temelju pretrage
     useEffect(() => {
@@ -158,6 +159,17 @@ const AdminPanel = ({ user, onNavigateHome }) => {
                 setIsAddModalOpen(false);
                 setSelectedUser(null);
                 showNotification(selectedUser ? 'Korisnik uspješno ažuriran!' : 'Korisnik uspješno dodan!', 'success');
+                
+                // Pošalji global event da se dokumenti trebaju refreshati
+                if (selectedUser) {
+                    window.dispatchEvent(new CustomEvent('userUpdated', {
+                        detail: { 
+                            userId: selectedUser.id,
+                            oldUsername: selectedUser.username,
+                            newUsername: formData.username
+                        }
+                    }));
+                }
             } else {
                 showNotification('Greška: ' + result.message, 'error');
             }
@@ -502,21 +514,11 @@ const AdminPanel = ({ user, onNavigateHome }) => {
                 </div>
             )}
 
-            {/* Documents Modal - placeholder */}
-            {isDocumentsModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content documents-modal">
-                        <h2>Upravljanje dokumentima</h2>
-                        <p>Ova funkcionalnost će biti implementirana u sljedećoj fazi.</p>
-                        <button 
-                            className="btn-cancel"
-                            onClick={() => setIsDocumentsModalOpen(false)}
-                        >
-                            Zatvori
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* Documents Manager */}
+            <DocumentsManager 
+                isOpen={isDocumentsModalOpen}
+                onClose={() => setIsDocumentsModalOpen(false)}
+            />
 
             {/* Delete Confirmation Modal */}
             <ConfirmModal

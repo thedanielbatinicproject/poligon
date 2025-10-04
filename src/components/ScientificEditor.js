@@ -1,5 +1,5 @@
 ﻿import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
+// import { Editor } from '@tinymce/tinymce-react'; // Koristit ćemo direktno globalni TinyMCE
 import { notesAPI } from '../utils/api';
 import './ScientificEditor.css';
 
@@ -21,15 +21,15 @@ const ScientificEditor = ({
     });
     
     
-    const [tinymceApiKey, setTinymceApiKey] = useState('');
-    
-    
     const [selectedText, setSelectedText] = useState('');
     const [selectionRange, setSelectionRange] = useState(null);
     const [showAddNoteButton, setShowAddNoteButton] = useState(false);
     const [noteButtonPosition, setNoteButtonPosition] = useState({ top: 0, left: 0 });
     const [showNoteForm, setShowNoteForm] = useState(false);
     const [newNoteDescription, setNewNoteDescription] = useState('');
+
+    // State za praćenje pozicije sivog selection okvira
+    const [selectionRect, setSelectionRect] = useState(null);
 
     
     const generateChapterPrefix = useCallback(() => {
@@ -86,7 +86,8 @@ const ScientificEditor = ({
         menubar: mode === 'EDIT',
         statusbar: true, 
         
-        apiKey: tinymceApiKey,
+        // Koristimo license_key umjesto apiKey za TinyMCE 6+
+        // apiKey: process.env.REACT_APP_TINYMCE_API_KEY || '',
         plugins: mode === 'EDIT' ? [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -292,6 +293,7 @@ const ScientificEditor = ({
                 setShowAddNoteButton(false);
                 setSelectedText('');
                 setSelectionRange(null);
+                setSelectionRect(null);
                 return;
             }
             
@@ -319,6 +321,8 @@ const ScientificEditor = ({
             setSelectedText(selectedContent);
             setSelectionRange(range);
             
+            // Ažuriraj poziciju sivog okvira
+            updateSelectionRect();
             
             calculateButtonPosition(range);
             setShowAddNoteButton(true);
@@ -328,9 +332,64 @@ const ScientificEditor = ({
         }
     }, [calculateButtonPosition, mode]);
 
+    // Funkcija za ažuriranje pozicije sivog selection okvira
+    const updateSelectionRect = useCallback(() => {
+        if (!editorRef.current || mode !== 'VIEW') {
+            setSelectionRect(null);
+            return;
+        }
+
+        try {
+            const editor = editorRef.current;
+            const editorContainer = editor.getContainer();
+            const iframe = editorContainer ? editorContainer.querySelector('iframe') : null;
+            
+            let iframeRect = { top: 0, left: 0 };
+            if (iframe) {
+                iframeRect = iframe.getBoundingClientRect();
+            } else if (editorContainer) {
+                iframeRect = editorContainer.getBoundingClientRect();
+            }
+            
+            const currentSelection = editor.selection;
+            const currentRange = currentSelection ? currentSelection.getRng() : null;
+            
+            if (currentRange) {
+                try {
+                    const rangeRect = currentRange.getBoundingClientRect();
+                    setSelectionRect({
+                        top: rangeRect.top + iframeRect.top,
+                        left: rangeRect.left + iframeRect.left,
+                        width: rangeRect.width,
+                        height: rangeRect.height
+                    });
+                } catch (e) {
+                    // Fallback na window selection
+                    const windowSelection = window.getSelection();
+                    if (windowSelection && windowSelection.rangeCount > 0) {
+                        const windowRange = windowSelection.getRangeAt(0);
+                        const rangeRect = windowRange.getBoundingClientRect();
+                        setSelectionRect({
+                            top: rangeRect.top,
+                            left: rangeRect.left,
+                            width: rangeRect.width,
+                            height: rangeRect.height
+                        });
+                    }
+                }
+            } else {
+                setSelectionRect(null);
+            }
+        } catch (error) {
+            console.log('Selection rect update error:', error);
+            setSelectionRect(null);
+        }
+    }, [mode]);
+
     
     const calculateButtonPosition = useCallback((range) => {
         if (!editorRef.current) {
+            console.log('No editorRef.current');
             return;
         }
         
@@ -342,41 +401,70 @@ const ScientificEditor = ({
             const editorBody = editor.getBody();
             const editorDoc = editor.getDoc();
             const editorContainer = editor.getContainer();
-            const iframe = editorContainer.querySelector('iframe');
+            const iframe = editorContainer ? editorContainer.querySelector('iframe') : null;
             
             let iframeRect = { top: 0, left: 0 };
             if (iframe) {
                 iframeRect = iframe.getBoundingClientRect();
+                console.log('IFrame rect:', iframeRect);
+            } else {
+                // Ako nema iframe-a, pokušaj s editorContainer
+                if (editorContainer) {
+                    iframeRect = editorContainer.getBoundingClientRect();
+                    console.log('Editor container rect:', iframeRect);
+                }
             }
             
-            
+            // Pokušaj prvo s TinyMCE selection API
             const currentSelection = editor.selection;
-            const currentRange = currentSelection.getRng();
+            const currentRange = currentSelection ? currentSelection.getRng() : null;
             
-            if (currentRange && currentRange.getBoundingClientRect) {
-                const rangeRect = currentRange.getBoundingClientRect();
-                
-                
-                clientRect = {
-                    top: rangeRect.top + iframeRect.top,
-                    left: rangeRect.left + iframeRect.left,
-                    bottom: rangeRect.bottom + iframeRect.top,
-                    right: rangeRect.right + iframeRect.left,
-                    width: rangeRect.width,
-                    height: rangeRect.height
-                };
-            } else {
-                const windowSelection = window.getSelection();
-                if (windowSelection.rangeCount === 0) {
-                    return;
+            if (currentRange) {
+                try {
+                    // Za direktnu TinyMCE integraciju možda nema iframe
+                    const rangeRect = currentRange.getBoundingClientRect();
+                    console.log('Range rect from TinyMCE:', rangeRect);
+                    
+                    clientRect = {
+                        top: rangeRect.top + iframeRect.top,
+                        left: rangeRect.left + iframeRect.left,
+                        bottom: rangeRect.bottom + iframeRect.top,
+                        right: rangeRect.right + iframeRect.left,
+                        width: rangeRect.width,
+                        height: rangeRect.height
+                    };
+                } catch (e) {
+                    console.log('TinyMCE range rect failed:', e);
+                    clientRect = null;
                 }
-                clientRect = windowSelection.getRangeAt(0).getBoundingClientRect();
+            }
+            
+            // Fallback na window.getSelection
+            if (!clientRect || clientRect.width === 0) {
+                const windowSelection = window.getSelection();
+                if (windowSelection && windowSelection.rangeCount > 0) {
+                    const windowRange = windowSelection.getRangeAt(0);
+                    const rangeRect = windowRange.getBoundingClientRect();
+                    console.log('Range rect from window:', rangeRect);
+                    
+                    clientRect = {
+                        top: rangeRect.top,
+                        left: rangeRect.left,
+                        bottom: rangeRect.bottom,
+                        right: rangeRect.right,
+                        width: rangeRect.width,
+                        height: rangeRect.height
+                    };
+                }
             }
             
             
             if (!clientRect || clientRect.width === 0 || clientRect.height === 0) {
+                console.log('No valid client rect:', clientRect);
                 return;
             }
+            
+            console.log('Final client rect:', clientRect);
             
             
             const buttonHeight = 40; 
@@ -622,9 +710,122 @@ const ScientificEditor = ({
         input.click();
     }, [generateChapterPrefix, counters.figures]);
 
+    // Inicijalizaj TinyMCE editor
+    useEffect(() => {
+        if (typeof window.tinymce === 'undefined') {
+            console.error('TinyMCE nije učitan!');
+            return;
+        }
+
+        const editorId = `tinymce-editor-${Date.now()}`;
+        
+        // Kreiraj textarea element
+        const container = document.getElementById('tinymce-container');
+        if (!container) return;
+        
+        const textarea = document.createElement('textarea');
+        textarea.id = editorId;
+        textarea.value = value || '';
+        container.innerHTML = '';
+        container.appendChild(textarea);
+
+        window.tinymce.init({
+            selector: `#${editorId}`,
+            ...editorConfig,
+            license_key: 'gpl', // Dodaj GPL licencu za testiranje
+            setup: (editor) => {
+                editorRef.current = editor;
+                
+                if (editorConfig.setup) {
+                    editorConfig.setup(editor);
+                }
+                
+                editor.on('change keyup', () => {
+                    const content = editor.getContent();
+                    if (onChange) {
+                        onChange(content);
+                    }
+                });
+            }
+        });
+
+        return () => {
+            if (editorRef.current) {
+                window.tinymce.remove(`#${editorId}`);
+                editorRef.current = null;
+            }
+        };
+    }, []);
+
+    // Scroll event listener za ažuriranje pozicije gumba u VIEW mode-u
+    useEffect(() => {
+        if (mode !== 'VIEW' || !showAddNoteButton || !selectionRange) {
+            return;
+        }
+
+        const handleScroll = () => {
+            // Ažuriraj poziciju gumba i sivog okvira kada se scrolla
+            if (selectionRange) {
+                calculateButtonPosition(selectionRange);
+                updateSelectionRect();
+            }
+        };
+
+        // Dodaj scroll listenere na sve moguće scroll kontejnere
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        document.addEventListener('scroll', handleScroll, { passive: true });
+        
+        // Dodaj i na editor kontejner ako postoji
+        if (editorRef.current) {
+            const editorContainer = editorRef.current.getContainer();
+            if (editorContainer) {
+                editorContainer.addEventListener('scroll', handleScroll, { passive: true });
+            }
+            
+            // Dodaj i na editor body
+            const editorBody = editorRef.current.getBody();
+            if (editorBody) {
+                editorBody.addEventListener('scroll', handleScroll, { passive: true });
+            }
+        }
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            document.removeEventListener('scroll', handleScroll);
+            
+            if (editorRef.current) {
+                const editorContainer = editorRef.current.getContainer();
+                if (editorContainer) {
+                    editorContainer.removeEventListener('scroll', handleScroll);
+                }
+                
+                const editorBody = editorRef.current.getBody();
+                if (editorBody) {
+                    editorBody.removeEventListener('scroll', handleScroll);
+                }
+            }
+        };
+    }, [mode, showAddNoteButton, selectionRange, calculateButtonPosition, updateSelectionRect]);
+
+    // Ažuriraj sadržaj kada se value promijeni
+    useEffect(() => {
+        if (editorRef.current && editorRef.current.getContent() !== (value || '')) {
+            editorRef.current.setContent(value || '');
+        }
+    }, [value]);
+
     return (
         <>
         <div className="scientific-editor">
+            {/* TinyMCE Editor Container */}
+            <div id="tinymce-container" style={{ minHeight: '650px' }}>
+                {typeof window.tinymce === 'undefined' && (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                        Učitavanje editora...
+                    </div>
+                )}
+            </div>
+            
             {showAddNoteButton && (
                 <div 
                     className="floating-note-button-container"
@@ -639,55 +840,22 @@ const ScientificEditor = ({
                     }}
                 >
 
-                    {editorRef.current && (() => {
-                        let selectionRect = null;
-                        try {
-                            const editor = editorRef.current;
-                            const editorContainer = editor.getContainer();
-                            const iframe = editorContainer.querySelector('iframe');
-                            
-                            let iframeRect = { top: 0, left: 0 };
-                            if (iframe) {
-                                iframeRect = iframe.getBoundingClientRect();
-                            }
-                            
-                            const currentSelection = editor.selection;
-                            const currentRange = currentSelection.getRng();
-                            if (currentRange && currentRange.getBoundingClientRect) {
-                                const rangeRect = currentRange.getBoundingClientRect();
-                                
-                                
-                                selectionRect = {
-                                    top: rangeRect.top + iframeRect.top,
-                                    left: rangeRect.left + iframeRect.left,
-                                    width: rangeRect.width,
-                                    height: rangeRect.height
-                                };
-                            }
-                        } catch (e) {
-                            
-                        }
-                        
-                        if (selectionRect && selectionRect.width > 0 && selectionRect.height > 0) {
-                            return (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: selectionRect.top + 'px',
-                                        left: selectionRect.left + 'px',
-                                        width: selectionRect.width + 'px',
-                                        height: selectionRect.height + 'px',
-                                        background: 'rgba(150,150,150,0.2)',
-                                        pointerEvents: 'none',
-                                        borderRadius: '3px',
-                                        border: '1px solid rgba(150,150,150,0.4)'
-                                    }}
-                                />
-                            );
-                        }
-                        
-                        return null;
-                    })()}
+                    {/* Sivi okvir za prikazivanje selekcije */}
+                    {selectionRect && selectionRect.width > 0 && selectionRect.height > 0 && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: selectionRect.top + 'px',
+                                left: selectionRect.left + 'px',
+                                width: selectionRect.width + 'px',
+                                height: selectionRect.height + 'px',
+                                background: 'rgba(150,150,150,0.2)',
+                                pointerEvents: 'none',
+                                borderRadius: '3px',
+                                border: '1px solid rgba(150,150,150,0.4)'
+                            }}
+                        />
+                    )}
                     
                     <div 
                         className="add-note-button"

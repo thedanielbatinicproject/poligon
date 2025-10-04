@@ -60,21 +60,6 @@
     }
   ],
   [
-    "session_1759510577141_o2em98hql",
-    {
-      "sessionId": "session_1759510577141_o2em98hql",
-      "user": {
-        "id": "admin001",
-        "username": "admin",
-        "ime": "Admin",
-        "prezime": "Korisnik",
-        "role": "admin"
-      },
-      "createdAt": "2025-10-03T16:56:17.141Z",
-      "lastAccess": "2025-10-03T17:09:38.404Z"
-    }
-  ],
-  [
     "session_1759510628472_fxf1m1hj1",
     {
       "sessionId": "session_1759510628472_fxf1m1hj1",
@@ -87,6 +72,51 @@
       },
       "createdAt": "2025-10-03T16:57:08.472Z",
       "lastAccess": "2025-10-03T16:57:08.472Z"
+    }
+  ],
+  [
+    "session_1759524599854_zjfa5v5v0",
+    {
+      "sessionId": "session_1759524599854_zjfa5v5v0",
+      "user": {
+        "id": "admin001",
+        "username": "admin",
+        "ime": "Admin",
+        "prezime": "Korisnik",
+        "role": "admin"
+      },
+      "createdAt": "2025-10-03T20:49:59.854Z",
+      "lastAccess": "2025-10-03T21:55:34.891Z"
+    }
+  ],
+  [
+    "session_1759527696573_92tve3si3",
+    {
+      "sessionId": "session_1759527696573_92tve3si3",
+      "user": {
+        "id": "user001",
+        "username": "Marko Novoimenić",
+        "ime": "Marko Novoimenić",
+        "prezime": "Marković",
+        "role": "user"
+      },
+      "createdAt": "2025-10-03T21:41:36.573Z",
+      "lastAccess": "2025-10-03T22:00:35.726Z"
+    }
+  ],
+  [
+    "session_1759578410320_3rri5ypfy",
+    {
+      "sessionId": "session_1759578410320_3rri5ypfy",
+      "user": {
+        "id": "user_1759572154698_5a0244e7",
+        "username": "test",
+        "ime": "Test",
+        "prezime": "Korisnik",
+        "role": "user"
+      },
+      "createdAt": "2025-10-04T11:46:50.320Z",
+      "lastAccess": "2025-10-04T12:03:59.881Z"
     }
   ]
 ]

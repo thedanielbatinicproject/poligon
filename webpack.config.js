@@ -1,6 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const webpack = require('webpack');
+require('dotenv').config();
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -47,6 +49,10 @@ module.exports = (env, argv) => {
     ]
   },
   plugins: [
+    new webpack.DefinePlugin({
+      'process.env.REACT_APP_TINYMCE_API_KEY': JSON.stringify(process.env.REACT_APP_TINYMCE_API_KEY),
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || (isProduction ? 'production' : 'development'))
+    }),
     new HtmlWebpackPlugin({
       template: './src/index.html',
       filename: 'index.html'

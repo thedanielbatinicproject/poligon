@@ -6,6 +6,7 @@ const crypto = require('crypto');
 
 const USERS_FILE = path.join(__dirname, '../data/users.json');
 const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json'); // Koristi stari sessions file
+const THESES_FILE = path.join(__dirname, '../data/theses.json');
 
 // Helper funkcije
 function loadUsers() {
@@ -30,6 +31,67 @@ function saveUsers(users) {
         return true;
     } catch (error) {
         console.error('Error saving users:', error);
+        return false;
+    }
+}
+
+// Funkcija za ažuriranje korisničkih podataka u svim dokumentima
+function updateUserDataInTheses(userId, newUserData) {
+    try {
+        if (!fs.existsSync(THESES_FILE)) {
+            return true;
+        }
+
+        const thesesData = JSON.parse(fs.readFileSync(THESES_FILE, 'utf8'));
+        let updatedCount = 0;
+
+        if (thesesData && thesesData.theses) {
+            const newFullName = `${newUserData.ime} ${newUserData.prezime}`.trim();
+            
+            thesesData.theses.forEach(thesis => {
+                let updated = false;
+
+                // Provjeri authorId u metadata ili direktno u thesis
+                const authorId = thesis.metadata?.authorId || thesis.authorId;
+                
+                // Ažuriraj author name ako je authorId isti kao userId
+                if (authorId === userId) {
+                    if (thesis.metadata) {
+                        thesis.metadata.author = newFullName;
+                    } else {
+                        thesis.author = newFullName;
+                    }
+                    updated = true;
+                }
+
+                // Ažuriraj editorIds i editors arrays ako sadrže userId
+                if (thesis.editorIds && Array.isArray(thesis.editorIds)) {
+                    const editorIndex = thesis.editorIds.indexOf(userId);
+                    if (editorIndex !== -1) {
+                        // Ažuriraj i editors array sa novim imenom
+                        if (thesis.editors && Array.isArray(thesis.editors)) {
+                            thesis.editors[editorIndex] = newFullName;
+                            updated = true;
+                        }
+                    }
+                }
+
+                if (updated) {
+                    updatedCount++;
+                    // Ažuriraj version i updated timestamp
+                    thesis.version = (thesis.version || 1) + 1;
+                    thesis.updated = new Date().toISOString();
+                }
+            });
+
+            if (updatedCount > 0) {
+                fs.writeFileSync(THESES_FILE, JSON.stringify(thesesData, null, 2));
+            }
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error updating user data in theses:', error);
         return false;
     }
 }
@@ -197,7 +259,16 @@ router.put('/:id', requireAdmin, (req, res) => {
         }
 
         // Provjeri jedinstvenost korisničkog imena (izuzev trenutnog korisnika)
-        if (username && username !== users[userIndex].username) {
+        const oldUsername = users[userIndex].username;
+        const oldIme = users[userIndex].ime;
+        const oldPrezime = users[userIndex].prezime;
+        
+        const usernameChanged = username && username !== oldUsername;
+        const imeChanged = ime && ime !== oldIme;
+        const prezimeChanged = prezime && prezime !== oldPrezime;
+        const userDataChanged = usernameChanged || imeChanged || prezimeChanged;
+        
+        if (usernameChanged) {
             if (users.find(u => u.username === username && u.id !== id)) {
                 return res.status(400).json({
                     success: false,
@@ -224,11 +295,17 @@ router.put('/:id', requireAdmin, (req, res) => {
         };
 
         if (saveUsers(users)) {
+            // UVIJEK ažuriraj theses.json kada se korisnik promijeni (bez obzira što se promijenilo)
+            const updateSuccess = updateUserDataInTheses(id, users[userIndex]);
+            if (!updateSuccess) {
+                console.warn('Failed to update user data in theses, but user was saved successfully');
+            }
+
             // Ukloni lozinku iz odgovora
             const { password: _, ...safeUser } = users[userIndex];
             res.json({
                 success: true,
-                message: 'Korisnik je uspješno ažuriran',
+                message: 'Korisnik je uspješno ažuriran i dokumenti su ažurirani',
                 data: safeUser
             });
         } else {

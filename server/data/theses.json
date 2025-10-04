@@ -1,1 +1,144 @@
-{"theses":[{"id":"thesis_1759511134000_i31d5iy7m","created":"2025-10-03T17:05:34.000Z","updated":"2025-10-03T17:05:34.000Z","version":1,"metadata":{"title":"Novi diplomski rad","author":"Student","mentor":"Mentor","university":"Sveučilište","faculty":"Fakultet","department":"Odsjek","academicYear":"2025/2026","recommendedWordCount":15000},"structure":{},"chapters":[],"bibliography":[],"settings":{"theme":"default","language":"hr"},"stats":{"totalWords":0,"totalCharacters":0,"totalPages":0}}]}
+{
+  "theses": [
+    {
+      "id": "thesis_1759525690110_be22blnjv",
+      "created": "2025-10-03T21:08:10.110Z",
+      "updated": "2025-10-03T22:00:42.643Z",
+      "version": 16,
+      "metadata": {
+        "title": "MARKO DOKUMENT 2",
+        "author": "TEST TEST MARKO",
+        "mentor": "Mentor",
+        "university": "Sveučilište",
+        "faculty": "Fakultet",
+        "department": "Odsjek",
+        "academicYear": "2025/2026",
+        "recommendedWordCount": 15000,
+        "authorId": "user001"
+      },
+      "structure": {},
+      "chapters": [
+        {
+          "id": "chapter_1759525725156_fky30d50z",
+          "title": "Novo poglavlje",
+          "content": "<p>wfwfw</p>",
+          "order": 0,
+          "parentId": null,
+          "level": 0,
+          "wordGoal": 2000,
+          "wordCount": 1,
+          "created": "2025-10-03T21:08:45.156Z",
+          "updated": "2025-10-03T21:08:47.705Z"
+        },
+        {
+          "id": "chapter_1759526996830_a4lrys8cq",
+          "title": "Novo potpoglavlje",
+          "content": "",
+          "order": 0,
+          "parentId": "chapter_1759525725156_fky30d50z",
+          "level": 1,
+          "wordGoal": 800,
+          "wordCount": 0,
+          "created": "2025-10-03T21:29:56.830Z",
+          "updated": "2025-10-03T21:29:56.830Z"
+        }
+      ],
+      "bibliography": [],
+      "editors": [],
+      "settings": {
+        "theme": "default",
+        "language": "hr"
+      },
+      "stats": {
+        "totalWords": 1,
+        "totalCharacters": 5,
+        "totalPages": 1
+      }
+    },
+    {
+      "id": "thesis_1759526987396_bynw5cmhp",
+      "created": "2025-10-03T21:29:47.396Z",
+      "updated": "2025-10-03T22:00:42.643Z",
+      "version": 15,
+      "metadata": {
+        "title": "Novi diplomski rad",
+        "author": "TEST TEST MARKO",
+        "authorId": "user001",
+        "mentor": "Mentor",
+        "university": "Sveučilište",
+        "faculty": "Fakultet",
+        "department": "Odsjek",
+        "academicYear": "2025/2026",
+        "recommendedWordCount": 15000
+      },
+      "structure": {},
+      "chapters": [
+        {
+          "id": "chapter_1759527000341_o68azf28s",
+          "title": "Novo poglavlje",
+          "content": "<p>fwfwfwf</p>",
+          "order": 0,
+          "parentId": null,
+          "level": 0,
+          "wordGoal": 2000,
+          "wordCount": 1,
+          "created": "2025-10-03T21:30:00.341Z",
+          "updated": "2025-10-03T21:30:04.411Z"
+        },
+        {
+          "id": "chapter_1759527001661_lt2vo1zwf",
+          "title": "Novo potpoglavlje",
+          "content": "",
+          "order": 0,
+          "parentId": "chapter_1759527000341_o68azf28s",
+          "level": 1,
+          "wordGoal": 800,
+          "wordCount": 0,
+          "created": "2025-10-03T21:30:01.662Z",
+          "updated": "2025-10-03T21:30:01.662Z"
+        }
+      ],
+      "bibliography": [],
+      "editors": [],
+      "settings": {
+        "theme": "default",
+        "language": "hr"
+      },
+      "stats": {
+        "totalWords": 1,
+        "totalCharacters": 7,
+        "totalPages": 1
+      }
+    },
+    {
+      "id": "thesis_1759572196708_kzpm9je9p",
+      "created": "2025-10-04T10:03:16.708Z",
+      "updated": "2025-10-04T11:46:47.734Z",
+      "version": 4,
+      "metadata": {
+        "title": "Testni diplomski rad",
+        "author": "Test Korisnik",
+        "mentor": "Mentor",
+        "university": "Sveučilište",
+        "faculty": "Fakultet",
+        "department": "Odsjek",
+        "academicYear": "2025/2026",
+        "recommendedWordCount": 15000,
+        "authorId": "user_1759572154698_5a0244e7"
+      },
+      "structure": {},
+      "chapters": [],
+      "bibliography": [],
+      "editors": [],
+      "settings": {
+        "theme": "default",
+        "language": "hr"
+      },
+      "stats": {
+        "totalWords": 0,
+        "totalCharacters": 0,
+        "totalPages": 0
+      }
+    }
+  ]
+}

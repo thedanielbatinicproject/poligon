@@ -19,6 +19,24 @@ const TasksTodos = ({ user, isAuthenticated }) => {
     const [calendarEvents, setCalendarEvents] = useState([]);
     const [upcomingItems, setUpcomingItems] = useState([]);
     const [visibleItems, setVisibleItems] = useState(5);
+
+    // Funkcije za provjeru dozvola
+    const isAdmin = () => {
+        return isAuthenticated && user && user.role === 'admin';
+    };
+
+    const canEditTask = (task) => {
+        return isAdmin() || (isAuthenticated && user && task.createdBy === user.id);
+    };
+
+    const canEditTodo = (todo) => {
+        if (isAdmin()) return true;
+        if (isAuthenticated && user) {
+            return todo.createdBy === user.id;
+        }
+        // Neregistrirani korisnici mogu samo Anonymous todoove
+        return todo.createdBy === 'Anonymous';
+    };
     
     
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -69,6 +87,21 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         updateCalendarEvents();
         updateUpcomingItems();
     }, [tasks, todos, selectedDocuments]);
+
+    // Blokira scroll kada su modali otvoreni
+    useEffect(() => {
+        const isModalOpen = showEditForm || showConfirmDialog || showCancelConfirm;
+        if (isModalOpen) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+
+        // Cleanup na unmount
+        return () => {
+            document.body.classList.remove('modal-open');
+        };
+    }, [showEditForm, showConfirmDialog, showCancelConfirm]);
 
 
 
@@ -258,14 +291,20 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
     const toggleFinished = async (item) => {
         try {
-            
+            // Provjeri dozvole
+            if (!canEditItem(item)) {
+                showNotification('Nemate dozvolu mijenjati status ovog zadatka.', 'error');
+                return;
+            }
+
+            // Ako je završen, pitaj za potvrdu reaktivacije
             if (item.isFinished) {
                 setConfirmItem(item);
                 setShowConfirmDialog(true);
                 return;
             }
 
-            
+            // Inače direktno mijenjaj status
             await performToggle(item);
         } catch (error) {
             console.error('Greška pri mijenjanju statusa:', error);
@@ -284,12 +323,14 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             });
 
             if (response.ok) {
-                
+                const result = await response.json();
+                showNotification(result.message, 'success');
+                // Osvježavaj podatke
                 loadTasks();
                 loadTodos();
             } else {
-                console.error('Greška pri mijenjanju statusa:', response.status);
-                showNotification('Greška pri mijenjanju statusa. Molimo pokušajte ponovno.', 'error');
+                const errorData = await response.json();
+                showNotification(errorData.message || 'Greška pri mijenjanju statusa', 'error');
             }
         } catch (error) {
             console.error('Greška pri mijenjanju statusa:', error);
@@ -405,26 +446,17 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.success) {
-                    
-                    if (editingItem.type === 'task') {
-                        setTasks(prev => prev.map(task => 
-                            task.id === editingItem.id ? result.data : task
-                        ));
-                    } else {
-                        setTodos(prev => prev.map(todo => 
-                            todo.id === editingItem.id ? result.data : todo
-                        ));
-                    }
-                    
-                    forceCloseEditForm();
-                    showNotification(`${editingItem.type.toUpperCase()} je uspješno ažuriran!`, 'success');
+                // Osvježavaj podatke
+                if (editingItem.type === 'task') {
+                    loadTasks();
                 } else {
-                    showNotification('Greška: ' + result.message, 'error');
+                    loadTodos();
                 }
+                forceCloseEditForm();
+                showNotification(result.message, 'success');
             } else {
                 const error = await response.json();
-                showNotification('Greška: ' + error.message, 'error');
+                showNotification(error.message || 'Greška pri ažuriranju', 'error');
             }
         } catch (error) {
             console.error('Greška pri ažuriranju:', error);
@@ -487,18 +519,9 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
     const canEditItem = (item) => {
         if (item.type === 'task') {
-            
-            
-            return isAuthenticated && user;
+            return canEditTask(item);
         } else {
-            
-            
-            if (isAuthenticated && user) {
-                return true; 
-            } else {
-                
-                return item.createdBy === 'Anonymous';
-            }
+            return canEditTodo(item);
         }
     };
 
@@ -508,18 +531,9 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
     const canDeleteItem = (item) => {
         if (item.type === 'task') {
-            
-            
-            return isAuthenticated && user;
+            return canEditTask(item);
         } else {
-            
-            
-            if (isAuthenticated && user) {
-                return true; 
-            } else {
-                
-                return item.createdBy === 'Anonymous';
-            }
+            return canEditTodo(item);
         }
     };
 
@@ -539,21 +553,16 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.success) {
-                    
-                    if (itemToDelete.type === 'task') {
-                        setTasks(prev => prev.filter(task => task.id !== itemToDelete.id));
-                    } else {
-                        setTodos(prev => prev.filter(todo => todo.id !== itemToDelete.id));
-                    }
-                    
-                    showNotification(`${itemToDelete.type.toUpperCase()} je uspješno obrisan!`, 'success');
+                // Osvježavaj podatke
+                if (itemToDelete.type === 'task') {
+                    loadTasks();
                 } else {
-                    showNotification('Greška: ' + result.message, 'error');
+                    loadTodos();
                 }
+                showNotification(result.message, 'success');
             } else {
                 const error = await response.json();
-                showNotification('Greška: ' + error.message, 'error');
+                showNotification(error.message || 'Greška pri brisanju', 'error');
             }
         } catch (error) {
             console.error('Greška pri brisanju:', error);
@@ -664,9 +673,12 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                 <tr 
                                     key={`${item.type}-${item.id}-${index}`}
                                     className={`task-row ${item.isFinished ? 'finished' : ''}`}
-                                    onClick={() => toggleFinished(item)}
-                                    style={{ cursor: 'pointer' }}
-                                    title={item.isFinished ? 'Klikni za reaktivaciju' : 'Klikni za završavanje'}
+                                    onClick={() => canEditItem(item) ? toggleFinished(item) : null}
+                                    style={{ cursor: canEditItem(item) ? 'pointer' : 'not-allowed' }}
+                                    title={canEditItem(item) 
+                                        ? (item.isFinished ? 'Klikni za reaktivaciju' : 'Klikni za završavanje')
+                                        : 'Nemate dozvolu mijenjati ovaj zadatak'
+                                    }
                                 >
                                     <td>
                                         <span className={`type-badge ${item.type} ${item.isFinished ? 'finished' : ''}`}>
@@ -696,9 +708,15 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                         }
                                     </td>
                                     <td className="action-cell">
-                                        <span className={`action-text ${item.isFinished ? 'finished' : 'active'}`}>
-                                            {item.isFinished ? '↻ Reaktiviraj' : '✓ Završi'}
-                                        </span>
+                                        {canEditItem(item) ? (
+                                            <span className={`action-text ${item.isFinished ? 'finished' : 'active'}`}>
+                                                {item.isFinished ? '↻ Reaktiviraj' : '✓ Završi'}
+                                            </span>
+                                        ) : (
+                                            <span className="action-text disabled" title="Nemate dozvolu">
+                                                🔒 Zaključano
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="edit-cell">
                                         <div className="action-buttons">

@@ -13,15 +13,15 @@
     "opis": "Glavni administrator sustava",
     "role": "admin",
     "createdAt": "2025-10-03T12:00:00.000Z",
-    "lastLogin": "2025-10-03T16:56:17.141Z",
+    "lastLogin": "2025-10-04T09:59:11.439Z",
     "isActive": true,
     "updatedAt": "2025-10-03T16:41:13.594Z"
   },
   {
     "id": "user001",
     "ime": "Marko",
-    "prezime": "Marković",
-    "username": "marko",
+    "prezime": "TESTER",
+    "username": "Marko Novoimenić",
     "password": "marko123",
     "email": "marko@example.com",
     "brojTelefona": "+385991234567",
@@ -31,9 +31,9 @@
     "opis": "Student računarstva  DANIEL",
     "role": "user",
     "createdAt": "2025-10-03T12:30:00.000Z",
-    "lastLogin": "2025-10-03T16:37:15.445Z",
+    "lastLogin": "2025-10-03T21:41:36.573Z",
     "isActive": true,
-    "updatedAt": "2025-10-03T17:09:49.360Z",
+    "updatedAt": "2025-10-04T09:59:32.292Z",
     "updatedBy": "admin"
   },
   {
@@ -50,10 +50,30 @@
     "opis": "Marko",
     "role": "user",
     "createdAt": "2025-10-03T17:10:00.935Z",
-    "lastLogin": null,
+    "lastLogin": "2025-10-03T21:55:29.100Z",
     "isActive": true,
     "createdBy": "admin",
     "updatedAt": "2025-10-03T17:10:12.097Z",
+    "updatedBy": "admin"
+  },
+  {
+    "id": "user_1759572154698_5a0244e7",
+    "ime": "Test",
+    "prezime": "Korisnik",
+    "username": "test",
+    "password": "test",
+    "email": "",
+    "brojTelefona": "",
+    "sveuciliste": "",
+    "fakultet": "",
+    "smjer": "",
+    "opis": "",
+    "role": "user",
+    "createdAt": "2025-10-04T10:02:34.698Z",
+    "lastLogin": "2025-10-04T11:46:50.320Z",
+    "isActive": true,
+    "createdBy": "admin",
+    "updatedAt": "2025-10-04T11:46:47.734Z",
     "updatedBy": "admin"
   }
 ]

@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "1759578949691z633dk44k",
+    "title": "ADMIN TODO",
+    "description": "ADMIN TODO",
+    "documentId": null,
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-04T11:55:49.691Z",
+    "createdBy": "admin001",
+    "isFinished": true,
+    "updatedAt": "2025-10-04T11:55:51.622Z",
+    "finishedAt": "2025-10-04T11:55:51.622Z"
+  },
+  {
+    "id": "1759579413382e1649wt4p",
+    "title": "GOST TODO",
+    "description": "gt",
+    "documentId": null,
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-04T12:03:33.382Z",
+    "createdBy": "Anonymous",
+    "isFinished": false,
+    "updatedAt": "2025-10-04T12:03:56.851Z"
+  },
+  {
+    "id": "1759579430351ya5u1c8e8",
+    "title": "TEST TODO",
+    "description": "tt",
+    "documentId": null,
+    "chapterId": null,
+    "dueDate": null,
+    "createdAt": "2025-10-04T12:03:50.351Z",
+    "createdBy": "user_1759572154698_5a0244e7",
+    "isFinished": false
+  }
+]

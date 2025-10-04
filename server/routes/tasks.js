@@ -23,7 +23,7 @@ function loadActiveSessions() {
 
 // Middleware za autentifikaciju
 const authenticateUser = (req, res, next) => {
-    if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
         const sessionId = req.cookies.sessionId;
         
         if (!sessionId) {
@@ -46,6 +46,36 @@ const authenticateUser = (req, res, next) => {
         req.user = session;
     }
     next();
+};
+
+// Funkcija za provjeru admin dozvola
+const isAdmin = (user) => {
+    return user && user.role === 'admin';
+};
+
+// Funkcija za provjeru može li korisnik uređivati task
+const canEditTask = (task, session) => {
+    const user = session?.user || session;
+    return isAdmin(user) || task.createdBy === user?.id;
+};
+
+// Funkcija za provjeru može li korisnik uređivati todo
+const canEditTodo = (todo, session) => {
+    // Izvlači user objekt iz sesije
+    const user = session?.user || session;
+    
+    // Ako je admin, može sve
+    if (user && isAdmin(user)) {
+        return true;
+    }
+    
+    // Ako je registriran korisnik, može svoje todoove
+    if (user && user.id) {
+        return todo.createdBy === user.id;
+    }
+    
+    // Neregistrirani korisnici mogu samo "Anonymous" todoove  
+    return todo.createdBy === 'Anonymous';
 };
 
 
@@ -140,7 +170,7 @@ router.post('/tasks', authenticateUser, (req, res) => {
             chapterId: chapterId || null,
             dueDate: dueDate,
             createdAt: new Date().toISOString(),
-            createdBy: req.user.username,
+            createdBy: req.user.id,
             isFinished: false
         };
 
@@ -184,10 +214,10 @@ router.put('/tasks/:id', authenticateUser, (req, res) => {
         }
 
         // Provjeri da li korisnik ima pravo urediti
-        if (tasks[taskIndex].createdBy !== req.user.username) {
+        if (!canEditTask(tasks[taskIndex], req.user)) {
             return res.status(403).json({
                 success: false,
-                message: 'Nemate pravo uređivati ovaj task'
+                message: isAdmin(req.user) ? 'Admin greška' : 'Možete uređivati samo vlastite taskove'
             });
         }
 
@@ -225,28 +255,7 @@ router.put('/tasks/:id', authenticateUser, (req, res) => {
 });
 
 // PATCH /api/tasks/:id/toggle-finished - Promijeni finished status
-router.patch('/tasks/:id/toggle-finished', (req, res) => {
-    
-    const sessionId = req.cookies.sessionId;
-    
-    if (!sessionId) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Niste prijavljeni' 
-        });
-    }
-
-    const activeSessions = loadActiveSessions();
-    const session = activeSessions.get(sessionId);
-    
-    if (!session) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Sesija je neispravna ili je istekla' 
-        });
-    }
-
-    req.user = session;
+router.patch('/tasks/:id/toggle-finished', authenticateUser, (req, res) => {
     try {
         const { id } = req.params;
         const tasks = loadTasks();
@@ -260,10 +269,10 @@ router.patch('/tasks/:id/toggle-finished', (req, res) => {
         }
 
         // Provjeri da li korisnik ima pravo urediti
-        if (tasks[taskIndex].createdBy !== req.user.username) {
+        if (!canEditTask(tasks[taskIndex], req.user)) {
             return res.status(403).json({
                 success: false,
-                message: 'Nemate pravo uređivati ovaj task'
+                message: isAdmin(req.user) ? 'Admin greška' : 'Možete mijenjati status samo vlastitim taskovima'
             });
         }
 
@@ -312,10 +321,10 @@ router.delete('/tasks/:id', authenticateUser, (req, res) => {
         }
 
         // Provjeri da li korisnik ima pravo obrisati
-        if (tasks[taskIndex].createdBy !== req.user.username) {
+        if (!canEditTask(tasks[taskIndex], req.user)) {
             return res.status(403).json({
                 success: false,
-                message: 'Nemate pravo obrisati ovaj task'
+                message: isAdmin(req.user) ? 'Admin greška' : 'Možete brisati samo vlastite taskove'
             });
         }
 
@@ -384,7 +393,7 @@ router.post('/todos', (req, res) => {
             const activeSessions = loadActiveSessions();
             const session = activeSessions.get(sessionId);
             if (session) {
-                createdBy = session.username;
+                createdBy = session.user?.id || session.id;
             }
         }
 
@@ -441,24 +450,18 @@ router.put('/todos/:id', (req, res) => {
 
         // Provjeri da li korisnik ima pravo urediti
         const sessionId = req.cookies.sessionId;
-        let isLoggedIn = false;
-        let currentUser = 'Anonymous';
+        let session = null;
         
         if (sessionId) {
             const activeSessions = loadActiveSessions();
-            const session = activeSessions.get(sessionId);
-            if (session) {
-                currentUser = session.username;
-                isLoggedIn = true;
-            }
+            session = activeSessions.get(sessionId);
         }
 
-        
-        
-        if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
+        // Provjeri dozvole
+        if (!canEditTodo(todos[todoIndex], session)) {
             return res.status(403).json({
                 success: false,
-                message: 'Nemate pravo uređivati ovaj todo'
+                message: 'Možete uređivati samo vlastite todoove'
             });
         }
 
@@ -511,24 +514,18 @@ router.patch('/todos/:id/toggle-finished', (req, res) => {
 
         // Provjeri da li korisnik ima pravo urediti
         const sessionId = req.cookies.sessionId;
-        let isLoggedIn = false;
-        let currentUser = 'Anonymous';
+        let session = null;
         
         if (sessionId) {
             const activeSessions = loadActiveSessions();
-            const session = activeSessions.get(sessionId);
-            if (session) {
-                currentUser = session.username;
-                isLoggedIn = true;
-            }
+            session = activeSessions.get(sessionId);
         }
 
-        
-        
-        if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
+        // Provjeri dozvole
+        if (!canEditTodo(todos[todoIndex], session)) {
             return res.status(403).json({
                 success: false,
-                message: 'Nemate pravo uređivati ovaj todo'
+                message: 'Možete mijenjati status samo vlastitim todoovima'
             });
         }
 
@@ -578,24 +575,18 @@ router.delete('/todos/:id', (req, res) => {
 
         // Provjeri da li korisnik ima pravo obrisati
         const sessionId = req.cookies.sessionId;
-        let isLoggedIn = false;
-        let currentUser = 'Anonymous';
+        let session = null;
         
         if (sessionId) {
             const activeSessions = loadActiveSessions();
-            const session = activeSessions.get(sessionId);
-            if (session) {
-                currentUser = session.username;
-                isLoggedIn = true;
-            }
+            session = activeSessions.get(sessionId);
         }
 
-        
-        
-        if (!isLoggedIn && todos[todoIndex].createdBy !== currentUser) {
+        // Provjeri dozvole
+        if (!canEditTodo(todos[todoIndex], session)) {
             return res.status(403).json({
                 success: false,
-                message: 'Nemate pravo obrisati ovaj todo'
+                message: 'Možete brisati samo vlastite todoove'
             });
         }
 
