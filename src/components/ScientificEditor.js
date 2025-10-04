@@ -735,6 +735,13 @@ const ScientificEditor = ({
         };
         window.addEventListener('scroll', handleScroll, { passive: true });
         document.addEventListener('scroll', handleScroll, { passive: true });
+        
+        // Dodaj listener za content-body kontejner
+        const contentBodyElement = document.querySelector('[data-content-body="true"]');
+        if (contentBodyElement) {
+            contentBodyElement.addEventListener('scroll', handleScroll, { passive: true });
+        }
+        
         if (editorRef.current) {
             const editorContainer = editorRef.current.getContainer();
             if (editorContainer) {
@@ -749,6 +756,12 @@ const ScientificEditor = ({
         return () => {
             window.removeEventListener('scroll', handleScroll);
             document.removeEventListener('scroll', handleScroll);
+            
+            // Ukloni listener za content-body kontejner
+            const contentBodyElement = document.querySelector('[data-content-body="true"]');
+            if (contentBodyElement) {
+                contentBodyElement.removeEventListener('scroll', handleScroll);
+            }
             
             if (editorRef.current) {
                 const editorContainer = editorRef.current.getContainer();

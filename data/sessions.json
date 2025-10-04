@@ -118,20 +118,5 @@
       "createdAt": "2025-10-04T14:05:00.197Z",
       "lastAccess": "2025-10-04T14:10:28.119Z"
     }
-  ],
-  [
-    "session_1759590686657_87thgb585",
-    {
-      "sessionId": "session_1759590686657_87thgb585",
-      "user": {
-        "id": "user_1759590681224_356462fe",
-        "username": "Gost",
-        "ime": "Gost",
-        "prezime": "Korisnik",
-        "role": "user"
-      },
-      "createdAt": "2025-10-04T15:11:26.657Z",
-      "lastAccess": "2025-10-04T15:11:26.657Z"
-    }
   ]
 ]
