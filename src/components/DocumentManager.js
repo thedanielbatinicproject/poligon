@@ -31,11 +31,9 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
                 onThesisUpdate(result.data);
                 onClose();
             } else {
-                console.error('Error updating metadata:', result.status);
-            }
+                }
         } catch (error) {
-            console.error('Error updating metadata:', error);
-        }
+            }
     };
 
     const handleDelete = async () => {
@@ -48,18 +46,14 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
                 
                 localStorage.removeItem('selectedDocumentId');
                 localStorage.removeItem('selectedChapterId');
-                
-                // Obavijesti roditelja da je dokument obrisan
                 if (onDocumentDeleted) {
                     onDocumentDeleted();
                 }
                 onClose();
             } else {
-                console.error('Error deleting thesis:', result.status);
-            }
+                }
         } catch (error) {
-            console.error('Error deleting thesis:', error);
-        } finally {
+            } finally {
             setIsDeleting(false);
             setShowDeleteConfirm(false);
         }

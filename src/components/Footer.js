@@ -10,7 +10,7 @@ function Footer() {
         <p>
           &copy; {yearRange} Poligon. Sva prava pridržana. {' '}
           <a 
-            href="https://github.com/thedanielbatinicproject/poligon" 
+            href="https://github.com/thedanielbatinicproject/poligon"
             target="_blank" 
             rel="noopener noreferrer"
             style={{ 

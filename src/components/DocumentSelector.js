@@ -36,7 +36,6 @@ const DocumentSelector = ({ user, onDocumentSelect, onCreateNew }) => {
                 setError('Greška pri učitavanju dokumenata');
             }
         } catch (error) {
-            console.error('Error loading theses:', error);
             setError('Greška pri učitavanju dokumenata');
         } finally {
             setLoading(false);

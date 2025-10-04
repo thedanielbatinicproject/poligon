@@ -36,7 +36,6 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                 element.classList.remove('notes-collapsed');
             }
         }
-        // Update NotesPanel preko globalnog event-a da izbjegnem JSX varijable
         window.dispatchEvent(new CustomEvent('notesCollapsedChange', { 
             detail: { collapsed: notesState === 1 } 
         }));
@@ -105,11 +104,9 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                 onThesisUpdate(result.data);
                 setChapters(result.data.chapters || []);
             } else {
-                console.error('Failed to add chapter:', result.status);
-            }
+                }
         } catch (error) {
-            console.error('Error adding chapter:', error);
-        } finally {
+            } finally {
             setLoading(false);
         }
     };
@@ -123,11 +120,9 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                 onThesisUpdate(result.data);
                 setChapters(result.data.chapters || []);
             } else {
-                console.error('Failed to update chapter:', result.status);
-            }
+                }
         } catch (error) {
-            console.error('Error updating chapter:', error);
-        }
+            }
     };
 
     const deleteChapter = async (chapterId) => {
@@ -144,11 +139,9 @@ const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelec
                 }
                 setShowDeleteConfirm(null);
             } else {
-                console.error('Failed to delete chapter:', result.status);
-            }
+                }
         } catch (error) {
-            console.error('Error deleting chapter:', error);
-        } finally {
+            } finally {
             setLoading(false);
         }
     };

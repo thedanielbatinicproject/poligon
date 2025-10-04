@@ -61,11 +61,9 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
 
                 setNotes(response.data.notes || []);
             } else {
-                console.error('Failed to load notes:', response);
                 setNotes([]);
             }
         } catch (error) {
-            console.error('Error loading notes:', error);
             setNotes([]);
         } finally {
             setLoading(false);
@@ -138,9 +136,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
             setNewNoteSelectedText('');
             setShowAddNoteForm(false);
         } catch (error) {
-            console.error('Error creating note:', error);
-            
-        } finally {
+            } finally {
             setLoading(false);
         }
     };
@@ -155,8 +151,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
                 ));
             }
         } catch (error) {
-            console.error('Error approving note:', error);
-        }
+            }
     };
 
     const handleDeleteNote = async (noteId) => {
@@ -171,9 +166,7 @@ const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapse
             setNotes(prev => prev.filter(note => note.id !== deleteConfirm));
             setDeleteConfirm(null);
         } catch (error) {
-            console.error('Error deleting note:', error);
-            
-        }
+            }
     };
 
     const formatDate = (dateString) => {

@@ -48,7 +48,6 @@ export const apiCall = async (url, options = {}) => {
             return { success: response.ok, data: null, status: response.status };
         }
     } catch (error) {
-        console.error('❌ API call error:', error);
         return { success: false, error: error.message, status: 0 };
     }
 };
@@ -68,8 +67,6 @@ export const authAPI = {
         method: 'GET'
     })
 };
-
-// Helper funkcije za theses API
 export const thesesAPI = {
     getAll: () => apiCall(`/api/theses?_t=${Date.now()}`),
     
@@ -88,8 +85,6 @@ export const thesesAPI = {
     delete: (id) => apiCall(`/api/theses/${id}`, {
         method: 'DELETE'
     }),
-    
-    // Chapter operations
     getChapters: (thesisId) => apiCall(`/api/theses/${thesisId}/chapters`),
     
     addChapter: (thesisId, chapterData) => apiCall(`/api/theses/${thesisId}/chapters`, {
@@ -106,8 +101,6 @@ export const thesesAPI = {
         method: 'DELETE'
     })
 };
-
-// Notes API
 export const notesAPI = {
     
     getNotes: (thesisId, chapterId) => {

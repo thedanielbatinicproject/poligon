@@ -4,7 +4,6 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './TasksTodos.css';
 
-// Postavka lokalizera za moment.js
 const localizer = momentLocalizer(moment);
 
 const TasksTodos = ({ user, isAuthenticated }) => {
@@ -20,7 +19,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
     const [upcomingItems, setUpcomingItems] = useState([]);
     const [visibleItems, setVisibleItems] = useState(5);
 
-    // Funkcije za provjeru dozvola
     const isAdmin = () => {
         return isAuthenticated && user && user.role === 'admin';
     };
@@ -34,11 +32,30 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         if (isAuthenticated && user) {
             return todo.createdBy === user.id;
         }
-        // Neregistrirani korisnici mogu samo Anonymous todoove
         return todo.createdBy === 'Anonymous';
     };
     
-    
+    const getAvailableDocuments = () => {
+        if (!isAuthenticated || !user) {
+            return [];
+        }
+
+        if (isAdmin()) {
+            return documents;
+        }
+
+        return documents.filter(doc => {
+            if (doc.metadata?.authorId === user.id) {
+                return true;
+            }
+            
+            if (doc.editorIds && doc.editorIds.includes(user.id)) {
+                return true;
+            }
+            
+            return false;
+        });
+    };    
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [confirmItem, setConfirmItem] = useState(null);
     
@@ -87,21 +104,18 @@ const TasksTodos = ({ user, isAuthenticated }) => {
         updateCalendarEvents();
         updateUpcomingItems();
     }, [tasks, todos, selectedDocuments]);
-
-    // Blokira scroll kada su modali otvoreni
     useEffect(() => {
-        const isModalOpen = showEditForm || showConfirmDialog || showCancelConfirm;
+        const isModalOpen = showEditForm || showConfirmDialog || showCancelConfirm || showDeleteConfirm;
         if (isModalOpen) {
             document.body.classList.add('modal-open');
         } else {
             document.body.classList.remove('modal-open');
         }
 
-        // Cleanup na unmount
         return () => {
             document.body.classList.remove('modal-open');
         };
-    }, [showEditForm, showConfirmDialog, showCancelConfirm]);
+    }, [showEditForm, showConfirmDialog, showCancelConfirm, showDeleteConfirm]);
 
 
 
@@ -113,7 +127,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 setTasks(data);
             }
         } catch (error) {
-            console.error('Greška pri učitavanju taskova:', error);
         }
     };
 
@@ -125,7 +138,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 setTodos(data);
             }
         } catch (error) {
-            console.error('Greška pri učitavanju todova:', error);
         }
     };
 
@@ -139,7 +151,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 setDocuments(documentsArray);
             }
         } catch (error) {
-            console.error('Greška pri učitavanju dokumenata:', error);
         }
     };
 
@@ -162,7 +173,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 setAvailableChapters([]);
             }
         } catch (error) {
-            console.error('Greška pri učitavanju poglavlja:', error);
             setAvailableChapters([]);
         }
     };
@@ -248,7 +258,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 showNotification('Greška: ' + error.message, 'error');
             }
         } catch (error) {
-            console.error('Greška pri kreiranju taska:', error);
             showNotification('Greška pri kreiranju taska', 'error');
         }
     };
@@ -280,7 +289,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 showNotification('Greška: ' + error.message, 'error');
             }
         } catch (error) {
-            console.error('Greška pri kreiranju todoa:', error);
             showNotification('Greška pri kreiranju todoa', 'error');
         }
     };
@@ -291,23 +299,19 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
     const toggleFinished = async (item) => {
         try {
-            // Provjeri dozvole
             if (!canEditItem(item)) {
                 showNotification('Nemate dozvolu mijenjati status ovog zadatka.', 'error');
                 return;
             }
 
-            // Ako je završen, pitaj za potvrdu reaktivacije
             if (item.isFinished) {
                 setConfirmItem(item);
                 setShowConfirmDialog(true);
                 return;
             }
 
-            // Inače direktno mijenjaj status
             await performToggle(item);
         } catch (error) {
-            console.error('Greška pri mijenjanju statusa:', error);
             showNotification('Greška pri mijenjanju statusa. Molimo pokušajte ponovno.', 'error');
         }
     };
@@ -325,7 +329,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
             if (response.ok) {
                 const result = await response.json();
                 showNotification(result.message, 'success');
-                // Osvježavaj podatke
                 loadTasks();
                 loadTodos();
             } else {
@@ -333,7 +336,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 showNotification(errorData.message || 'Greška pri mijenjanju statusa', 'error');
             }
         } catch (error) {
-            console.error('Greška pri mijenjanju statusa:', error);
             showNotification('Greška pri mijenjanju statusa. Molimo pokušajte ponovno.', 'error');
         }
     };
@@ -446,7 +448,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                // Osvježavaj podatke
                 if (editingItem.type === 'task') {
                     loadTasks();
                 } else {
@@ -459,7 +460,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 showNotification(error.message || 'Greška pri ažuriranju', 'error');
             }
         } catch (error) {
-            console.error('Greška pri ažuriranju:', error);
             showNotification('Greška pri ažuriranju', 'error');
         }
     };
@@ -501,7 +501,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                     .sort((a, b) => a.order - b.order);
                 return `${mainChapters.indexOf(ch) + 1}.`;
             } else {
-                // Potpoglavlje
                 const parent = allChapters.find(c => c.id === ch.parentId);
                 if (parent) {
                     const parentNumber = getNumber(parent).slice(0, -1); 
@@ -553,7 +552,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                // Osvježavaj podatke
                 if (itemToDelete.type === 'task') {
                     loadTasks();
                 } else {
@@ -565,7 +563,6 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                 showNotification(error.message || 'Greška pri brisanju', 'error');
             }
         } catch (error) {
-            console.error('Greška pri brisanju:', error);
             showNotification('Greška pri brisanju', 'error');
         } finally {
             setShowDeleteConfirm(false);
@@ -829,7 +826,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                 }}
                             >
                                 <option value="">GLOBAL (bez dokumenta)</option>
-                                {documents.map(doc => (
+                                {getAvailableDocuments().map(doc => (
                                     <option key={doc.id} value={doc.id}>{doc.metadata?.title || 'Nepoznat dokument'}</option>
                                 ))}
                             </select>
@@ -900,7 +897,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                 }}
                             >
                                 <option value="">GLOBAL (bez dokumenta)</option>
-                                {documents.map(doc => (
+                                {getAvailableDocuments().map(doc => (
                                     <option key={doc.id} value={doc.id}>{doc.metadata?.title || 'Nepoznat dokument'}</option>
                                 ))}
                             </select>
@@ -1017,7 +1014,7 @@ const TasksTodos = ({ user, isAuthenticated }) => {
                                         }}
                                     >
                                         <option value="">GLOBAL (bez dokumenta)</option>
-                                        {documents.map(doc => (
+                                        {getAvailableDocuments().map(doc => (
                                             <option key={doc.id} value={doc.id}>
                                                 {doc.metadata?.title || 'Nepoznat dokument'}
                                             </option>

@@ -39,8 +39,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem('currentPage', currentPage);
   }, [currentPage]);
-
-  // Funkcija za provjeru auth statusa - koristi cookies
   const checkAuthStatus = async () => {
     const result = await authAPI.status();
     
@@ -77,8 +75,6 @@ function App() {
       </div>
     );
   }
-
-  // Prikaz login stranice SAMO ako korisnik eksplicitno traži login
   if (!isAuthenticated && currentPage === 'login') {
     return (
       <div className="app">
@@ -101,10 +97,8 @@ function App() {
 
   
   const renderPage = () => {
-    // Admin panel redirect logic
     if (currentPage === 'admin') {
       if (!isAuthenticated || !user || user.role !== 'admin') {
-        // Redirect non-admin users to home
         setCurrentPage('documents');
         return <DocumentPage user={user} onPageChange={setCurrentPage} />;
       }

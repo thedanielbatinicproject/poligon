@@ -125,6 +125,41 @@ const About = () => {
 
                 <div className="tech-item">
                     <div 
+                        className={`tech-header ${activeSection === 'user-management' ? 'active' : ''}`}
+                        onClick={() => toggleSection('user-management')}
+                    >
+                        <h3>Upravljanje korisnicima i dozvole</h3>
+                        <span className="toggle-icon">{activeSection === 'user-management' ? '−' : '+'}</span>
+                    </div>
+                    {activeSection === 'user-management' && (
+                        <div className="tech-content">
+                            <h4>Sustav dozvola:</h4>
+                            <ul>
+                                <li><strong>Admin:</strong> Potpune dozvole - upravljanje korisnicima, brisanje svih dokumenata</li>
+                                <li><strong>Korisnici:</strong> Mogu uređivati vlastite dokumente i one gdje su dodani kao editori</li>
+                                <li><strong>Neregistrirani:</strong> Read-only pristup dokumentima bez mogućnosti editiranja</li>
+                            </ul>
+                            
+                            <h4>Session management:</h4>
+                            <ul>
+                                <li>Cookie-based autentifikacija s secure flagovima</li>
+                                <li>Automatska provjera dozvola na server strani</li>
+                                <li>Session timeout i cleanup mehanizmi</li>
+                            </ul>
+                            
+                            <h4>Zadaci i todo liste:</h4>
+                            <ul>
+                                <li>Pristup temeljen na ulogama - admin može sve, korisnici samo svoje</li>
+                                <li>Vlasništvo temeljeno na ID korisnika umjesto korisničkog imena za bolju postojanost</li>
+                                <li>Dokumenti vidljivi u padajućem izborniku ovisno o dozvolama korisnika</li>
+                                <li>Neregistrirani korisnici mogu stvarati samo todo liste</li>
+                            </ul>
+                        </div>
+                    )}
+                </div>
+
+                <div className="tech-item">
+                    <div 
                         className={`tech-header ${activeSection === 'performance' ? 'active' : ''}`}
                         onClick={() => toggleSection('performance')}
                     >
@@ -135,26 +170,28 @@ const About = () => {
                         <div className="tech-content">
                             <h4>Podatkovni sloj:</h4>
                             <ul>
-                                <li>JSON datoteke s atomskim write operacijama</li>
-                                <li>Automatski backup kroz git versioning</li>
-                                <li>File-based pristup za jednostavno deployment</li>
+                                <li>JSON datoteke s atomskim operacijama pisanja</li>
+                                <li>Automatska sigurnosna kopija kroz git verzioniranje</li>
+                                <li>Pristup temeljen na datotekama za jednostavno postavljanje</li>
+                                <li>Odvojene datoteke za korisnike, dokumente, zadatke i todo liste</li>
                             </ul>
                             
-                            <h4>Performanse optimizacije:</h4>
+                            <h4>Optimizacije performansi:</h4>
                             <ul>
-                                <li>React lazy loading za komponente</li>
-                                <li>Webpack code splitting</li>
-                                <li>Image optimization za uploadove</li>
-                                <li>Browser caching za statičke resurse</li>
-                                <li>Minimized i compressed bundle outputs</li>
+                                <li>React lijeno učitavanje za komponente</li>
+                                <li>Webpack dijeljenje koda</li>
+                                <li>Optimizacija slika za prijenose</li>
+                                <li>Predmemoriranje u pregledniku za statičke resurse</li>
+                                <li>Minimizirani i komprimirani izlazni paketi</li>
                             </ul>
                             
                             <h4>Sigurnost:</h4>
                             <ul>
-                                <li>Cookie-based session management</li>
-                                <li>File upload validacija (tip, veličina)</li>
+                                <li>Upravljanje sesijama temeljeno na kolačićima</li>
+                                <li>Provjera valjanosti prijenosa datoteka (tip, veličina)</li>
                                 <li>CORS konfiguracija</li>
-                                <li>Relativno stabilna arhitektura</li>
+                                <li>Provjere dozvola na strani poslužitelja za sve API pozive</li>
+                                <li>Anti-scroll modalni sustav za bolje korisničko iskustvo</li>
                             </ul>
                         </div>
                     )}
@@ -174,27 +211,27 @@ const About = () => {
                             <ul>
                                 <li><strong>PDF Export:</strong> Direktno generiranje PDF-ova iz editora</li>
                                 <li><strong>Poboljšano numeriranje:</strong> Potpuna automatizacija svih elemenata</li>
-                                <li><strong>Drag & Drop:</strong> Reorganizacija poglavlja</li>
-                                <li><strong>Template sistem:</strong> Predložeci za različite tipove radova</li>
+                                                                <li><strong>Povuci i ispusti:</strong> Reorganizacija poglavlja</li>
+                                <li><strong>Sustav predložaka:</strong> Predložci za različite tipove radova</li>
                                 <li><strong>Bibliografia:</strong> Automatsko upravljanje referenci</li>
-                                <li><strong>Collaboration:</strong> Multi-user editing capabilities</li>
+                                <li><strong>Suradnja:</strong> Mogućnosti uređivanja više korisnika</li>
                             </ul>
                             
                             <h4>Tehnička poboljšanja:</h4>
                             <ul>
                                 <li>Prelazak na PostgreSQL za skalabilnost</li>
-                                <li>Redis caching za performanse</li>
-                                <li>Docker containerization</li>
-                                <li>CI/CD pipeline setup</li>
-                                <li>Unit i integration testovi</li>
+                                <li>Redis predmemoriranje za performanse</li>
+                                <li>Docker kontejnerizacija</li>
+                                <li>Postavljanje CI/CD cjevovoda</li>
+                                <li>Jedinični i integracijski testovi</li>
                             </ul>
                             
-                            <h4>UX poboljšanja:</h4>
+                            <h4>Poboljšanja korisničkog iskustva:</h4>
                             <ul>
-                                <li>Dark mode podrška</li>
-                                <li>Keyboard shortcuts</li>
-                                <li>Offline mode capabilities</li>
-                                <li>Mobile app version</li>
+                                <li>Podrška za tamni način rada</li>
+                                <li>Tipkovni prečaci</li>
+                                <li>Mogućnosti rada bez mreže</li>
+                                <li>Mobilna aplikacija</li>
                             </ul>
                         </div>
                     )}
@@ -205,11 +242,11 @@ const About = () => {
                 <h2>Tehnički pokazatelji</h2>
                 <div className="stats-grid">
                     <div className="stat-card">
-                        <h3>Bundle veličina</h3>
-                        <p>~214 KiB (optimized)</p>
+                        <h3>Veličina paketa</h3>
+                        <p>~214 KiB (optimizirano)</p>
                     </div>
                     <div className="stat-card">
-                        <h3>Build vrijeme</h3>
+                        <h3>Vrijeme izgradnje</h3>
                         <p>~4.855 sekundi</p>
                     </div>
                     <div className="stat-card">
@@ -217,8 +254,8 @@ const About = () => {
                         <p>React modularna arhitektura</p>
                     </div>
                     <div className="stat-card">
-                        <h3>Deployment</h3>
-                        <p>Single server setup</p>
+                        <h3>Postavljanje</h3>
+                        <p>Konfiguracija jednog poslužitelja</p>
                     </div>
                 </div>
             </div>

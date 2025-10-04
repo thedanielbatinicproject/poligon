@@ -44,8 +44,7 @@ const ChapterTasks = ({ documentId, chapterId, chapterTitle, user, isAuthenticat
                 setTodos(chapterTodos);
             }
         } catch (error) {
-            console.error('Error loading chapter tasks:', error);
-        } finally {
+            } finally {
             setLoading(false);
         }
     };
@@ -102,8 +101,7 @@ const ChapterTasks = ({ documentId, chapterId, chapterTitle, user, isAuthenticat
                 }
             }
         } catch (error) {
-            console.error('Error toggling item:', error);
-        }
+            }
     };
 
     const formatDate = (dateString) => {

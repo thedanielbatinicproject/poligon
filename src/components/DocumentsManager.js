@@ -9,23 +9,15 @@ const DocumentsManager = ({ isOpen, onClose }) => {
     const [selectedDocument, setSelectedDocument] = useState(null);
     const [documentDetails, setDocumentDetails] = useState(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
-    
-    // Search i pagination za dokumente
     const [documentSearch, setDocumentSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pagination, setPagination] = useState(null);
-    
-    // Add user modal
     const [showAddUserModal, setShowAddUserModal] = useState(false);
     const [userSearch, setUserSearch] = useState('');
     const [filteredUsers, setFilteredUsers] = useState([]);
-    
-    // Delete confirmations
     const [deleteConfirm, setDeleteConfirm] = useState({ show: false, type: null, data: null });
     
     const [notification, setNotification] = useState(null);
-
-    // Učitaj dokumente s paginacijom
     const fetchDocuments = async (page = 1, search = '') => {
         try {
             setLoading(true);
@@ -41,14 +33,11 @@ const DocumentsManager = ({ isOpen, onClose }) => {
                 showNotification('Greška pri dohvaćanju dokumenata: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error fetching documents:', error);
             showNotification('Greška pri dohvaćanju dokumenata', 'error');
         } finally {
             setLoading(false);
         }
     };
-
-    // Učitaj korisnike koji mogu biti editori (bez admin korisnika)
     const fetchUsers = async () => {
         try {
             const response = await fetch('/api/admin/documents/users/available', {
@@ -61,11 +50,8 @@ const DocumentsManager = ({ isOpen, onClose }) => {
                 setFilteredUsers(result.data);
             }
         } catch (error) {
-            console.error('Error fetching users:', error);
-        }
+            }
     };
-
-    // Učitaj detalje o dokumentu s editorima
     const fetchDocumentDetails = async (documentId) => {
         try {
             setLoadingDetails(true);
@@ -80,14 +66,11 @@ const DocumentsManager = ({ isOpen, onClose }) => {
                 showNotification('Greška pri dohvaćanju detalja dokumenta: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error fetching document details:', error);
             showNotification('Greška pri dohvaćanju detalja dokumenta', 'error');
         } finally {
             setLoadingDetails(false);
         }
     };
-
-    // Dodaj korisnika kao editor-a
     const addEditor = async (username) => {
         try {
             const response = await fetch(`/api/admin/documents/${selectedDocument}/editors`, {
@@ -103,18 +86,15 @@ const DocumentsManager = ({ isOpen, onClose }) => {
             
             if (result.success) {
                 showNotification('Editor uspješno dodan!', 'success');
-                fetchDocumentDetails(selectedDocument); // Refresh detalja
+                fetchDocumentDetails(selectedDocument);
                 setShowAddUserModal(false);
             } else {
                 showNotification('Greška: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error adding editor:', error);
             showNotification('Greška pri dodavanju editora', 'error');
         }
     };
-
-    // Ukloni editor-a
     const removeEditor = async (username) => {
         try {
             const response = await fetch(`/api/admin/documents/${selectedDocument}/editors/${username}`, {
@@ -126,18 +106,15 @@ const DocumentsManager = ({ isOpen, onClose }) => {
             
             if (result.success) {
                 showNotification('Editor uspješno uklonjen!', 'success');
-                fetchDocumentDetails(selectedDocument); // Refresh detalja
+                fetchDocumentDetails(selectedDocument);
                 setDeleteConfirm({ show: false, type: null, data: null });
             } else {
                 showNotification('Greška: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error removing editor:', error);
             showNotification('Greška pri uklanjanju editora', 'error');
         }
     };
-
-    // Obriši dokument
     const deleteDocument = async (documentId) => {
         try {
             const response = await fetch(`/api/admin/documents/${documentId}`, {
@@ -149,7 +126,7 @@ const DocumentsManager = ({ isOpen, onClose }) => {
             
             if (result.success) {
                 showNotification('Dokument uspješno obrisan!', 'success');
-                fetchDocuments(currentPage, documentSearch); // Refresh liste
+                fetchDocuments(currentPage, documentSearch);
                 setSelectedDocument(null);
                 setDocumentDetails(null);
                 setDeleteConfirm({ show: false, type: null, data: null });
@@ -157,7 +134,6 @@ const DocumentsManager = ({ isOpen, onClose }) => {
                 showNotification('Greška: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error deleting document:', error);
             showNotification('Greška pri brisanju dokumenta', 'error');
         }
     };
@@ -198,16 +174,12 @@ const DocumentsManager = ({ isOpen, onClose }) => {
             setFilteredUsers(filtered);
         }
     };
-
-    // Load initial data
     useEffect(() => {
         if (isOpen) {
             fetchDocuments();
             fetchUsers();
         }
     }, [isOpen]);
-
-    // Reset search when document search changes
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (documentSearch !== '') {

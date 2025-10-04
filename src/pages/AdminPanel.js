@@ -31,13 +31,9 @@ const AdminPanel = ({ user, onNavigateHome }) => {
 
     const [newPassword, setNewPassword] = useState('');
     const [notification, setNotification] = useState(null);
-
-    // Učitaj korisnike
     useEffect(() => {
         fetchUsers();
     }, []);
-
-    // Upravljaj scrollom kada su modali otvoreni
     useEffect(() => {
         const isModalOpen = isEditModalOpen || isAddModalOpen || isPasswordModalOpen || isDocumentsModalOpen || deleteConfirm.show;
         
@@ -46,14 +42,10 @@ const AdminPanel = ({ user, onNavigateHome }) => {
         } else {
             document.body.classList.remove('modal-open');
         }
-
-        // Cleanup function
         return () => {
             document.body.classList.remove('modal-open');
         };
     }, [isEditModalOpen, isAddModalOpen, isPasswordModalOpen, isDocumentsModalOpen, deleteConfirm.show]);
-
-    // Filtriraj korisnike na temelju pretrage
     useEffect(() => {
         if (!searchTerm.trim()) {
             setFilteredUsers(users);
@@ -86,11 +78,9 @@ const AdminPanel = ({ user, onNavigateHome }) => {
             if (result.success) {
                 setUsers(result.data);
             } else {
-                console.error('Error fetching users:', result.message);
                 showNotification('Greška pri dohvaćanju korisnika: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error fetching users:', error);
             showNotification('Greška pri dohvaćanju korisnika', 'error');
         } finally {
             setLoading(false);
@@ -98,8 +88,6 @@ const AdminPanel = ({ user, onNavigateHome }) => {
     };
 
     const handleSearch = () => {
-        // Search je već implementiran kroz useEffect
-        console.log('Searching for:', searchTerm);
     };
 
     const handleUserClick = (user) => {
@@ -159,8 +147,6 @@ const AdminPanel = ({ user, onNavigateHome }) => {
                 setIsAddModalOpen(false);
                 setSelectedUser(null);
                 showNotification(selectedUser ? 'Korisnik uspješno ažuriran!' : 'Korisnik uspješno dodan!', 'success');
-                
-                // Pošalji global event da se dokumenti trebaju refreshati
                 if (selectedUser) {
                     window.dispatchEvent(new CustomEvent('userUpdated', {
                         detail: { 
@@ -174,7 +160,6 @@ const AdminPanel = ({ user, onNavigateHome }) => {
                 showNotification('Greška: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error saving user:', error);
             showNotification('Greška pri spremanju korisnika', 'error');
         }
     };
@@ -196,7 +181,6 @@ const AdminPanel = ({ user, onNavigateHome }) => {
                 showNotification('Greška: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error deleting user:', error);
             showNotification('Greška pri brisanju korisnika', 'error');
         }
     };
@@ -229,7 +213,6 @@ const AdminPanel = ({ user, onNavigateHome }) => {
                 showNotification('Greška: ' + result.message, 'error');
             }
         } catch (error) {
-            console.error('Error changing password:', error);
             showNotification('Greška pri promjeni lozinke', 'error');
         }
     };

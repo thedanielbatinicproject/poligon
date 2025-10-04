@@ -15,7 +15,7 @@ const Home = () => {
                     <h1>Poligon</h1>
                     <p className="hero-subtitle">Specijalizirana platforma za kreiranje znanstvenih radova</p>
                     <p className="hero-description">
-                        Jednostavna, plug-and-play aplikacija za pisanje diplomskih radova s naprednim funkcionalnostima 
+                        Jednostavna plug-and-play aplikacija za pisanje diplomskih radova s naprednim funkcionalnostima 
                         znanstvenog formatiranja i hijerarhijskom organizacijom poglavlja.
                     </p>
                 </div>
@@ -27,7 +27,7 @@ const Home = () => {
                 <div className="user-types">
                     <div className="user-type-card">
                         <h3>VIEWER Režim</h3>
-                        <p>Pregled i čitanje dokumenata bez potrebe za prijavom</p>
+                        <p>Pregled i čitanje dokumenata bez potrebe za prijavljujem</p>
                     </div>
                     <div className="user-type-card">
                         <h3>EDITOR Režim</h3>
@@ -47,7 +47,7 @@ const Home = () => {
                         {activeSection === 'getting-started' && (
                             <div className="guide-content">
                                 <ol>
-                                    <li><strong>Pristup aplikaciji:</strong> Otvorite aplikaciju u web pregledniku</li>
+                                    <li><strong>Pristup aplikaciji:</strong> Otvorite aplikaciju u web-pregledniku</li>
                                     <li><strong>Odabir režima:</strong> Aplikacija automatski otkriva jeste li prijavljeni</li>
                                     <li><strong>VIEWER:</strong> Odaberite dokument iz liste za pregled</li>
                                     <li><strong>EDITOR:</strong> Prijavite se i kreirajte novi dokument ili uređujte postojeći</li>
@@ -68,8 +68,8 @@ const Home = () => {
                             <div className="guide-content">
                                 <h4>Kreiranje novog dokumenta:</h4>
                                 <ul>
-                                    <li>Kliknite "Kreiraj novi dokument"</li>
-                                    <li>Automatski se kreira s osnovnim metapodacima</li>
+                                    <li>Kliknite "Stvori novi dokument"</li>
+                                    <li>Automatski se stvara s osnovnim metapodacima</li>
                                     <li>Počnite dodavati poglavlja odmah</li>
                                 </ul>
                                 <h4>Upravljanje metapodacima:</h4>
@@ -101,15 +101,15 @@ const Home = () => {
                                 </ul>
                                 <h4>Dodavanje poglavlja:</h4>
                                 <ul>
-                                    <li>Hover preko postojećeg poglavlja</li>
-                                    <li>Kliknite zeleni "+" gumb</li>
-                                    <li>Automatski se kreira potomak</li>
+                                    <li>Postavite pokazivač preko postojećeg poglavlja</li>
+                                    <li>Kliknite zeleni gumb "+"</li>
+                                    <li>Automatski se stvara potpoglavlje</li>
                                 </ul>
                                 <h4>Brisanje poglavlja:</h4>
                                 <ul>
-                                    <li>Hover preko poglavlja</li>
-                                    <li>Kliknite crveni "×" gumb</li>
-                                    <li>Potvrda za brisanje uključujući svu djecu</li>
+                                    <li>Postavite pokazivač preko poglavlja</li>
+                                    <li>Kliknite crveni gumb "×"</li>
+                                    <li>Potvrda za brisanje uključujući sva potpoglavlja</li>
                                 </ul>
                             </div>
                         )}
@@ -127,10 +127,10 @@ const Home = () => {
                             <div className="guide-content">
                                 <h4>TinyMCE funkcionalnosti:</h4>
                                 <ul>
-                                    <li>Kompletni WYSIWYG editor</li>
+                                    <li>Potpuni WYSIWYG editor</li>
                                     <li>Znanstveno formatiranje (Times New Roman, A4)</li>
                                     <li>Tablice s automatskim okvirima</li>
-                                    <li>Upload i umetanje slika</li>
+                                    <li>Prijenos i umetanje slika</li>
                                     <li>Matematičke jednadžbe</li>
                                 </ul>
                                 <h4>Automatsko numeriranje:</h4>
@@ -143,7 +143,41 @@ const Home = () => {
                                 <ul>
                                     <li>Gumbovi za brzu tablicu, sliku, jednadžbu</li>
                                     <li>Brojači elemenata u realnom vremenu</li>
-                                    <li>Skriveno u VIEWER režimu</li>
+                                    <li>Skriveno u PREGLJEDNI režimu</li>
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="guide-item">
+                        <div 
+                            className={`guide-header ${activeSection === 'tasks' ? 'active' : ''}`}
+                            onClick={() => toggleSection('tasks')}
+                        >
+                            <h3>Zadaci i todo liste</h3>
+                            <span className="toggle-icon">{activeSection === 'tasks' ? '−' : '+'}</span>
+                        </div>
+                        {activeSection === 'tasks' && (
+                            <div className="guide-content">
+                                <h4>Upravljanje zadacima:</h4>
+                                <ul>
+                                    <li>Stvorite zadatke povezane s dokumentima ili poglavljima</li>
+                                    <li>Postavite datume dospijeća s prioritetima</li>
+                                    <li>Filtrirajte zadatke po dokumentima</li>
+                                    <li>Označite zadatke kao završene</li>
+                                </ul>
+                                <h4>Todo liste:</h4>
+                                <ul>
+                                    <li>Stvorite brze bilješke i planove</li>
+                                    <li>Dostupno i neregistriranim korisnicima</li>
+                                    <li>Organizirajte po dokumentima ili globalno</li>
+                                </ul>
+                                <h4>Dozvole i sigurnost:</h4>
+                                <ul>
+                                    <li><strong>Admin:</strong> Može uređivati sve zadatke i todoove</li>
+                                    <li><strong>Korisnici:</strong> Mogu uređivati samo svoje stavke</li>
+                                    <li><strong>Neregistrirani:</strong> Ne mogu stvarati zadatke, samo todo-ove</li>
+                                    <li>Vidljivost dokumenata ovisi o vlasništvu i dozvolama uređivanja</li>
                                 </ul>
                             </div>
                         )}
@@ -165,17 +199,17 @@ const Home = () => {
                                     <li>Vraća na zadnje poglavlje</li>
                                     <li>Čuva poziciju nakon refresh-a</li>
                                 </ul>
-                                <h4>Upload slika:</h4>
+                                <h4>Prijenos slika:</h4>
                                 <ul>
-                                    <li>Maksimalno 5MB po slici</li>
+                                    <li>Najveća veličina 5 MB po slici</li>
                                     <li>Podržani formati: JPG, PNG, GIF</li>
-                                    <li>Automatsko imenovanje i pohranjivanje</li>
+                                    <li>Automatsko imenovanje i spremanje</li>
                                 </ul>
-                                <h4>Responsive dizajn:</h4>
+                                <h4>Prilagodljivi dizajn:</h4>
                                 <ul>
-                                    <li>Optimizirano za desktop i mobile</li>
-                                    <li>Adaptive toolbar i navigacija</li>
-                                    <li>Touch-friendly kontrole</li>
+                                    <li>Optimizirano za stolna i mobilna računala</li>
+                                    <li>Prilagodljiva alatna traka i navigacija</li>
+                                    <li>Kontrole prilagođene dodiru</li>
                                 </ul>
                             </div>
                         )}
@@ -200,7 +234,7 @@ const Home = () => {
                     </div>
                     <div className="advantage-card">
                         <h3>Web-based</h3>
-                        <p>Pristup s bilo kojeg uređaja kroz web pregljednik bez potrebe za dodatnim softwareom</p>
+                        <p>Pristup s bilo kojeg uređaja kroz web-pregljednik bez potrebe za dodatnim programskim rješenjima</p>
                     </div>
                 </div>
             </div>

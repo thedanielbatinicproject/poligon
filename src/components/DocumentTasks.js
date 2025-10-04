@@ -46,8 +46,7 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
                 setTodos(documentTodos);
             }
         } catch (error) {
-            console.error('Error loading document tasks:', error);
-        } finally {
+            } finally {
             setLoading(false);
         }
     };
@@ -104,8 +103,7 @@ const DocumentTasks = ({ documentId, user, isAuthenticated }) => {
                 }
             }
         } catch (error) {
-            console.error('Error toggling item:', error);
-        }
+            }
     };
 
     const formatDate = (dateString) => {

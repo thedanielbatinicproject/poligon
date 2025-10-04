@@ -1,5 +1,4 @@
-﻿import React, { useRef, useEffect, useState, useCallback } from 'react';
-// import { Editor } from '@tinymce/tinymce-react'; // Koristit ćemo direktno globalni TinyMCE
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { notesAPI } from '../utils/api';
 import './ScientificEditor.css';
 
@@ -27,8 +26,6 @@ const ScientificEditor = ({
     const [noteButtonPosition, setNoteButtonPosition] = useState({ top: 0, left: 0 });
     const [showNoteForm, setShowNoteForm] = useState(false);
     const [newNoteDescription, setNewNoteDescription] = useState('');
-
-    // State za praćenje pozicije sivog selection okvira
     const [selectionRect, setSelectionRect] = useState(null);
 
     
@@ -85,9 +82,6 @@ const ScientificEditor = ({
         height: 650,
         menubar: mode === 'EDIT',
         statusbar: true, 
-        
-        // Koristimo license_key umjesto apiKey za TinyMCE 6+
-        // apiKey: process.env.REACT_APP_TINYMCE_API_KEY || '',
         plugins: mode === 'EDIT' ? [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -159,7 +153,6 @@ const ScientificEditor = ({
                     }
                 })
                 .catch(error => {
-                    console.error('Upload error:', error);
                     reject(error);
                 });
             });
@@ -320,8 +313,6 @@ const ScientificEditor = ({
             
             setSelectedText(selectedContent);
             setSelectionRange(range);
-            
-            // Ažuriraj poziciju sivog okvira
             updateSelectionRect();
             
             calculateButtonPosition(range);
@@ -331,8 +322,6 @@ const ScientificEditor = ({
             setShowAddNoteButton(false);
         }
     }, [calculateButtonPosition, mode]);
-
-    // Funkcija za ažuriranje pozicije sivog selection okvira
     const updateSelectionRect = useCallback(() => {
         if (!editorRef.current || mode !== 'VIEW') {
             setSelectionRect(null);
@@ -364,7 +353,6 @@ const ScientificEditor = ({
                         height: rangeRect.height
                     });
                 } catch (e) {
-                    // Fallback na window selection
                     const windowSelection = window.getSelection();
                     if (windowSelection && windowSelection.rangeCount > 0) {
                         const windowRange = windowSelection.getRangeAt(0);
@@ -381,7 +369,6 @@ const ScientificEditor = ({
                 setSelectionRect(null);
             }
         } catch (error) {
-            console.log('Selection rect update error:', error);
             setSelectionRect(null);
         }
     }, [mode]);
@@ -389,7 +376,6 @@ const ScientificEditor = ({
     
     const calculateButtonPosition = useCallback((range) => {
         if (!editorRef.current) {
-            console.log('No editorRef.current');
             return;
         }
         
@@ -406,24 +392,17 @@ const ScientificEditor = ({
             let iframeRect = { top: 0, left: 0 };
             if (iframe) {
                 iframeRect = iframe.getBoundingClientRect();
-                console.log('IFrame rect:', iframeRect);
             } else {
-                // Ako nema iframe-a, pokušaj s editorContainer
                 if (editorContainer) {
                     iframeRect = editorContainer.getBoundingClientRect();
-                    console.log('Editor container rect:', iframeRect);
                 }
             }
-            
-            // Pokušaj prvo s TinyMCE selection API
             const currentSelection = editor.selection;
             const currentRange = currentSelection ? currentSelection.getRng() : null;
             
             if (currentRange) {
                 try {
-                    // Za direktnu TinyMCE integraciju možda nema iframe
                     const rangeRect = currentRange.getBoundingClientRect();
-                    console.log('Range rect from TinyMCE:', rangeRect);
                     
                     clientRect = {
                         top: rangeRect.top + iframeRect.top,
@@ -434,18 +413,14 @@ const ScientificEditor = ({
                         height: rangeRect.height
                     };
                 } catch (e) {
-                    console.log('TinyMCE range rect failed:', e);
                     clientRect = null;
                 }
             }
-            
-            // Fallback na window.getSelection
             if (!clientRect || clientRect.width === 0) {
                 const windowSelection = window.getSelection();
                 if (windowSelection && windowSelection.rangeCount > 0) {
                     const windowRange = windowSelection.getRangeAt(0);
                     const rangeRect = windowRange.getBoundingClientRect();
-                    console.log('Range rect from window:', rangeRect);
                     
                     clientRect = {
                         top: rangeRect.top,
@@ -460,11 +435,8 @@ const ScientificEditor = ({
             
             
             if (!clientRect || clientRect.width === 0 || clientRect.height === 0) {
-                console.log('No valid client rect:', clientRect);
                 return;
             }
-            
-            console.log('Final client rect:', clientRect);
             
             
             const buttonHeight = 40; 
@@ -584,7 +556,7 @@ const ScientificEditor = ({
             
             if (editorRef.current) {
                 editorRef.current.notificationManager.open({
-                    text: 'Bilješka je uspješno dodana!',
+                    text: 'Bilje�ka je uspje�no dodana!',
                     type: 'success',
                     timeout: 3000
                 });
@@ -594,7 +566,7 @@ const ScientificEditor = ({
             
             if (editorRef.current) {
                 editorRef.current.notificationManager.open({
-                    text: 'Greška pri kreiranju bilješke',
+                    text: 'Gre�ka pri kreiranju bilje�ke',
                     type: 'error',
                     timeout: 4000
                 });
@@ -643,14 +615,14 @@ const ScientificEditor = ({
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Ćelija 1</td>
-                            <td>Ćelija 2</td>
-                            <td>Ćelija 3</td>
+                            <td>Celija 1</td>
+                            <td>Celija 2</td>
+                            <td>Celija 3</td>
                         </tr>
                         <tr>
-                            <td>Ćelija 4</td>
-                            <td>Ćelija 5</td>
-                            <td>Ćelija 6</td>
+                            <td>Celija 4</td>
+                            <td>Celija 5</td>
+                            <td>Celija 6</td>
                         </tr>
                     </tbody>
                 </table>
@@ -697,29 +669,23 @@ const ScientificEditor = ({
                             setCounters(prev => ({ ...prev, figures: prev.figures + 1 }));
                         }
                     } else {
-                        alert('Greška pri uploadu slike: ' + data.error);
+                        alert('Gre�ka pri uploadu slike: ' + data.error);
                     }
                 })
                 .catch(error => {
-                    console.error('Upload error:', error);
-                    alert('Greška pri uploadu slike');
+                    alert('Gre�ka pri uploadu slike');
                 });
             }
         };
         
         input.click();
     }, [generateChapterPrefix, counters.figures]);
-
-    // Inicijalizaj TinyMCE editor
     useEffect(() => {
         if (typeof window.tinymce === 'undefined') {
-            console.error('TinyMCE nije učitan!');
             return;
         }
 
         const editorId = `tinymce-editor-${Date.now()}`;
-        
-        // Kreiraj textarea element
         const container = document.getElementById('tinymce-container');
         if (!container) return;
         
@@ -732,7 +698,7 @@ const ScientificEditor = ({
         window.tinymce.init({
             selector: `#${editorId}`,
             ...editorConfig,
-            license_key: 'gpl', // Dodaj GPL licencu za testiranje
+            license_key: 'gpl',
             setup: (editor) => {
                 editorRef.current = editor;
                 
@@ -756,33 +722,24 @@ const ScientificEditor = ({
             }
         };
     }, []);
-
-    // Scroll event listener za ažuriranje pozicije gumba u VIEW mode-u
     useEffect(() => {
         if (mode !== 'VIEW' || !showAddNoteButton || !selectionRange) {
             return;
         }
 
         const handleScroll = () => {
-            // Ažuriraj poziciju gumba i sivog okvira kada se scrolla
             if (selectionRange) {
                 calculateButtonPosition(selectionRange);
                 updateSelectionRect();
             }
         };
-
-        // Dodaj scroll listenere na sve moguće scroll kontejnere
         window.addEventListener('scroll', handleScroll, { passive: true });
         document.addEventListener('scroll', handleScroll, { passive: true });
-        
-        // Dodaj i na editor kontejner ako postoji
         if (editorRef.current) {
             const editorContainer = editorRef.current.getContainer();
             if (editorContainer) {
                 editorContainer.addEventListener('scroll', handleScroll, { passive: true });
             }
-            
-            // Dodaj i na editor body
             const editorBody = editorRef.current.getBody();
             if (editorBody) {
                 editorBody.addEventListener('scroll', handleScroll, { passive: true });
@@ -806,8 +763,6 @@ const ScientificEditor = ({
             }
         };
     }, [mode, showAddNoteButton, selectionRange, calculateButtonPosition, updateSelectionRect]);
-
-    // Ažuriraj sadržaj kada se value promijeni
     useEffect(() => {
         if (editorRef.current && editorRef.current.getContent() !== (value || '')) {
             editorRef.current.setContent(value || '');
@@ -821,7 +776,7 @@ const ScientificEditor = ({
             <div id="tinymce-container" style={{ minHeight: '650px' }}>
                 {typeof window.tinymce === 'undefined' && (
                     <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-                        Učitavanje editora...
+                        Ucitavanje editora...
                     </div>
                 )}
             </div>
@@ -874,10 +829,10 @@ const ScientificEditor = ({
                         <button 
                             className="selection-note-btn"
                             onClick={handleCreateNoteFromSelection}
-                            title="Dodaj bilješku za selektirani tekst"
+                            title="Dodaj bilje�ku za selektirani tekst"
                         >
                             <img src="/icons/quote.png" alt="Quote" className="quote-icon" />
-                            Dodaj bilješku
+                            Dodaj bilje�ku
                         </button>
                     </div>
                 </div>
@@ -888,12 +843,12 @@ const ScientificEditor = ({
             <div className="note-form-overlay" onClick={handleCloseNoteForm}>
                 <div className="note-form-modal" onClick={(e) => e.stopPropagation()}>
                     <div className="note-form-header">
-                        <h3>Dodaj bilješku</h3>
+                        <h3>Dodaj bilje�ku</h3>
                         <button 
                             className="close-btn"
                             onClick={handleCloseNoteForm}
                         >
-                            ×
+                            �
                         </button>
                     </div>
                     
@@ -919,12 +874,12 @@ const ScientificEditor = ({
                         </div>
                         
                         <div className="form-field">
-                            <label htmlFor="note-description"><strong>Opis bilješke *</strong></label>
+                            <label htmlFor="note-description"><strong>Opis bilje�ke *</strong></label>
                             <textarea
                                 id="note-description"
                                 value={newNoteDescription}
                                 onChange={(e) => setNewNoteDescription(e.target.value)}
-                                placeholder="Unesite detaljni opis bilješke..."
+                                placeholder="Unesite detaljni opis bilje�ke..."
                                 rows={4}
                                 className="note-description-input"
                                 autoFocus
@@ -937,7 +892,7 @@ const ScientificEditor = ({
                                 onClick={handleSaveNote}
                                 disabled={!newNoteDescription.trim()}
                             >
-                                Spremi bilješku
+                                Spremi bilje�ku
                             </button>
                             <button 
                                 className="cancel-note-btn"

@@ -22,7 +22,6 @@ const LoginPage = ({ onLogin }) => {
                 setError(result.data?.message || 'Login failed');
             }
         } catch (error) {
-            console.error('Login error:', error);
             setError('Greška pri povezivanju sa serverom');
         } finally {
             setLoading(false);
