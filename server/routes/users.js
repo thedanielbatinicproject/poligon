@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const USERS_FILE = path.join(__dirname, '../data/users.json');
-const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json'); // Koristi stari sessions file
+const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
 const THESES_FILE = path.join(__dirname, '../data/theses.json');
 
 // Helper funkcije

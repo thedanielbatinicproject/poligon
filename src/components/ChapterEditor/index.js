@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ChapterEditor.css';
-import ScientificEditor from './ScientificEditor';
-import NotesPanel from './NotesPanel';
-import { thesesAPI } from '../utils/api';
+import ScientificEditor from '../ScientificEditor';
+import NotesPanel from '../NotesPanel';
+import { thesesAPI } from '../../utils/api';
 
 const ChapterEditor = ({ thesis, selectedChapter, onThesisUpdate, onChapterSelect, mode, user }) => {
     const [chapters, setChapters] = useState([]);

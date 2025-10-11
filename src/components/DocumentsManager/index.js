@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ConfirmModal from '../components/ConfirmModal';
+import ConfirmModal from '../ConfirmModal';
 import './DocumentsManager.css';
 
 const DocumentsManager = ({ isOpen, onClose }) => {

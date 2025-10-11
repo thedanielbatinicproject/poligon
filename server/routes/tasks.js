@@ -4,9 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const ThesisModel = require('../models/ThesisModel');
 
-const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json');
-const TASKS_FILE = path.join(__dirname, '../../data/tasks.json');
-const TODOS_FILE = path.join(__dirname, '../../data/todos.json');
+const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
+const TASKS_FILE = path.join(__dirname, '../data/tasks.json');
+const TODOS_FILE = path.join(__dirname, '../data/todos.json');
 
 function loadActiveSessions() {
     try {

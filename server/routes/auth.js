@@ -5,7 +5,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 
-const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json');
+const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
 
 
 const dataDir = path.dirname(SESSIONS_FILE);

@@ -7,10 +7,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
+// Multer konfiguracija za upload slika
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, 'public', 'uploads');
+        const uploadDir = path.join(__dirname, '../public', 'uploads');
         
         const fs = require('fs');
         if (!fs.existsSync(uploadDir)) {
@@ -19,7 +19,6 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-        
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
         cb(null, 'img-' + uniqueSuffix + ext);
@@ -29,10 +28,9 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 
+        fileSize: 5 * 1024 * 1024 // 5MB
     },
     fileFilter: function (req, file, cb) {
-        
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
@@ -41,18 +39,16 @@ const upload = multer({
     }
 });
 
-// Middleware za parsiranje JSON-a i cookies
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Static fileovi
+app.use(express.static(path.join(__dirname, '../dist')));
+app.use(express.static(path.join(__dirname, '../public')));
 
-app.use(express.static(path.join(__dirname, 'dist')));
-
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-
+// CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -64,13 +60,13 @@ app.use((req, res, next) => {
     next();
 });
 
-
-const authRoutes = require('./server/routes/auth');
-const thesesRoutes = require('./server/routes/theses');
-const tasksRoutes = require('./server/routes/tasks');
-const notesRoutes = require('./server/routes/notes');
-const usersRoutes = require('./server/routes/users');
-const adminDocumentsRoutes = require('./server/routes/admin-documents');
+// API Rute
+const authRoutes = require('./routes/auth');
+const thesesRoutes = require('./routes/theses');
+const tasksRoutes = require('./routes/tasks');
+const notesRoutes = require('./routes/notes');
+const usersRoutes = require('./routes/users');
+const adminDocumentsRoutes = require('./routes/admin-documents');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/theses', thesesRoutes);
@@ -79,7 +75,7 @@ app.use('/api/notes', notesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/admin/documents', adminDocumentsRoutes);
 
-
+// Upload endpoint
 app.post('/api/upload', upload.single('image'), (req, res) => {
     try {
         if (!req.file) {
@@ -89,7 +85,6 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
             });
         }
 
-        // Generiraj URL za pristup datoteci
         const fileUrl = `/uploads/${req.file.filename}`;
         
         res.json({
@@ -108,6 +103,7 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
     }
 });
 
+// Health check
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'success',
@@ -118,6 +114,7 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// About endpoint
 app.get('/api/about', (req, res) => {
     const technologies = ['Node.js', 'Express.js', 'React.js', 'HTML5', 'CSS3', 'JavaScript', 'Webpack', 'Babel'];
     const features = [
@@ -137,7 +134,7 @@ app.get('/api/about', (req, res) => {
     });
 });
 
-
+// TinyMCE config endpoint
 app.get('/api/tinymce-config', (req, res) => {
     res.json({
         apiKey: process.env.TINYMCE_API_KEY || '',
@@ -145,17 +142,18 @@ app.get('/api/tinymce-config', (req, res) => {
     });
 });
 
-
+// SPA fallback - mora biti zadnji
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
-
+// Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Nešto je pošlo po zlu!' });
 });
 
+// Start server
 app.listen(PORT, () => {
     console.log(`Poslužitelj pokrenut na http://localhost:${PORT}`);
 });

@@ -8,8 +8,16 @@ yarn-error.log*
 dist/
 build/
 
-# Uploaded files
-public/uploads/
+# Uploaded files - user uploads NISU u gitu
+public/uploads/*
+!public/uploads/.gitkeep
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Temporary files
+tmp/
+*.log
+stderr.log
 
 # Environment variables
 .env
@@ -22,9 +30,9 @@ public/uploads/
 server/data/users.json.backup
 server/data/sessions.json.backup
 server/data/theses.json.backup*
-data/sessions.json.backup
-data/todos.json.backup
-data/tasks.json.backup
+
+# Old data folder (deprecated - sve je sada u server/data)
+data/
 
 # Logs
 logs

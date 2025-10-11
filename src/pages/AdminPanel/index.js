@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import ConfirmModal from '../components/ConfirmModal';
-import DocumentsManager from '../components/DocumentsManager';
+import ConfirmModal from '../../components/ConfirmModal';
+import DocumentsManager from '../../components/DocumentsManager';
 import './AdminPanel.css';
 
 const AdminPanel = ({ user, onNavigateHome }) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { thesesAPI } from '../utils/api';
+import { thesesAPI } from '../../utils/api';
 import './DocumentSelector.css';
 
 const DocumentSelector = ({ user, onDocumentSelect, onCreateNew }) => {

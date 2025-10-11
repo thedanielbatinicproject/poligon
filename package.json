@@ -2,10 +2,10 @@
   "name": "poligon",
   "version": "1.0.0",
   "description": "React.js web application template with Express.js backend",
-  "main": "index.js",
+  "main": "server/index.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
     "build": "webpack --mode production",
     "dev-client": "webpack serve --mode development",
     "build-dev": "webpack --mode development",

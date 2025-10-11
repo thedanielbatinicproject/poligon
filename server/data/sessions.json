@@ -1,1 +1,17 @@
-{"sessions":{}}
+[
+  [
+    "session_1760120244327_h63p6lwap",
+    {
+      "sessionId": "session_1760120244327_h63p6lwap",
+      "user": {
+        "id": "admin001",
+        "username": "admin",
+        "ime": "Admin",
+        "prezime": "User",
+        "role": "admin"
+      },
+      "createdAt": "2025-10-10T18:17:24.327Z",
+      "lastAccess": "2025-10-11T16:08:03.407Z"
+    }
+  ]
+]

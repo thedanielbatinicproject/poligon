@@ -1,5 +1,5 @@
 import React from 'react';
-import DocumentPage from './DocumentPage';
+import DocumentPage from '../DocumentPage';
 import './Dashboard.css';
 
 const Dashboard = ({ mode, user }) => {

@@ -6,7 +6,7 @@ const ThesisModel = require('../models/ThesisModel');
 const fs = require('fs');
 const path = require('path');
 
-const SESSIONS_FILE = path.join(__dirname, '../../data/sessions.json');
+const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
 
 function loadActiveSessions() {
     try {

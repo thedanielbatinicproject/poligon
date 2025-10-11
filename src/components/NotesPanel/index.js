@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './NotesPanel.css';
-import { notesAPI } from '../utils/api';
-import ConfirmModal from './ConfirmModal';
+import { notesAPI } from '../../utils/api';
+import ConfirmModal from '../ConfirmModal';
 
 const NotesPanel = ({ thesis, chapter, mode, user, onCollapsedChange, isCollapsed = false }) => {
     const [notes, setNotes] = useState([]);

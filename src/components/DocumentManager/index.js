@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './DocumentManager.css';
-import { thesesAPI } from '../utils/api';
+import { thesesAPI } from '../../utils/api';
 
 const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted }) => {
     const [metadata, setMetadata] = useState({

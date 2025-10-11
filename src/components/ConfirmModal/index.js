@@ -25,25 +25,25 @@ const ConfirmModal = ({
     };
 
     return (
-        <div className="confirm-modal-overlay" onClick={handleOverlayClick}>
-            <div className={`confirm-modal ${type}`}>
-                <div className="confirm-modal-header">
+        <div className={styles.overlay} onClick={handleOverlayClick}>
+            <div className={`${styles.modal} ${styles[type]}`}>
+                <div className={styles.header}>
                     <h3>{title}</h3>
                 </div>
                 
-                <div className="confirm-modal-body">
+                <div className={styles.body}>
                     <p>{message}</p>
                 </div>
                 
-                <div className="confirm-modal-actions">
+                <div className={styles.actions}>
                     <button 
-                        className="confirm-btn"
+                        className={styles.confirmBtn}
                         onClick={handleConfirm}
                     >
                         {confirmText}
                     </button>
                     <button 
-                        className="cancel-btn"
+                        className={styles.cancelBtn}
                         onClick={onClose}
                     >
                         {cancelText}

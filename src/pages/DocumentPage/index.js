@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import ChapterEditor from '../components/ChapterEditor';
-import DocumentManager from '../components/DocumentManager';
-import DocumentSelector from '../components/DocumentSelector';
-import DocumentTasks from '../components/DocumentTasks';
-import ChapterTasks from '../components/ChapterTasks';
-import { thesesAPI } from '../utils/api';
+import ChapterEditor from '../../components/ChapterEditor';
+import DocumentManager from '../../components/DocumentManager';
+import DocumentSelector from '../../components/DocumentSelector';
+import DocumentTasks from '../../components/DocumentTasks';
+import ChapterTasks from '../../components/ChapterTasks';
+import { thesesAPI } from '../../utils/api';
 import './DocumentPage.css';
 
 const DocumentPage = ({ user, onPageChange }) => {

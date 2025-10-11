@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { notesAPI } from '../utils/api';
+import { notesAPI } from '../../utils/api';
 import './ScientificEditor.css';
 
 const ScientificEditor = ({ 
