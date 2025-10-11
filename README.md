@@ -96,13 +96,6 @@ npm start
 
 Aplikacija će biti dostupna na http://localhost:3000
 
-## Dokumentacija
-
-- **[NPM skripte](docs/scripts.md)** - Popis svih dostupnih npm naredbi
-- **[API dokumentacija](docs/api.md)** - Popis svih API ruta i endpointa
-- **[Detaljne značajke](docs/features.md)** - Opširni opis svih funkcionalnosti
-- **[Baza podataka](docs/database.md)** - Struktura baze i upute za postavljanje
-
 ### Produkcijski nacin
 
 Build React aplikacije:
@@ -119,8 +112,9 @@ Aplikacija ce biti dostupna na http://localhost:3000
 
 ## Dokumentacija
 
+- **[NPM skripte](docs/scripts.md)** - Popis svih dostupnih npm naredbi
 - **[API dokumentacija](docs/api.md)** - Popis svih API ruta i endpointa
-- **[Detaljne znacajke](docs/features.md)** - Opširni opis svih funkcionalnosti
+- **[Detaljne značajke](docs/features.md)** - Opširni opis svih funkcionalnosti
 - **[Baza podataka](docs/database.md)** - Struktura baze i upute za postavljanje
 
 ## Struktura projekta
