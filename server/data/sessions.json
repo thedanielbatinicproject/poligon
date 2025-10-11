@@ -13,5 +13,20 @@
       "createdAt": "2025-10-10T18:17:24.327Z",
       "lastAccess": "2025-10-11T16:08:03.407Z"
     }
+  ],
+  [
+    "session_1760216557445_is2clgg90",
+    {
+      "sessionId": "session_1760216557445_is2clgg90",
+      "user": {
+        "id": "admin001",
+        "username": "admin",
+        "ime": "Admin",
+        "prezime": "User",
+        "role": "admin"
+      },
+      "createdAt": "2025-10-11T21:02:37.445Z",
+      "lastAccess": "2025-10-11T21:02:37.445Z"
+    }
   ]
 ]

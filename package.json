@@ -6,10 +6,20 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
-    "build": "webpack --mode production",
     "dev-client": "webpack serve --mode development",
+    "build": "webpack --mode production",
     "build-dev": "webpack --mode development",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rd /s /q dist 2>nul || echo Dist folder cleared",
+    "lint": "echo Linting not configured yet",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:unit": "echo \"Unit tests not configured yet\" && exit 1",
+    "test:integration": "echo \"Integration tests not configured yet\" && exit 1",
+    "test:api": "echo \"API tests not configured yet\" && exit 1",
+    "test:e2e": "echo \"E2E tests not configured yet\" && exit 1",
+    "db:migrate": "echo \"Database migrations not configured yet\" && exit 1",
+    "db:seed": "echo \"Database seeding not configured yet\" && exit 1",
+    "logs": "type stderr.log 2>nul || echo No logs found",
+    "logs:clear": "del /f stderr.log 2>nul || echo Logs cleared"
   },
   "repository": {
     "type": "git",
