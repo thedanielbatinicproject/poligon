@@ -110,7 +110,7 @@ Build React aplikacije:
 npm run build
 ```
 
-Pokretanje poslu�itelja:
+Pokretanje poslužitelja:
 ```bash
 npm start
 ```
