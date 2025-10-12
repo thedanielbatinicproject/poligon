@@ -63,6 +63,7 @@ app.use(cookieParser());
 const passport = require('passport');
 app.use(passport.initialize());
 
+
 // Static fileovi
 app.use(express.static(path.join(__dirname, '../dist')));
 app.use(express.static(path.join(__dirname, '../public')));

@@ -66,6 +66,8 @@
     "react-katex": "^3.1.0",
     "tinymce": "^8.1.2",
     "uuid": "^13.0.0"
+    ,
+    "fast-xml-parser": "^4.3.7"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

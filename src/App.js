@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import NotificationProvider from './components/Notification/NotificationProvider';
 import { authAPI } from './utils/api';
 import './App.css';
 
@@ -70,28 +71,32 @@ function App() {
   
   if (loading) {
     return (
-      <div className="app">
-        <div className="loading">🔄 Loading...</div>
-      </div>
+      <NotificationProvider>
+        <div className="app">
+          <div className="loading">🔄 Loading...</div>
+        </div>
+      </NotificationProvider>
     );
   }
   if (!isAuthenticated && currentPage === 'login') {
     return (
-      <div className="app">
-        <Header 
-          user={null}
-          isAuthenticated={false}
-          onLogout={handleLogout}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-        />
-        <main className="main-content">
-          <Suspense fallback={<div className="loading">Učitava...</div>}>
-            <LoginPage onLogin={handleLogin} />
-          </Suspense>
-        </main>
-        <Footer />
-      </div>
+      <NotificationProvider>
+        <div className="app">
+          <Header 
+            user={null}
+            isAuthenticated={false}
+            onLogout={handleLogout}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+          />
+          <main className="main-content">
+            <Suspense fallback={<div className="loading">Učitava...</div>}>
+              <LoginPage onLogin={handleLogin} />
+            </Suspense>
+          </main>
+          <Footer />
+        </div>
+      </NotificationProvider>
     );
   }
 
@@ -117,28 +122,30 @@ function App() {
       case 'tasks-todos':
         return <TasksTodos user={user} isAuthenticated={isAuthenticated} />;
       case 'login':
-        return <LoginPage onLogin={handleLogin} />;
+        return isAuthenticated ? <Dashboard user={user} /> : <LoginPage onLogin={handleLogin} />;
       default:
         return <Home />;
     }
   };
 
   return (
-    <div className="app">
-      <Header 
-        user={user}
-        isAuthenticated={isAuthenticated}
-        onLogout={handleLogout}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-      />
-      <main className="main-content">
-        <Suspense fallback={<div className="loading">Učitava stranicu...</div>}>
-          {renderPage()}
-        </Suspense>
-      </main>
-      <Footer />
-    </div>
+    <NotificationProvider>
+      <div className="app">
+        <Header 
+          user={user}
+          isAuthenticated={isAuthenticated}
+          onLogout={handleLogout}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+        <main className="main-content">
+          <Suspense fallback={<div className="loading">Učitava stranicu...</div>}>
+            {renderPage()}
+          </Suspense>
+        </main>
+        <Footer />
+      </div>
+    </NotificationProvider>
   );
 }
 
