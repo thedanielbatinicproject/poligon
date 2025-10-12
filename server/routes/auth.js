@@ -8,14 +8,30 @@ function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+// Check if we should skip SAML validation (for development with simulator)
+const skipSamlValidation = process.env.DEV_MODE_SKIP_SAML_VALIDATION === 'true';
+
+// Dummy certificate for dev mode (not used for validation)
+const DUMMY_CERT = 'MIIDXTCCAkWgAwIBAgIJALmVVuDWu4NYMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTYxMjI4MTkzNzQ1WhcNMjYxMjI2MTkzNzQ1WjBFMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzUCFozgNb1h1M0jzNRSCjhOBnR+uVbVpaWfXYIR+AhWDdEe5ryY+CgavOg8bfLybyzFdehlYdDRgkedEB/GjG8aJw06l0qF4jDOAw0kEygWCu2mcH7XOxRt+YAH3TVHa/Hu1W3WjzkobqqqLQ8gkKWWM27fOgAZ6GieaJBN6VBSMMcPey3HWLBmc+TYJmv1dbaO2jHhKh8pfKw0W12VM8P1PIO8gv4Phu/uuJYieBWKixBEyy0lHjyixYFCR12xdh4CA47q958ZRGnnDUGFVE1QhgRacJCOZ9bd5t9mr8KLaVBYTCJo5ERE8jymab5dPqe5qKfJsCZiqWglbjUo9twIDAQABo1AwTjAdBgNVHQ4EFgQUxpuwcs/CYQOyui+r1G+3KxBNhxkwHwYDVR0jBBgwFoAUxpuwcs/CYQOyui+r1G+3KxBNhxkwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAAiWUKs/2x/viNCKi3Y6blEuCtAGhzOOZ9EjrvJ8+COH3Rag3tVBWrcBZ3/uhhPq5gy9lqw4OkvEws99/5jFsX1FJ6MKBgqfuy7yh5s1YfM0ANHYczMmYpZeAcQf2CGAaVfwTTfSlzNLsF2lW/ly7yapFzlYSJLGoVE+OHEu8g09zSvjRM2dhNLiCcKJi3sJc1iztz1uIm0BaNJAr5Z3VpLScVo8VkgO/pLL2jrKJRZ1m5BkVYdgLs8SLJr3GPDWJLMVyxf8SBCbJWf1M+5SXkz0BtFPd+VxLdVV7Z6JmZhfLMJDI4CfPE7I5T+N7vGx1O4rZkm1b0+XLFXMxDnHFKw==';
+
+if (skipSamlValidation) {
+    console.log('[AUTH] WARNING: SAML signature validation is DISABLED (DEV_MODE_SKIP_SAML_VALIDATION=true)');
+    console.log('[AUTH] This should ONLY be used with the simulator in development!');
+}
+
 passport.use(new SamlStrategy({
     entryPoint: process.env.AAIEDUHR_SAML_ENTRY_POINT || 'https://login.aaiedu.hr/simplesaml/saml2/idp/SSOService.php',
     issuer: process.env.AAIEDUHR_SAML_ISSUER || 'https://yourapp.com',
     callbackUrl: process.env.AAIEDUHR_SAML_CALLBACK_URL || 'http://localhost:3000/api/auth/callback/aaieduhr',
-    idpCert: process.env.AAIEDUHR_SAML_CERT || 'MIIDXTCCAkWgAwIBAgIJALmVVuDWu4NYMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTYxMjI4MTkzNzQ1WhcNMjYxMjI2MTkzNzQ1WjBFMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzUCFozgNb1h1M0jzNRSCjhOBnR+uVbVpaWfXYIR+AhWDdEe5ryY+CgavOg8bfLybyzFdehlYdDRgkedEB/GjG8aJw06l0qF4jDOAw0kEygWCu2mcH7XOxRt+YAH3TVHa/Hu1W3WjzkobqqqLQ8gkKWWM27fOgAZ6GieaJBN6VBSMMcPey3HWLBmc+TYJmv1dbaO2jHhKh8pfKw0W12VM8P1PIO8gv4Phu/uuJYieBWKixBEyy0lHjyixYFCR12xdh4CA47q958ZRGnnDUGFVE1QhgRacJCOZ9bd5t9mr8KLaVBYTCJo5ERE8jymab5dPqe5qKfJsCZiqWglbjUo9twIDAQABo1AwTjAdBgNVHQ4EFgQUxpuwcs/CYQOyui+r1G+3KxBNhxkwHwYDVR0jBBgwFoAUxpuwcs/CYQOyui+r1G+3KxBNhxkwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAAiWUKs/2x/viNCKi3Y6blEuCtAGhzOOZ9EjrvJ8+COH3Rag3tVBWrcBZ3/uhhPq5gy9lqw4OkvEws99/5jFsX1FJ6MKBgqfuy7yh5s1YfM0ANHYczMmYpZeAcQf2CGAaVfwTTfSlzNLsF2lW/ly7yapFzlYSJLGoVE+OHEu8g09zSvjRM2dhNLiCcKJi3sJc1iztz1uIm0BaNJAr5Z3VpLScVo8VkgO/pLL2jrKJRZ1m5BkVYdgLs8SLJr3GPDWJLMVyxf8SBCbJWf1M+5SXkz0BtFPd+VxLdVV7Z6JmZhfLMJDI4CfPE7I5T+N7vGx1O4rZkm1b0+XLFXMxDnHFKw==',
+    // Use dummy cert in dev mode (won't be validated anyway), real cert in production
+    idpCert: skipSamlValidation ? DUMMY_CERT : (process.env.AAIEDUHR_SAML_CERT || DUMMY_CERT),
     identifierFormat: null,
     signatureAlgorithm: 'sha256',
-    wantAssertionsSigned: false
+    // Disable ALL signature validation in dev mode with simulator
+    wantAssertionsSigned: skipSamlValidation ? false : true,
+    wantAuthnResponseSigned: skipSamlValidation ? false : true,
+    validateInResponseTo: skipSamlValidation ? 'never' : 'ifPresent',
+    disableRequestedAuthnContext: skipSamlValidation
 }, async (profile, done) => {
     try {
         const email = profile.email || profile['urn:oid:0.9.2342.19200300.100.1.3'] || profile.nameID;
@@ -81,7 +97,25 @@ passport.use(new SamlStrategy({
 router.get('/login/aaieduhr', passport.authenticate('saml', { failureRedirect: '/login', failureFlash: true }));
 
 router.post('/callback/aaieduhr', 
-    passport.authenticate('saml', { failureRedirect: '/login', failureFlash: true }),
+    (req, res, next) => {
+        passport.authenticate('saml', (err, user, info) => {
+            if (err) {
+                console.error('[AUTH] SAML authentication error:', err.message || err);
+                console.error('[AUTH] Full error:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: err.message || 'Authentication failed',
+                    details: skipSamlValidation ? 'Dev mode active - signature validation should be skipped' : 'Production mode - signature validation enabled'
+                });
+            }
+            if (!user) {
+                console.error('[AUTH] No user returned from SAML');
+                return res.status(401).json({ success: false, error: 'Authentication failed - no user' });
+            }
+            req.user = user;
+            next();
+        })(req, res, next);
+    },
     async (req, res) => {
         try {
             const user = req.user;
