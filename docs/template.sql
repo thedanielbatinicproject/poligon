@@ -148,3 +148,27 @@ CREATE TABLE api_keys (
   expires_at DATETIME DEFAULT NULL,
   FOREIGN KEY (user_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- SESSIONS
+CREATE TABLE sessions (
+  session_id VARCHAR(128) PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  session_data JSON NOT NULL,
+  last_route VARCHAR(255),
+  last_document_id INT UNSIGNED DEFAULT NULL,
+  last_chapter_id INT UNSIGNED DEFAULT NULL,
+  scroll_position INT DEFAULT 0,
+  sidebar_state ENUM('open', 'closed') DEFAULT 'open',
+  theme ENUM('light', 'dark', 'auto') DEFAULT 'light',
+  user_agent TEXT,
+  ip_address VARCHAR(45),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_activity DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  expires_at DATETIME NOT NULL,
+  INDEX idx_user_id (user_id),
+  INDEX idx_expires_at (expires_at),
+  INDEX idx_last_activity (last_activity),
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (last_document_id) REFERENCES documents(document_id) ON DELETE SET NULL,
+  FOREIGN KEY (last_chapter_id) REFERENCES chapters(chapter_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
