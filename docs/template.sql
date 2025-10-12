@@ -7,7 +7,7 @@ CREATE TABLE users (
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
-  role ENUM('student', 'mentor', 'admin') NOT NULL,
+  role ENUM('user', 'student', 'mentor', 'admin') NOT NULL DEFAULT 'user',
   preferred_language ENUM('hr', 'en') DEFAULT 'hr',
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL

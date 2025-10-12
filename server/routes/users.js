@@ -3,9 +3,10 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const db = require('../db/index');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
 const USERS_FILE = path.join(__dirname, '../data/users.json');
-const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
 const THESES_FILE = path.join(__dirname, '../data/theses.json');
 
 // Helper funkcije
@@ -96,62 +97,13 @@ function updateUserDataInTheses(userId, newUserData) {
     }
 }
 
-function loadActiveSessions() {
-    try {
-        if (fs.existsSync(SESSIONS_FILE)) {
-            const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
-            const sessionsArray = JSON.parse(data);
-            return new Map(sessionsArray);
-        }
-    } catch (error) {
-        console.error('Error loading sessions:', error);
-    }
-    return new Map();
-}
-
 function generateUniqueId() {
     return 'user_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
 }
 
-// Middleware za provjeru admin dozvola
-const requireAdmin = (req, res, next) => {
-    const sessionId = req.cookies.sessionId;
-    
-    if (!sessionId) {
-        return res.status(401).json({
-            success: false,
-            message: 'Niste prijavljeni'
-        });
-    }
-
-    const activeSessions = loadActiveSessions();
-    const session = activeSessions.get(sessionId);
-    
-    if (!session) {
-        return res.status(401).json({
-            success: false,
-            message: 'Sesija je neispravna ili je istekla'
-        });
-    }
-
-    // Provjeri je li korisnik admin
-    const users = loadUsers();
-    const user = users.find(u => u.username === session.user.username);
-    
-    if (!user || user.role !== 'admin') {
-        return res.status(403).json({
-            success: false,
-            message: 'Nemate administratorske dozvole'
-        });
-    }
-
-    req.user = user;
-    req.session = session;
-    next();
-};
-
-// GET /api/users - Dohvati sve korisnike s lozinkama (samo admin)
-router.get('/', requireAdmin, (req, res) => {
+// ROUTES
+// GET /api/users - Dohvati sve korisnike (samo admin)
+router.get('/', requireAuth, requireRole('admin'), (req, res) => {
     try {
         const users = loadUsers();
         // Admin panel treba vidjeti lozinke za upravljanje korisnicima
@@ -195,7 +147,7 @@ router.get('/public', (req, res) => {
 });
 
 // POST /api/users - Dodaj novog korisnika (samo admin)
-router.post('/', requireAdmin, (req, res) => {
+router.post('/', requireAuth, requireRole('admin'), (req, res) => {
     try {
         const { 
             ime, prezime, username, password, email,
@@ -266,7 +218,7 @@ router.post('/', requireAdmin, (req, res) => {
 });
 
 // PUT /api/users/:id - Ažuriraj korisnika (samo admin)
-router.put('/:id', requireAdmin, (req, res) => {
+router.put('/:id', requireAuth, requireRole('admin'), (req, res) => {
     try {
         const { id } = req.params;
         const { 
@@ -350,7 +302,7 @@ router.put('/:id', requireAdmin, (req, res) => {
 });
 
 // DELETE /api/users/:id - Obriši korisnika (samo admin)
-router.delete('/:id', requireAdmin, (req, res) => {
+router.delete('/:id', requireAuth, requireRole('admin'), (req, res) => {
     try {
         const { id } = req.params;
         const users = loadUsers();
@@ -396,7 +348,7 @@ router.delete('/:id', requireAdmin, (req, res) => {
 });
 
 // POST /api/users/change-admin-password - Promijeni admin lozinku (samo admin)
-router.post('/change-admin-password', requireAdmin, (req, res) => {
+router.post('/change-admin-password', requireAuth, requireRole('admin'), (req, res) => {
     try {
         const { newPassword } = req.body;
 

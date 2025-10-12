@@ -3,24 +3,11 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const ThesisModel = require('../models/ThesisModel');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
-const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
 const USERS_FILE = path.join(__dirname, '../data/users.json');
 
 // Helper funkcije
-function loadActiveSessions() {
-    try {
-        if (fs.existsSync(SESSIONS_FILE)) {
-            const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
-            const sessionsArray = JSON.parse(data);
-            return new Map(sessionsArray);
-        }
-    } catch (error) {
-        console.error('Error loading sessions:', error);
-    }
-    return new Map();
-}
-
 function loadUsers() {
     try {
         if (fs.existsSync(USERS_FILE)) {
@@ -34,44 +21,9 @@ function loadUsers() {
     return [];
 }
 
-// Admin middleware
-const requireAdmin = (req, res, next) => {
-    const sessionId = req.cookies.sessionId;
-    
-    if (!sessionId) {
-        return res.status(401).json({
-            success: false,
-            message: 'Niste prijavljeni'
-        });
-    }
-
-    const activeSessions = loadActiveSessions();
-    const session = activeSessions.get(sessionId);
-    
-    if (!session) {
-        return res.status(401).json({
-            success: false,
-            message: 'Sesija je neispravna ili je istekla'
-        });
-    }
-
-    const users = loadUsers();
-    const user = users.find(u => u.username === session.user.username);
-    
-    if (!user || user.role !== 'admin') {
-        return res.status(403).json({
-            success: false,
-            message: 'Nemate administratorske dozvole'
-        });
-    }
-
-    req.user = user;
-    req.session = session;
-    next();
-};
-
+// ROUTES
 // GET /api/admin/documents - Dohvati sve dokumente s paginacijom i pretragom
-router.get('/', requireAdmin, async (req, res) => {
+router.get('/', requireAuth, requireRole('admin'), async (req, res) => {
     try {
         const { page = 1, limit = 10, search = '' } = req.query;
         const users = loadUsers();
@@ -145,7 +97,7 @@ router.get('/', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/documents/:id - Dohvati specifični dokument s editorima
-router.get('/:id', requireAdmin, async (req, res) => {
+router.get('/:id', requireAuth, requireRole('admin'), async (req, res) => {
     try {
         const { id } = req.params;
         const users = loadUsers();
@@ -223,7 +175,7 @@ router.get('/:id', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/documents/users/available - Dohvati korisnike koji mogu biti editori (bez admin)
-router.get('/users/available', requireAdmin, async (req, res) => {
+router.get('/users/available', requireAuth, requireRole('admin'), async (req, res) => {
     try {
         const users = loadUsers();
         
@@ -253,7 +205,7 @@ router.get('/users/available', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/documents/:id/editors - Dodaj editor-a u dokument
-router.post('/:id/editors', requireAdmin, async (req, res) => {
+router.post('/:id/editors', requireAuth, requireRole('admin'), async (req, res) => {
     try {
         const { id } = req.params;
         const { username } = req.body;
@@ -341,7 +293,7 @@ router.post('/:id/editors', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/admin/documents/:id/editors/:username - Ukloni editor-a iz dokumenta
-router.delete('/:id/editors/:username', requireAdmin, async (req, res) => {
+router.delete('/:id/editors/:username', requireAuth, requireRole('admin'), async (req, res) => {
     try {
         const { id, username } = req.params;
         
@@ -399,7 +351,7 @@ router.delete('/:id/editors/:username', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/admin/documents/:id - Obriši dokument
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireRole('admin'), async (req, res) => {
     try {
         const { id } = req.params;
         

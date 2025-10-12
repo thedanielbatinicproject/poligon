@@ -1,68 +1,38 @@
-import React, { useState } from 'react';
-import { authAPI } from '../../utils/api';
+import React from 'react';
 import './LoginPage.css';
 
-const LoginPage = ({ onLogin }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        try {
-            const result = await authAPI.login({ username, password });
-
-            if (result.success && result.data.success) {
-                onLogin(result.data.user);
-            } else {
-                setError(result.data?.message || 'Login failed');
-            }
-        } catch (error) {
-            setError('Greška pri povezivanju sa serverom');
-        } finally {
-            setLoading(false);
-        }
+const LoginPage = () => {
+    const handleAAILogin = () => {
+        window.location.href = '/api/auth/login/aaieduhr';
     };
 
     return (
         <div className="login-page">
             <div className="login-container">
                 <div className="login-form">
-                    <h2>Prijava</h2>
-                    <form onSubmit={handleLogin}>
-                        <div className="form-group">
-                            <label>Korisničko ime:</label>
-                            <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                placeholder="Unesite korisničko ime"
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Lozinka:</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Unesite lozinku"
-                                required
-                            />
-                        </div>
-                        {error && <div className="error-message">{error}</div>}
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="login-btn"
-                        >
-                            {loading ? 'Prijavljivanje...' : 'Prijavi se'}
-                        </button>
-                    </form>
+                    <h2>Prijava u sustav</h2>
+                    <p className="login-description">
+                        Prijava putem AAI@EduHr korisničkog računa:
+                    </p>
+                    <div className="aai-login-section">
+                        <img 
+                            src="/images/aaieduhr.png" 
+                            alt="AAI@EduHr Login" 
+                            className="aai-login-logo"
+                            onClick={handleAAILogin}
+                            style={{ cursor: 'pointer' }}
+                            onError={(e) => {
+                                e.target.src = '/images/aaieduhr.png';
+                            }}
+                        />
+                    </div>
+                    <div className="login-info">
+                        <p>
+                            <small>
+                                Prijavite se putem AAI@EduHr sustava koristeći vaš fakultetski email i lozinku.
+                            </small>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

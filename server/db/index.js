@@ -3,7 +3,7 @@
  * Exports a configured Knex instance for MariaDB/MySQL
  */
 const knex = require('knex');
-const knexConfig = require('../knexfile');
+const knexConfig = require('../../knexfile');
 
 // Determine environment (default to development)
 const environment = process.env.NODE_ENV || 'development';
@@ -15,10 +15,10 @@ const db = knex(config);
 // Test connection on startup (optional but useful for debugging)
 db.raw('SELECT 1')
   .then(() => {
-    console.log(`✅ Database connected successfully (${environment})`);
+    console.log(`[DATABASE] Connected successfully (${environment})`);
   })
   .catch((err) => {
-    console.error('❌ Database connection failed:', err.message);
+    console.error('[DATABASE] Connection failed:', err.message);
   });
 
 module.exports = db;

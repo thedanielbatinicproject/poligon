@@ -12,13 +12,70 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     padding: 2rem;
     width: 100%;
-    max-width: 400px;
+    max-width: 450px;
 }
 
 .login-form h2 {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     color: var(--text-primary);
+}
+
+.login-description {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    font-weight: 500;
+}
+
+.aai-login-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 0;
+    padding: 2rem;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.aai-login-section:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.aai-login-logo {
+    max-width: 280px;
+    width: 100%;
+    height: auto;
+    transition: transform 0.2s ease;
+}
+
+.aai-login-logo:hover {
+    transform: scale(1.05);
+}
+
+.aai-login-logo:active {
+    transform: scale(0.98);
+}
+
+.login-info {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #e7f3ff;
+    border-radius: 6px;
+    border-left: 4px solid #0066cc;
+}
+
+.login-info p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.login-info small {
+    font-size: 0.9rem;
 }
 
 .form-group {

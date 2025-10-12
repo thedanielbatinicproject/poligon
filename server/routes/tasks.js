@@ -3,50 +3,10 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const ThesisModel = require('../models/ThesisModel');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 
-const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
 const TASKS_FILE = path.join(__dirname, '../data/tasks.json');
 const TODOS_FILE = path.join(__dirname, '../data/todos.json');
-
-function loadActiveSessions() {
-    try {
-        if (fs.existsSync(SESSIONS_FILE)) {
-            const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
-            const sessionsArray = JSON.parse(data);
-            return new Map(sessionsArray);
-        }
-    } catch (error) {
-        console.error('Error loading sessions:', error);
-    }
-    return new Map();
-}
-
-// Middleware za autentifikaciju
-const authenticateUser = (req, res, next) => {
-    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-        const sessionId = req.cookies.sessionId;
-        
-        if (!sessionId) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Niste prijavljeni' 
-            });
-        }
-
-        const activeSessions = loadActiveSessions();
-        const session = activeSessions.get(sessionId);
-        
-        if (!session) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Sesija je neispravna ili je istekla' 
-            });
-        }
-
-        req.user = session;
-    }
-    next();
-};
 
 // Funkcija za provjeru admin dozvola
 const isAdmin = (user) => {
@@ -54,16 +14,12 @@ const isAdmin = (user) => {
 };
 
 // Funkcija za provjeru može li korisnik uređivati task
-const canEditTask = (task, session) => {
-    const user = session?.user || session;
-    return isAdmin(user) || task.createdBy === user?.id;
+const canEditTask = (task, user) => {
+    return isAdmin(user) || task.createdBy === user?.user_id;
 };
 
 // Funkcija za provjeru može li korisnik uređivati todo
-const canEditTodo = (todo, session) => {
-    // Izvlači user objekt iz sesije
-    const user = session?.user || session;
-    
+const canEditTodo = (todo, user) => {
     // Ako je admin, može sve
     if (user && isAdmin(user)) {
         return true;
@@ -148,7 +104,7 @@ router.get('/tasks', (req, res) => {
 });
 
 // POST /api/tasks - Kreiraj novi task
-router.post('/tasks', authenticateUser, (req, res) => {
+router.post('/tasks', requireAuth, (req, res) => {
     try {
         const { title, description, documentId, chapterId, dueDate } = req.body;
 
@@ -198,7 +154,7 @@ router.post('/tasks', authenticateUser, (req, res) => {
 });
 
 // PUT /api/tasks/:id - Ažuriraj task
-router.put('/tasks/:id', authenticateUser, (req, res) => {
+router.put('/tasks/:id', requireAuth, (req, res) => {
     try {
         const { id } = req.params;
         const { title, description, documentId, chapterId, dueDate, completed } = req.body;
@@ -255,7 +211,7 @@ router.put('/tasks/:id', authenticateUser, (req, res) => {
 });
 
 // PATCH /api/tasks/:id/toggle-finished - Promijeni finished status
-router.patch('/tasks/:id/toggle-finished', authenticateUser, (req, res) => {
+router.patch('/tasks/:id/toggle-finished', requireAuth, (req, res) => {
     try {
         const { id } = req.params;
         const tasks = loadTasks();
@@ -307,7 +263,7 @@ router.patch('/tasks/:id/toggle-finished', authenticateUser, (req, res) => {
 });
 
 // DELETE /api/tasks/:id - Obriši task
-router.delete('/tasks/:id', authenticateUser, (req, res) => {
+router.delete('/tasks/:id', requireAuth, (req, res) => {
     try {
         const { id } = req.params;
         const tasks = loadTasks();

@@ -1,51 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const ThesisModel = require('../models/ThesisModel');
-
-
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 const fs = require('fs');
 const path = require('path');
-
-const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
-
-function loadActiveSessions() {
-    try {
-        if (fs.existsSync(SESSIONS_FILE)) {
-            const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
-            const sessionsArray = JSON.parse(data);
-            return new Map(sessionsArray);
-        }
-    } catch (error) {
-        console.error('Error loading sessions:', error);
-    }
-    return new Map();
-}
-
-// Middleware za autentifikaciju - sada koristi cookies
-const authenticateUser = (req, res, next) => {
-    
-    if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
-        const sessionId = req.cookies.sessionId;
-        
-        if (!sessionId) {
-            return res.status(401).json({ error: 'Authentication required - no session cookie' });
-        }
-        
-        // Učitaj aktivne sesije iz fajla
-        const activeSessions = loadActiveSessions();
-        
-        if (!activeSessions.has(sessionId)) {
-            return res.status(401).json({ error: 'Invalid or expired session' });
-        }
-        
-        const sessionData = activeSessions.get(sessionId);
-        req.user = sessionData.user;
-        req.sessionId = sessionId;
-    }
-    
-    next();
-};
-
 
 router.get('/', async (req, res) => {
     try {
@@ -72,7 +30,7 @@ router.get('/:id', async (req, res) => {
 });
 
 
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
     try {
         const thesis = await ThesisModel.create(req.body);
         res.status(201).json(thesis);
@@ -83,7 +41,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
     try {
         const thesis = await ThesisModel.update(req.params.id, req.body);
         res.json(thesis);
@@ -94,7 +52,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 
-router.delete('/:id', authenticateUser, async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
     try {
         await ThesisModel.delete(req.params.id);
         res.status(204).send();
@@ -105,7 +63,7 @@ router.delete('/:id', authenticateUser, async (req, res) => {
 });
 
 
-router.post('/:id/chapters', authenticateUser, async (req, res) => {
+router.post('/:id/chapters', requireAuth, async (req, res) => {
     try {
         const thesis = await ThesisModel.addChapter(req.params.id, req.body);
         res.json(thesis);
@@ -116,7 +74,7 @@ router.post('/:id/chapters', authenticateUser, async (req, res) => {
 });
 
 
-router.put('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
+router.put('/:id/chapters/:chapterId', requireAuth, async (req, res) => {
     try {
         const thesis = await ThesisModel.updateChapter(req.params.id, req.params.chapterId, req.body);
         res.json(thesis);
@@ -127,7 +85,7 @@ router.put('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
 });
 
 
-router.delete('/:id/chapters/:chapterId', authenticateUser, async (req, res) => {
+router.delete('/:id/chapters/:chapterId', requireAuth, async (req, res) => {
     try {
         const thesis = await ThesisModel.deleteChapter(req.params.id, req.params.chapterId);
         res.json(thesis);
