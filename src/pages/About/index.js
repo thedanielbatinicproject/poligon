@@ -44,7 +44,9 @@ const About = () => {
                             <ul>
                                 <li><strong>React 18:</strong> Moderna komponentna arhitektura s hooks-ima</li>
                                 <li><strong>JavaScript ES6+:</strong> Asinkroni pristup i moderne značajke</li>
-                                <li><strong>TinyMCE 6:</strong> Napredni WYSIWYG editor za znanstvene radove</li>
+                                <li><strong>Monaco Editor:</strong> VS Code editor za LaTeX s syntax highlighting-om</li>
+                                <li><strong>KaTeX:</strong> Brzi math renderer za LaTeX preview</li>
+                                <li><strong>latex.js + jsPDF:</strong> LaTeX kompajliranje i PDF generiranje u browseru</li>
                                 <li><strong>CSS3:</strong> Responzivni dizajn s CSS varijablama</li>
                                 <li><strong>Webpack 5:</strong> Module bundling i optimizacija</li>
                             </ul>
@@ -77,12 +79,14 @@ const About = () => {
                                 <li>Skalabilnost i performanse</li>
                                 <li>Bogat ekosustav paketa</li>
                             </ul>
-                            <h4>TinyMCE editor:</h4>
+                            <h4>LaTeX Editor:</h4>
                             <ul>
-                                <li>Profesionalne funkcionalnosti za znanstvene radove</li>
-                                <li>Cloud-based pristup bez složenih konfiguracija</li>
-                                <li>Izvrsna podrška za tablice i slike</li>
-                                <li>Customizable toolbar za specifične potrebe</li>
+                                <li>Split-screen prikaz (kod + preview) kao Overleaf</li>
+                                <li>Monaco editor s punom LaTeX syntax podrškom</li>
+                                <li>Client-side PDF kompajliranje putem latex.js</li>
+                                <li>Auto-save svake 30 sekundi</li>
+                                <li>Customizable toolbar za brzo umetanje struktura</li>
+                                <li>Verzioniranje dokumenata za audit trail</li>
                             </ul>
                             <h4>JSON baza umjesto SQL:</h4>
                             <ul>

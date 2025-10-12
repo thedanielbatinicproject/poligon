@@ -125,13 +125,15 @@ const Home = () => {
                         </div>
                         {activeSection === 'editor' && (
                             <div className="guide-content">
-                                <h4>TinyMCE funkcionalnosti:</h4>
+                                <h4>LaTeX Editor funkcionalnosti:</h4>
                                 <ul>
-                                    <li>Potpuni WYSIWYG editor</li>
-                                    <li>Znanstveno formatiranje (Times New Roman, A4)</li>
-                                    <li>Tablice s automatskim okvirima</li>
-                                    <li>Prijenos i umetanje slika</li>
-                                    <li>Matematičke jednadžbe</li>
+                                    <li>Split-screen editor (kod + preview)</li>
+                                    <li>Monaco syntax highlighting za LaTeX</li>
+                                    <li>Direktno PDF generiranje u browseru (latex.js)</li>
+                                    <li>Automatsko spremanje svake 30 sekundi</li>
+                                    <li>Brzo umetanje LaTeX struktura (section, equation, figure...)</li>
+                                    <li>Praćenje pozicije cursora i vraćanje na zadnju lokaciju</li>
+                                    <li>Verzioniranje dokumenata</li>
                                 </ul>
                                 <h4>Automatsko numeriranje:</h4>
                                 <ul>

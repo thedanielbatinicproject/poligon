@@ -2,33 +2,49 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
+const mysql = require('mysql2/promise');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Provjeri i kreiraj direktorij za upload ako ne postoji
+const uploadDir = path.join(__dirname, '../storage', 'images');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // Multer konfiguracija za upload slika
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../public', 'uploads');
-        
-        const fs = require('fs');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const userId = req.user ? req.user.id : 'unknown';
+        const now = new Date();
+        // Zagreb timezone offset (CET/CEST)
+        const zagrebTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Zagreb' }));
+        const pad = n => n.toString().padStart(2, '0');
+        const padMs = n => n.toString().padStart(3, '0');
+        // Windows-safe format: hyphens instead of colons
+        const dateStr = 
+            pad(zagrebTime.getDate()) + '.' +
+            pad(zagrebTime.getMonth() + 1) + '.' +
+            zagrebTime.getFullYear() + '_' +
+            pad(zagrebTime.getHours()) + '-' +
+            pad(zagrebTime.getMinutes()) + '-' +
+            pad(zagrebTime.getSeconds()) + '.' +
+            padMs(zagrebTime.getMilliseconds());
         const ext = path.extname(file.originalname);
-        cb(null, 'img-' + uniqueSuffix + ext);
+        cb(null, `img-${dateStr}-${userId}${ext}`);
     }
 });
 
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
+        fileSize: process.env.IMAGE_STORAGE_LIMIT * 1024 * 1024 // 5MB
     },
     fileFilter: function (req, file, cb) {
         if (file.mimetype.startsWith('image/')) {
@@ -39,8 +55,7 @@ const upload = multer({
     }
 });
 
-// Middleware
-app.use(express.json());
+// Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -50,7 +65,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // CORS
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.header('Access-Control-Allow-Origin', (process.env.CORS_ORIGIN+":"+process.env.PORT) || 'http://localhost:3000');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -76,6 +91,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/admin/documents', adminDocumentsRoutes);
 
 // Upload endpoint
+// TODO: Dodati integraciju sa MariaDB
 app.post('/api/upload', upload.single('image'), (req, res) => {
     try {
         if (!req.file) {
@@ -104,58 +120,75 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 });
 
 // Health check
+// TODO: Dodati provjeru spojenosti na MariaDB i detaljnije informacije o serveru i korisniku
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'success',
-        message: 'Poslužitelj je pokrenut s React.js frontend-om!',
+        message: 'Poslužitelj je pokrenut i radi ispravno!',
         timestamp: new Date().toISOString(),
         framework: 'React.js',
-        backend: 'Express.js'
+        backend: 'Express.js',
+        database: 'MariaDB',
+        loggedIn: req.user || 'unknown user',
     });
 });
 
-// About endpoint
-app.get('/api/about', (req, res) => {
-    const technologies = ['Node.js', 'Express.js', 'React.js', 'HTML5', 'CSS3', 'JavaScript', 'Webpack', 'Babel'];
-    const features = [
-        'React komponente',
-        'Express API poslužitelj',
-        'Webpack bundling',
-        'Babel transpiling',
-        'API rute',
-        'Rukovanje greškama',
-        'Responzivni dizajn'
-    ];
-    
-    res.json({
-        technologies: technologies,
-        features: features,
-        currentYear: new Date().getFullYear()
-    });
-});
-
-// TinyMCE config endpoint
-app.get('/api/tinymce-config', (req, res) => {
-    res.json({
-        apiKey: process.env.TINYMCE_API_KEY || '',
-        success: true
-    });
-});
 
 // SPA fallback - mora biti zadnji
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
-// Error handler
+// Multer error handler (mora biti prije generic error handler-a)
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Nešto je pošlo po zlu!' });
+    if (err instanceof multer.MulterError) {
+        // Multer-specific errors
+        switch (err.code) {
+            case 'LIMIT_FILE_SIZE':
+                return res.status(413).json({ 
+                    success: false, 
+                    error: 'Datoteka je prevelika. Maksimalna veličina je 5MB.' 
+                });
+            case 'LIMIT_FILE_COUNT':
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Previše datoteka. Dozvoljena je samo jedna datoteka.' 
+                });
+            case 'LIMIT_UNEXPECTED_FILE':
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Neočekivano ime polja za datoteku.' 
+                });
+            default:
+                return res.status(400).json({ 
+                    success: false, 
+                    error: `Greška pri uploadu: ${err.message}` 
+                });
+        }
+    } else if (err.message === 'Samo slike su dozvoljene!') {
+        // Custom file filter error
+        return res.status(400).json({ 
+            success: false, 
+            error: err.message 
+        });
+    }
+    
+    // Pass to generic error handler
+    next(err);
+});
+
+// Generic error handler
+app.use((err, req, res, next) => {
+    console.error('Server error:', err.stack);
+    res.status(err.status || 500).json({ 
+        success: false, 
+        error: err.message || 'Nešto je pošlo po zlu!' 
+    });
 });
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Poslužitelj pokrenut na http://localhost:${PORT}`);
+    console.log(`Poslužitelj pokrenut na ${process.env.CORS_ORIGIN}:${PORT}`);
 });
 
 module.exports = app;

@@ -1,0 +1,246 @@
+.latex-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+/* Toolbar */
+.latex-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: #2d2d30;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.latex-toolbar button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #0e639c;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.latex-toolbar button:hover:not(:disabled) {
+  background: #1177bb;
+}
+
+.latex-toolbar button:disabled {
+  background: #3e3e42;
+  color: #6e6e6e;
+  cursor: not-allowed;
+}
+
+.btn-save {
+  background: #0e7b0e !important;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #0d9b0d !important;
+}
+
+.btn-compile {
+  background: #c7741e !important;
+}
+
+.btn-compile:hover:not(:disabled) {
+  background: #d68430 !important;
+}
+
+.save-status {
+  font-size: 13px;
+  color: #cccccc;
+}
+
+.save-status .unsaved {
+  color: #f48771;
+}
+
+.save-status .saved {
+  color: #4ec9b0;
+}
+
+.compilation-error {
+  font-size: 13px;
+  color: #f48771;
+  cursor: help;
+}
+
+.cursor-position {
+  font-size: 12px;
+  color: #858585;
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+/* Template bar */
+.template-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+  overflow-x: auto;
+}
+
+.template-label {
+  font-size: 13px;
+  color: #cccccc;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.template-bar button {
+  padding: 6px 12px;
+  border: 1px solid #3e3e42;
+  border-radius: 3px;
+  background: #3c3c3c;
+  color: #cccccc;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.template-bar button:hover {
+  background: #505050;
+  border-color: #6e6e6e;
+}
+
+/* Split view */
+.split-view {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.editor-pane {
+  flex: 1;
+  border-right: 2px solid #3e3e42;
+  overflow: hidden;
+}
+
+.preview-pane {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  color: #000000;
+  padding: 30px;
+}
+
+/* Preview content */
+.preview-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #333;
+  border-bottom: 2px solid #0e639c;
+  padding-bottom: 8px;
+}
+
+.preview-notice {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #856404;
+}
+
+.latex-preview {
+  font-family: 'Times New Roman', Times, serif;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.preview-title {
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+  margin: 30px 0 10px 0;
+  color: #000;
+}
+
+.preview-author {
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 40px;
+  color: #333;
+  font-style: italic;
+}
+
+.preview-section {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  color: #000;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+.preview-subsection {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #111;
+}
+
+.preview-text {
+  font-size: 16px;
+  margin-bottom: 12px;
+  text-align: justify;
+  color: #000;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .split-view {
+    flex-direction: column;
+  }
+  
+  .editor-pane {
+    border-right: none;
+    border-bottom: 2px solid #3e3e42;
+    height: 50vh;
+  }
+  
+  .preview-pane {
+    height: 50vh;
+  }
+}
+
+/* Scrollbar styling */
+.preview-pane::-webkit-scrollbar {
+  width: 10px;
+}
+
+.preview-pane::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.preview-pane::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+.preview-pane::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

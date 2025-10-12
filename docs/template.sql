@@ -26,6 +26,8 @@ CREATE TABLE documents (
   type_id INT UNSIGNED NOT NULL,
   title VARCHAR(255) NOT NULL,
   abstract TEXT,
+  latex_content LONGTEXT,
+  compiled_pdf_path VARCHAR(255),
   status ENUM('draft', 'submitted', 'under_review', 'finished', 'graded') NOT NULL DEFAULT 'draft',
   language ENUM('hr', 'en') DEFAULT 'hr',
   grade TINYINT UNSIGNED,
@@ -45,32 +47,16 @@ CREATE TABLE document_mentors (
   FOREIGN KEY (mentor_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- CHAPTERS
-CREATE TABLE chapters (
-  chapter_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  document_id INT UNSIGNED NOT NULL,
-  parent_chapter_id INT UNSIGNED DEFAULT NULL,
-  chapter_title VARCHAR(255) NOT NULL,
-  chapter_content TEXT,
-  chapter_order INT UNSIGNED NOT NULL,
-  version INT UNSIGNED DEFAULT 1,
-  last_edited_by INT UNSIGNED,
-  created_at DATETIME NOT NULL,
-  updated_at DATETIME NOT NULL,
-  FOREIGN KEY (document_id) REFERENCES documents(document_id),
-  FOREIGN KEY (parent_chapter_id) REFERENCES chapters(chapter_id),
-  FOREIGN KEY (last_edited_by) REFERENCES users(user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- CHAPTER VERSIONS
-CREATE TABLE chapter_versions (
+-- DOCUMENT VERSIONS
+CREATE TABLE document_versions (
   version_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  chapter_id INT UNSIGNED NOT NULL,
+  document_id INT UNSIGNED NOT NULL,
   version_number INT UNSIGNED NOT NULL,
   edited_by INT UNSIGNED NOT NULL,
-  content_snapshot TEXT NOT NULL,
+  latex_snapshot LONGTEXT NOT NULL,
+  compiled_pdf_path VARCHAR(255),
   edited_at DATETIME NOT NULL,
-  FOREIGN KEY (chapter_id) REFERENCES chapters(chapter_id),
+  FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
   FOREIGN KEY (edited_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -89,8 +75,8 @@ CREATE TABLE workflow_history (
 CREATE TABLE audit_log (
   audit_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
-  action_type ENUM('edit', 'submit', 'grade', 'comment', 'upload') NOT NULL,
-  entity_type ENUM('document', 'chapter', 'file', 'task') NOT NULL,
+  action_type ENUM('edit', 'submit', 'grade', 'comment', 'upload', 'compile') NOT NULL,
+  entity_type ENUM('document', 'file', 'task') NOT NULL,
   entity_id INT UNSIGNED NOT NULL,
   action_timestamp DATETIME NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -127,14 +113,12 @@ CREATE TABLE messages (
 CREATE TABLE file_uploads (
   file_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   document_id INT UNSIGNED NOT NULL,
-  chapter_id INT UNSIGNED DEFAULT NULL,
   uploaded_by INT UNSIGNED NOT NULL,
   file_path VARCHAR(255) NOT NULL,
-  file_type ENUM('image', 'pdf') NOT NULL,
+  file_type ENUM('image', 'pdf', 'bib', 'tex') NOT NULL,
   file_size INT UNSIGNED NOT NULL,
   uploaded_at DATETIME NOT NULL,
-  FOREIGN KEY (document_id) REFERENCES documents(document_id),
-  FOREIGN KEY (chapter_id) REFERENCES chapters(chapter_id),
+  FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
   FOREIGN KEY (uploaded_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -156,7 +140,8 @@ CREATE TABLE sessions (
   session_data JSON NOT NULL,
   last_route VARCHAR(255),
   last_document_id INT UNSIGNED DEFAULT NULL,
-  last_chapter_id INT UNSIGNED DEFAULT NULL,
+  editor_cursor_position INT DEFAULT 0,
+  editor_scroll_line INT DEFAULT 0,
   scroll_position INT DEFAULT 0,
   sidebar_state ENUM('open', 'closed') DEFAULT 'open',
   theme ENUM('light', 'dark', 'auto') DEFAULT 'light',
@@ -169,6 +154,5 @@ CREATE TABLE sessions (
   INDEX idx_expires_at (expires_at),
   INDEX idx_last_activity (last_activity),
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-  FOREIGN KEY (last_document_id) REFERENCES documents(document_id) ON DELETE SET NULL,
-  FOREIGN KEY (last_chapter_id) REFERENCES chapters(chapter_id) ON DELETE SET NULL
+  FOREIGN KEY (last_document_id) REFERENCES documents(document_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
