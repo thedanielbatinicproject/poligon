@@ -37,6 +37,20 @@ const DocumentPage = ({ user, onPageChange }) => {
     useEffect(() => {
         loadInitialDocument();
     }, []); 
+
+    useEffect(() => {
+        // disable background scrolling while DocumentManager modal is open
+        if (showDocumentManager) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            // cleanup on unmount
+            document.body.style.overflow = '';
+        };
+    }, [showDocumentManager]);
+
     
     useEffect(() => {
         if (!user) {
@@ -226,18 +240,11 @@ const DocumentPage = ({ user, onPageChange }) => {
                         {mode === 'EDIT' && user && (
                             <>
                                 <button 
-                                    className="action-btn primary-btn"
-                                    onClick={createNewThesis}
-                                    title="Kreiraj novi dokument"
-                                >
-                                    <img src="/icons/add.png" alt="Add" className="btn-icon" /> Novi dokument
-                                </button>
-                                <button 
                                     className="action-btn secondary-btn"
                                     onClick={() => setShowDocumentManager(true)}
                                     title="Upravljanje dokumentima"
                                 >
-                                    <img src="/icons/manage.png" alt="Manage" className="btn-icon" /> Upravljaj dokumentima
+                                    <img src="/icons/manage.png" alt="Manage" className="btn-icon" /> Uredi detalje dokumenta
                                 </button>
                             </>
                         )}

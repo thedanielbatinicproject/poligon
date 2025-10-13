@@ -5,7 +5,7 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "nodemon server/index.js",
+    "dev": "concurrently \"nodemon server/index.js\" \"webpack serve --mode development\"",
     "dev-client": "webpack serve --mode development",
     "build": "webpack --mode production",
     "build-dev": "webpack --mode development",
@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/thedanielbatinicproject/poligon#readme",
   "dependencies": {
+    "concurrently": "^8.2.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

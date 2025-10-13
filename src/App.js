@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import NotificationProvider from './components/Notification/NotificationProvider';
 import { authAPI } from './utils/api';
 import './App.css';
 
@@ -71,32 +70,28 @@ function App() {
   
   if (loading) {
     return (
-      <NotificationProvider>
-        <div className="app">
-          <div className="loading">🔄 Loading...</div>
-        </div>
-      </NotificationProvider>
+      <div className="app">
+        <div className="loading">Loading...</div>
+      </div>
     );
   }
   if (!isAuthenticated && currentPage === 'login') {
     return (
-      <NotificationProvider>
-        <div className="app">
-          <Header 
-            user={null}
-            isAuthenticated={false}
-            onLogout={handleLogout}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
-          <main className="main-content">
-            <Suspense fallback={<div className="loading">Učitava...</div>}>
-              <LoginPage onLogin={handleLogin} />
-            </Suspense>
-          </main>
-          <Footer />
-        </div>
-      </NotificationProvider>
+      <div className="app">
+        <Header 
+          user={null}
+          isAuthenticated={false}
+          onLogout={handleLogout}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+        <main className="main-content">
+          <Suspense fallback={<div className="loading">Učitavanje...</div>}>
+            <LoginPage onLogin={handleLogin} />
+          </Suspense>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
@@ -129,23 +124,21 @@ function App() {
   };
 
   return (
-    <NotificationProvider>
-      <div className="app">
-        <Header 
-          user={user}
-          isAuthenticated={isAuthenticated}
-          onLogout={handleLogout}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-        />
-        <main className="main-content">
-          <Suspense fallback={<div className="loading">Učitava stranicu...</div>}>
-            {renderPage()}
-          </Suspense>
-        </main>
-        <Footer />
-      </div>
-    </NotificationProvider>
+    <div className="app">
+      <Header 
+        user={user}
+        isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
+      <main className="main-content">
+        <Suspense fallback={<div className="loading">Učitava stranicu...</div>}>
+          {renderPage()}
+        </Suspense>
+      </main>
+      <Footer />
+    </div>
   );
 }
 

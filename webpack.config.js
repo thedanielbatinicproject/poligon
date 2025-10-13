@@ -65,26 +65,35 @@ module.exports = (env, argv) => {
     ] : [])
   ],
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'dist'),
-    },
+    static: [
+      {
+        directory: path.join(__dirname, 'dist'),
+      },
+      {
+        directory: path.join(__dirname, 'public'),
+      }
+    ],
     compress: true,
     port: 3001,
     hot: true,
-    proxy: {
-      '/api': {
+    client: {
+      overlay: false  // Isključi overlay warnings u browseru
+    },
+    proxy: [
+      {
+        context: ['/api'],
         target: 'http://localhost:3000',
         changeOrigin: true
       }
-    }
+    ]
   },
   resolve: {
     extensions: ['.js', '.jsx']
   },
   performance: {
-    maxEntrypointSize: 400000, 
-    maxAssetSize: 400000, 
-    hints: 'warning'
+    maxEntrypointSize: 6000000, 
+    maxAssetSize: 6000000, 
+    hints: false
   }
   };
 };

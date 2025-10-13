@@ -60,7 +60,7 @@ function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) 
             )}
             {user ? (
               <div className="user-info">
-                <span>Pozdrav, {user.ime ? `${user.ime} ${user.prezime}` : user.username}!</span>
+                <span>{user.first_name && user.last_name ? `Pozdrav, ${user.first_name} ${user.last_name}!` : <em>unknown name!</em>}</span>
                 <button onClick={onLogout} className="logout-btn">
                   Odjavi se
                 </button>

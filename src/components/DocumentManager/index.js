@@ -70,7 +70,7 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
         <div className="document-manager-overlay">
             <div className="document-manager">
                 <div className="manager-header">
-                    <h2>Uredi dokumenta</h2>
+                    <h2>Uredi dokument</h2>
                     <button onClick={onClose} className="close-btn">×</button>
                 </div>
 
@@ -164,7 +164,7 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
                             className="delete-btn"
                             title="Obriši ovaj dokument"
                         >
-                            🗑️ Obriši dokument
+                            <img src="/icons/delete.png" alt="Delete" className="btn-icon" /> <b>Obriši dokument</b>
                         </button>
                     </div>
                     <div className="right-actions">
@@ -182,12 +182,12 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
             {showDeleteConfirm && (
                 <div className="delete-confirm-overlay">
                     <div className="delete-confirm-modal">
-                        <h3>⚠️ Potvrda brisanja</h3>
-                        <p>
-                            Jeste li sigurni da želite trajno obrisati dokument <strong>"{metadata.title || 'Bez naslova'}"</strong>?
-                        </p>
+                        <h3>
+                            <img src="/icons/warning.png" alt="Upozorenje" className="modal-warning-icon" />
+                            Potvrda brisanja
+                        </h3>
                         <p className="warning-text">
-                            Ova akcija će obrisati sav sadržaj uključujući sva poglavlja i ne može se poništiti!
+                            Ova akcija će obrisati sav sadržaj uključujući sva poglavlja dokumenta i ne može se poništiti!
                         </p>
                         <div className="confirm-buttons">
                             <button 
@@ -195,7 +195,7 @@ const DocumentManager = ({ thesis, onClose, onThesisUpdate, onDocumentDeleted })
                                 className="confirm-delete-btn"
                                 disabled={isDeleting}
                             >
-                                {isDeleting ? 'Brišem...' : '🗑️ Da, obriši trajno'}
+                                {isDeleting ? 'Brišem...' : 'Da, obriši trajno'}
                             </button>
                             <button 
                                 onClick={() => setShowDeleteConfirm(false)}

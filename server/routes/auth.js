@@ -5,21 +5,6 @@ const { Strategy: SamlStrategy } = require('@node-saml/passport-saml');
 const db = require('../db/index');
 const { XMLParser } = require('fast-xml-parser');
 
-/*
-    If you don't have a table for pending_logins yet, create it with:
-
-    CREATE TABLE pending_logins (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        token VARCHAR(128) NOT NULL UNIQUE,
-        as_admin TINYINT(1) DEFAULT 0,
-        created_at DATETIME NOT NULL,
-        expires_at DATETIME NOT NULL,
-        INDEX (expires_at)
-    );
-
-    This table stores short-lived tokens that carry the "login as admin" intent.
-*/
-
 function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
@@ -30,14 +15,13 @@ const skipSamlValidation = process.env.DEV_MODE_SKIP_SAML_VALIDATION === 'true';
 // Dummy certificate for dev mode (not used for validation)
 const DUMMY_CERT = 'MIIDXTCCAkWgAwIBAgIJALmVVuDWu4NYMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTYxMjI4MTkzNzQ1WhcNMjYxMjI2MTkzNzQ1WjBFMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzUCFozgNb1h1M0jzNRSCjhOBnR+uVbVpaWfXYIR+AhWDdEe5ryY+CgavOg8bfLybyzFdehlYdDRgkedEB/GjG8aJw06l0qF4jDOAw0kEygWCu2mcH7XOxRt+YAH3TVHa/Hu1W3WjzkobqqqLQ8gkKWWM27fOgAZ6GieaJBN6VBSMMcPey3HWLBmc+TYJmv1dbaO2jHhKh8pfKw0W12VM8P1PIO8gv4Phu/uuJYieBWKixBEyy0lHjyixYFCR12xdh4CA47q958ZRGnnDUGFVE1QhgRacJCOZ9bd5t9mr8KLaVBYTCJo5ERE8jymab5dPqe5qKfJsCZiqWglbjUo9twIDAQABo1AwTjAdBgNVHQ4EFgQUxpuwcs/CYQOyui+r1G+3KxBNhxkwHwYDVR0jBBgwFoAUxpuwcs/CYQOyui+r1G+3KxBNhxkwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAAiWUKs/2x/viNCKi3Y6blEuCtAGhzOOZ9EjrvJ8+COH3Rag3tVBWrcBZ3/uhhPq5gy9lqw4OkvEws99/5jFsX1FJ6MKBgqfuy7yh5s1YfM0ANHYczMmYpZeAcQf2CGAaVfwTTfSlzNLsF2lW/ly7yapFzlYSJLGoVE+OHEu8g09zSvjRM2dhNLiCcKJi3sJc1iztz1uIm0BaNJAr5Z3VpLScVo8VkgO/pLL2jrKJRZ1m5BkVYdgLs8SLJr3GPDWJLMVyxf8SBCbJWf1M+5SXkz0BtFPd+VxLdVV7Z6JmZhfLMJDI4CfPE7I5T+N7vGx1O4rZkm1b0+XLFXMxDnHFKw==';
 
-// In dev mode we may skip SAML validation; no noisy console warnings here.
-
+// In dev mode - skip SAML validation
 passport.use(new SamlStrategy({
     entryPoint: process.env.AAIEDUHR_SAML_ENTRY_POINT || 'https://login.aaiedu.hr/simplesaml/saml2/idp/SSOService.php',
     issuer: process.env.AAIEDUHR_SAML_ISSUER || 'https://yourapp.com',
     callbackUrl: process.env.AAIEDUHR_SAML_CALLBACK_URL || 'http://localhost:3000/api/auth/callback/aaieduhr',
     // Use dummy cert in dev mode (won't be validated anyway), real cert in production
-    idpCert: skipSamlValidation ? DUMMY_CERT : (process.env.AAIEDUHR_SAML_CERT || DUMMY_CERT),
+    idpCert: skipSamlValidation ? DUMMY_CERT : process.env.AAIEDUHR_SAML_CERT,
     identifierFormat: null,
     signatureAlgorithm: 'sha256',
     // Disable ALL signature validation in dev mode with simulator
@@ -264,6 +248,7 @@ router.post('/callback/aaieduhr',
                 );
 
                 let user;
+                let role = 'student';
                 // Consume RelayState token which should be a pending_logins.token OR
                 // a legacy 'as_admin=1' string. Prefer DB-backed token when present.
                 const relayStateRaw = (req.body && (req.body.RelayState || req.body.relayState || req.body.Relaystate)) || '';

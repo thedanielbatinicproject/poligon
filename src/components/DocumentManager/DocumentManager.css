@@ -11,6 +11,13 @@
     z-index: 1000;
 }
 
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
 .document-manager {
     background: var(--bg-secondary);
     border-radius: 12px;
@@ -148,6 +155,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 1rem; /* base for em sizing of icon */
 }
 
 .delete-btn:hover {
@@ -155,6 +163,42 @@
     transform: translateY(-1px);
 }
 
+.delete-btn .btn-icon {
+    width: 1.8em;          /* scales with button font-size */
+    height: 1.8em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    background: #fff;
+    object-fit: contain;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06) inset;
+}
+
+.delete-btn .btn-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: grayscale(1) contrast(130%);
+}
+
+.modal-warning-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    object-fit: contain;
+}
+
+/* ensure confirm button icon aligns and scales with text */
+.confirm-delete-btn .btn-icon {
+    width: 1.1em;
+    height: 1.1em;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    object-fit: contain;
+}
 
 .delete-confirm-overlay {
     position: fixed;
