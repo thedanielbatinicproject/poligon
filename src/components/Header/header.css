@@ -1,0 +1,67 @@
+
+.nav-container h1 a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  overflow: visible; 
+
+  --logo-size: 40px;
+  /* scale factor for the circular faded background (1 = same as logo size) */
+  --circle-scale: 0.9; /* tune this to adjust the circle radius without changing logo size */
+}
+
+/* white circular background with faded (radial) edges */
+.logo-wrap::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /* use --logo-size and --circle-scale so circle radius can be adjusted independently */
+  width: calc(var(--logo-size) * var(--circle-scale));
+  height: calc(var(--logo-size) * var(--circle-scale));
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255,255,255,1) 0%,
+    rgba(255,255,255,0.85) 30%,
+    rgba(255,255,255,0.45) 55%,
+    rgba(255,255,255,0) 80%
+  );
+  filter: blur(4px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.9;
+}
+
+.logo {
+  position: relative;
+  z-index: 1;
+  width: 40px;
+  height: auto;
+  display: block;
+}
+
+/* responsive tweak - make the circle and logo a bit larger on wide screens */
+@media (min-width: 1024px) {
+  .logo { width: 48px; }
+  .logo-wrap::after { width: 3.2em; height: 3.2em; filter: blur(8px); }
+}
+
+/* accessibility: disable decorative effects when reduced motion is preferred */
+@media (prefers-reduced-motion: reduce) {
+  .logo-wrap::after {
+    filter: none;
+    opacity: 0.9;
+  }
+}

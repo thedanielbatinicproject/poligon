@@ -1,4 +1,5 @@
 import React from 'react';
+import './header.css';
 
 function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) {
   return (
@@ -7,8 +8,10 @@ function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) 
         <div className="nav-container">
           <h1>
             <a href="#" onClick={(e) => { e.preventDefault(); onPageChange('home'); }}>
-              <img src="/favicon.png" alt="Poligon" className="logo" />
-              Poligon
+              <span className="logo-wrap">
+                <img src="/favicon.png" alt="logo" className="logo" />
+              </span>
+              POLIGON
             </a>
           </h1>
           <ul className="nav-menu">
@@ -36,7 +39,7 @@ function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) 
                 className={currentPage === 'tasks-todos' ? 'active' : ''}
                 onClick={(e) => { e.preventDefault(); onPageChange('tasks-todos'); }}
               >
-                Task & Todos
+                Zadatci
               </a>
             </li>
             <li>
@@ -45,7 +48,7 @@ function Header({ currentPage, onPageChange, user, isAuthenticated, onLogout }) 
                 className={currentPage === 'about' ? 'active' : ''}
                 onClick={(e) => { e.preventDefault(); onPageChange('about'); }}
               >
-                O nama
+                O platformi
               </a>
             </li>
           </ul>
