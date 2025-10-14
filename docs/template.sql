@@ -47,6 +47,21 @@ CREATE TABLE document_mentors (
   FOREIGN KEY (mentor_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- DOCUMENT EDITORS (many-to-many: documents <-> users)
+CREATE TABLE IF NOT EXISTS document_editors (
+  document_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  role ENUM('owner','editor','viewer') NOT NULL DEFAULT 'viewer',
+  added_by INT UNSIGNED DEFAULT NULL,
+  added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (document_id, user_id),
+  INDEX idx_de_user (user_id),
+  INDEX idx_de_document (document_id),
+  CONSTRAINT fk_de_document FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
+  CONSTRAINT fk_de_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  CONSTRAINT fk_de_added_by FOREIGN KEY (added_by) REFERENCES users(user_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- DOCUMENT VERSIONS
 CREATE TABLE document_versions (
   version_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

@@ -67,6 +67,11 @@ Povezuje dokumente s mentorima (više mentora po radu).
 
 **Svrha:** Omogućava da rad ima više mentora. Koristi se za kontrolu pristupa i notifikacije.
 
+### document_editors
+Povezuje dokumente sa editorima (kolaboratorima) tog dokumenta, svi imaju pristup uređivanju dokumenta.
+
+**Svrha:** Omogućava spremanje više različitih korisnika na isti dokument kao urednike tog dokumenta.
+
 ### document_versions
 Povijest verzija cjelokupnog dokumenta, omogućava vraćanje na prethodne verzije.
 
