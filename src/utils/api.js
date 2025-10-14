@@ -31,23 +31,35 @@ export const apiCall = async (url, options = {}) => {
 
     try {
         const response = await fetch(url, defaultOptions);
-        
-        
         const contentType = response.headers.get('content-type');
+        const authErr = response.headers.get('X-Auth-Error');
+        if (!response.ok) {
+            const msgMap = {
+                'unauthorized': 'Niste prijavljeni.',
+                'missing-id': 'Nedostaje ID dokumenta.',
+                'forbidden': 'Nemate dozvolu za ovu akciju.',
+                'server-error': 'Greška na serveru.',
+                'fetch-theses': 'Greška kod dohvaćanja popisa dokumenata.',
+                'thesis-not-found': 'Dokument nije pronađen.',
+                'create-thesis': 'Greška kod kreiranja dokumenta.',
+                'update-thesis': 'Greška kod ažuriranja dokumenta.',
+                'delete-thesis': 'Greška kod brisanja dokumenta.',
+                'add-chapter': 'Greška kod dodavanja poglavlja.',
+                'update-chapter': 'Greška kod ažuriranja poglavlja.',
+                'delete-chapter': 'Greška kod brisanja poglavlja.'
+            };
+            const msg = authErr ? (msgMap[authErr] || authErr) : (response.statusText || `HTTP ${response.status}`);
+            if (window.showNotification) window.showNotification(msg, 'error', 6000);
+            return { success: false, error: msg, status: response.status };
+        }
         if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            
-            
-            if (response.status === 401) {
-
-                
-            }
-            
             return { success: response.ok, data, status: response.status };
         } else {
             return { success: response.ok, data: null, status: response.status };
         }
     } catch (error) {
+        if (window.showNotification) window.showNotification(error.message, 'error', 6000);
         return { success: false, error: error.message, status: 0 };
     }
 };
@@ -67,6 +79,7 @@ export const authAPI = {
         method: 'GET'
     })
 };
+
 export const thesesAPI = {
     getAll: () => apiCall(`/api/theses?_t=${Date.now()}`),
     

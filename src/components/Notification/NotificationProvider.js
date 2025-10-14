@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import './Notification.css';
 
 const NotificationContext = createContext(null);
@@ -14,7 +14,6 @@ export function NotificationProvider({ children }) {
   const addNotification = useCallback((message, type = 'error', timeout = 5000) => {
     const id = 'n_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     const note = { id, message, type };
-    // newest on top visually
     setNotifications((n) => [note, ...n]);
 
     if (timeout && timeout > 0) {
@@ -23,6 +22,20 @@ export function NotificationProvider({ children }) {
 
     return id;
   }, [removeNotification]);
+
+  useEffect(() => {
+    // expose global helper for non-React callers (fetch wrapper / other scripts)
+    window.showNotification = (message, type = 'error', timeout = 5000) => {
+      try {
+        addNotification(message, type, timeout);
+      } catch (e) {
+        /* noop */
+      }
+    };
+    return () => {
+      try { delete window.showNotification; } catch (e) {}
+    };
+  }, [addNotification]);
 
   return (
     <NotificationContext.Provider value={{ addNotification, removeNotification }}>

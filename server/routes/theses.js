@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ThesisModel = require('../models/ThesisModel');
-const { requireAuth, optionalAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth, requireMentor, requireDocumentEditor } = require('../middleware/auth');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,88 +10,82 @@ router.get('/', async (req, res) => {
         const theses = await ThesisModel.getAll();
         res.json(theses);
     } catch (error) {
-        console.error('Error fetching theses:', error);
-        res.status(500).json({ error: 'Error fetching theses' });
+        res.set('X-Auth-Error', 'fetch-theses');
+        return res.sendStatus(500);
     }
 });
-
 
 router.get('/:id', async (req, res) => {
     try {
         const thesis = await ThesisModel.getById(req.params.id);
         if (!thesis) {
-            return res.status(404).json({ error: 'Thesis not found' });
+            res.set('X-Auth-Error', 'thesis-not-found');
+            return res.sendStatus(404);
         }
         res.json(thesis);
     } catch (error) {
-        console.error('Error fetching thesis:', error);
-        res.status(500).json({ error: 'Error fetching thesis' });
+        res.set('X-Auth-Error', 'fetch-thesis');
+        return res.sendStatus(500);
     }
 });
 
-
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireMentor, async (req, res) => {
     try {
         const thesis = await ThesisModel.create(req.body);
         res.status(201).json(thesis);
     } catch (error) {
-        console.error('Error creating thesis:', error);
-        res.status(500).json({ error: 'Error creating thesis' });
+        res.set('X-Auth-Error', 'create-thesis');
+        return res.sendStatus(500);
     }
 });
 
-
-router.put('/:id', requireAuth, async (req, res) => {
+router.put('/:id', requireDocumentEditor, async (req, res) => {
     try {
         const thesis = await ThesisModel.update(req.params.id, req.body);
         res.json(thesis);
     } catch (error) {
-        console.error('Error updating thesis:', error);
-        res.status(500).json({ error: 'Error updating thesis' });
+        res.set('X-Auth-Error', 'update-thesis');
+        return res.sendStatus(500);
     }
 });
 
-
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireMentor, async (req, res) => {
     try {
         await ThesisModel.delete(req.params.id);
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting thesis:', error);
-        res.status(500).json({ error: 'Error deleting thesis' });
+        res.set('X-Auth-Error', 'delete-thesis');
+        return res.sendStatus(500);
     }
 });
 
-
-router.post('/:id/chapters', requireAuth, async (req, res) => {
+router.post('/:id/chapters', requireDocumentEditor, async (req, res) => {
     try {
         const thesis = await ThesisModel.addChapter(req.params.id, req.body);
         res.json(thesis);
     } catch (error) {
-        console.error('Error adding chapter:', error);
-        res.status(500).json({ error: 'Error adding chapter' });
+        res.set('X-Auth-Error', 'add-chapter');
+        return res.sendStatus(500);
     }
 });
 
-
-router.put('/:id/chapters/:chapterId', requireAuth, async (req, res) => {
+router.put('/:id/chapters/:chapterId', requireDocumentEditor, async (req, res) => {
     try {
         const thesis = await ThesisModel.updateChapter(req.params.id, req.params.chapterId, req.body);
         res.json(thesis);
     } catch (error) {
-        console.error('Error updating chapter:', error);
-        res.status(500).json({ error: 'Error updating chapter' });
+        res.set('X-Auth-Error', 'update-chapter');
+        return res.sendStatus(500);
     }
 });
 
-
-router.delete('/:id/chapters/:chapterId', requireAuth, async (req, res) => {
+router.delete('/:id/chapters/:chapterId', requireMentor, async (req, res) => {
     try {
         const thesis = await ThesisModel.deleteChapter(req.params.id, req.params.chapterId);
         res.json(thesis);
     } catch (error) {
-        console.error('Error deleting chapter:', error);
-        res.status(500).json({ error: 'Error deleting chapter' });
+        res.set('X-Auth-Error', 'delete-chapter');
+        return res.sendStatus(500);
     }
 });
 
