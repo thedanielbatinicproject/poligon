@@ -22,7 +22,7 @@ function loadUsers() {
 }
 
 // ROUTES
-// GET /api/admin/documents - Dohvati sve dokumente s paginacijom i pretragom
+// GET /api/admin/documents - Dohvati sve dokumente
 router.get('/', requireAuth, requireRole('admin'), async (req, res) => {
     try {
         const { page = 1, limit = 10, search = '' } = req.query;
