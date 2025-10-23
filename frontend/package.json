@@ -1,0 +1,24 @@
+{
+  "name": "poligon-frontend",
+  "version": "2.0.0",
+  "description": "Frontend for Poligon app (React + TypeScript + Vite + Chakra UI)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
+    "framer-motion": "^10.16.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.41",
+    "@types/react-dom": "^18.2.17",
+    "typescript": "^5.3.3",
+    "vite": "^5.2.8"
+  }
+}

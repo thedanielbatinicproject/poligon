@@ -1,21 +1,28 @@
 import express from 'express';
-import cors from 'cors';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
+import fileUpload from 'multer';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
-app.use(cors());
+// Middleware
+app.use(morgan('dev'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Static uploads folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Example route
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+  res.json({ status: 'ok', message: 'Poligon backend is running.' });
 });
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Backend server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Poligon backend running on port ${port}`);
 });
