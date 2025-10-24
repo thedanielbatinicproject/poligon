@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { getUserById } from '../services/user.service';
 import { getActiveSessionIdsForUser } from '../services/session.service';
+import passport from 'passport';
 
 const authRouter = Router();
 
@@ -10,14 +11,16 @@ const authRouter = Router();
 // GET /auth/login/aaieduhr - Initiate SAML login
 authRouter.get('/login/aaieduhr', (req: Request, res: Response) => {
   // TODO: Use passport.authenticate('saml', ...) here
-  res.status(501).json({ error: 'AAI@EduHr login not implemented yet in backend/routes/auth.routes.ts.' });
+  passport.authenticate('saml', { failureRedirect: '/', failureFlash: true })(req, res);
 });
 
 // POST /auth/callback/aaieduhr - SAML callback endpoint
-authRouter.post('/callback/aaieduhr', (req: Request, res: Response) => {
-  // TODO: Use passport.authenticate('saml', ...) as callback
-  res.status(501).json({ error: 'AAI@EduHr callback not implemented yet in backend/routes/auth.routes.ts.' });
-});
+authRouter.post('/callback/aaieduhr',
+  passport.authenticate('saml', { failureRedirect: '/', failureFlash: true }),
+  (req, res) => {
+    // Korisnik je prijavljen, možeš redirectati ili vratiti JSON
+    res.redirect('/'); // ili res.json({ user: req.user });
+  });
 
 // GET /auth/status - Check current session/user
 authRouter.get('/status', async (req: Request, res: Response) => {

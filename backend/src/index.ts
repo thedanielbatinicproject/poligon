@@ -1,11 +1,15 @@
 import express from 'express'
 import session from 'express-session'
+import sessionStore from './config/sessionStore'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import path from 'path'
 import apiRouter from './routes/api.routes'
 import authRouter from './routes/auth.routes'
 import filesRouter from './routes/files.routes';
+import passport from 'passport';
+import samlStrategy from './config/saml';
+
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -13,21 +17,36 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const app = express();
 const port = process.env.PORT || 5000;
 
+
 // Middleware
 app.use(morgan('dev')); // Logging middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware
+
+// Session middleware (custom store za tvoju sessions tablicu)
+import CustomSessionStore from './config/customSessionStore';
 const sessionOptions: session.SessionOptions = {
-  secret: process.env.SESSION_SECRET || 'SECRET_COOKIE_KEY',
+  secret: process.env.SESSION_SECRET || 'SECRET_COOKIE_KEY_:D',
   resave: false,
   saveUninitialized: false,
+  store: new CustomSessionStore(),
   cookie: { secure: false } // za dev, za prod koristi secure: true uz HTTPS
 };
-
-// Cast to unknown first to work around duplicated @types/express instances causing incompatible types
 app.use(session(sessionOptions));
+
+
+// Initialize Passport and use SAML strategy
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(samlStrategy);
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+passport.deserializeUser((user, done) => {
+  done(null, user as any);
+});
+
 
 // Main routes
 app.use('/files', filesRouter);
@@ -38,7 +57,6 @@ app.use('/auth', authRouter);
 
 
 //Catch-all for undefined routes with 404 JSON responses
-
 app.use('/auth', (req, res) => {
   res.status(404).json({ error: 'Required auth route is not accessible.' });
 });
