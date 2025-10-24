@@ -1,4 +1,5 @@
 import express from 'express'
+import session from 'express-session'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import path from 'path'
@@ -16,6 +17,17 @@ const port = process.env.PORT || 5000;
 app.use(morgan('dev')); // Logging middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware
+const sessionOptions: session.SessionOptions = {
+  secret: process.env.SESSION_SECRET || 'SECRET_COOKIE_KEY',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // za dev, za prod koristi secure: true uz HTTPS
+};
+
+// Cast to unknown first to work around duplicated @types/express instances causing incompatible types
+app.use(session(sessionOptions));
 
 // Main routes
 app.use('/files', filesRouter);
