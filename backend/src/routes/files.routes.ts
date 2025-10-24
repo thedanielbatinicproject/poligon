@@ -4,6 +4,7 @@ import { imageUpload, documentUpload } from '../middleware/fileUpload.middleware
 import filesService from '../services/files.service';
 import { deleteFileFromDisk } from '../services/fileDisk.service';
 import path from 'path';
+import { AuditService } from '../services/audit.service';
 
 const filesRouter = Router();
 
@@ -26,6 +27,14 @@ filesRouter.post('/upload/image', checkLogin, imageUpload.single('file'), async 
       file_type,
       file_size,
     });
+
+    await AuditService.createAuditLog({
+      user_id: Number(req.session.user_id),
+      action_type: 'upload',
+      entity_type: 'file',
+      entity_id: fileUpload.file_id
+    });
+
     res.status(201).json(fileUpload);
   } catch (err) {
     res.status(500).json({ error: 'Upload failed even though user is authorized!', details: err });
@@ -55,6 +64,12 @@ filesRouter.post('/upload/document', checkLogin, documentUpload.single('file'), 
       file_path,
       file_type,
       file_size,
+    });
+    await AuditService.createAuditLog({
+      user_id: Number(req.session.user_id),
+      action_type: 'upload',
+      entity_type: 'file',
+      entity_id: fileUpload.file_id // ID novouploanog file-a iz baze
     });
     res.status(201).json(fileUpload);
   } catch (err) {
@@ -87,6 +102,13 @@ filesRouter.delete('/:file_id', checkLogin, async (req: Request, res: Response) 
     }
     await deleteFileFromDisk(file.file_path);
     await filesService.deleteFileUpload(file_id);
+    
+    await AuditService.createAuditLog({
+      user_id: Number(req.session.user_id),
+      action_type: 'delete',
+      entity_type: 'file',
+      entity_id: file_id
+    });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete file with id ' + req.params.file_id + '!', details: err });

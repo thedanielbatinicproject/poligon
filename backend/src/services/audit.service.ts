@@ -10,8 +10,6 @@ export interface CreateAuditLogParams {
   entity_id: number;
 }
 
-
-
 export class AuditService {
   /**
    * Creates a new audit log entry.
