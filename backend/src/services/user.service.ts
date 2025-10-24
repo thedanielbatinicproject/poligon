@@ -1,3 +1,8 @@
+/**
+ * Service for managing user data and authentication.
+ * Provides functions for user creation, retrieval, update, and validation.
+ * All operations are type-safe and support enterprise authentication requirements.
+ */
 import pool from '../db';
 import { User } from '../types/user';
 

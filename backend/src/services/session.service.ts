@@ -1,3 +1,8 @@
+/**
+ * Service for managing user sessions in the database.
+ * Handles session creation, update, deletion, and retrieval for custom session store.
+ * Ensures type safety and SQL-backed session persistence for authentication flows.
+ */
 import pool from '../db';
 import { SessionData } from 'express-session';
 

@@ -1,3 +1,8 @@
+/**
+ * Service for managing file uploads and metadata in the file_uploads table.
+ * Provides functions for inserting, deleting, and retrieving file records.
+ * All operations are type-safe and intended for use in enterprise-grade backend flows.
+ */
 import { Pool } from 'mysql2/promise';
 import db from '../db';
 

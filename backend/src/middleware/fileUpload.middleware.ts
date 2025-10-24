@@ -22,9 +22,17 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    // Format: [fieldname]-[dd_mm_yyyy_hh_mm_ss]-[userId].ext
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const timestamp = `${pad(now.getDate())}_${pad(now.getMonth() + 1)}_${now.getFullYear()}_${pad(now.getHours())}_${pad(now.getMinutes())}_${pad(now.getSeconds())}`;
+    // Try to get userId from session (if available)
+    let userId = 'unknown';
+    if (req.session && req.session.user_id) {
+      userId = String(req.session.user_id);
+    }
     const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    cb(null, `${file.fieldname}-${timestamp}-${userId}${ext}`);
   }
 });
 
