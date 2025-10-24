@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response, NextFunction, Router} from 'express';
 import { checkLogin, checkAdmin } from '../middleware/auth.middleware';
 import { imageUpload, documentUpload } from '../middleware/fileUpload.middleware';
 import filesService from '../services/files.service';
@@ -35,11 +35,11 @@ filesRouter.post('/upload/image', checkLogin, imageUpload.single('file'), async 
 // POST /files/upload/document
 filesRouter.post('/upload/document', checkLogin, documentUpload.single('file'), async (req: Request, res: Response) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    if (!req.file) return res.status(400).json({ error: 'File does not have \'uploaded_by\' property or it has it incorrectly defined! Session is probably ill-defined.' });
     const { document_id } = req.body;
     const uploaded_by = req.session.user_id;
     if (typeof uploaded_by !== 'number') {
-      return res.status(401).json({ error: 'Not authenticated' });
+      return res.status(401).json({ error: 'User not authenticated!' });
     }
     // file_type: pdf, bib, tex (determine from mimetype/ext)
     let file_type: 'pdf' | 'bib' | 'tex' = 'pdf';
@@ -58,7 +58,7 @@ filesRouter.post('/upload/document', checkLogin, documentUpload.single('file'), 
     });
     res.status(201).json(fileUpload);
   } catch (err) {
-    res.status(500).json({ error: 'Upload failed', details: err });
+    res.status(500).json({ error: 'Upload failed even though user is authorized!', details: err });
   }
 });
 
@@ -79,7 +79,7 @@ filesRouter.delete('/:file_id', checkLogin, async (req: Request, res: Response) 
   try {
     const file_id = Number(req.params.file_id);
     const file = await filesService.getFileById(file_id);
-    if (!file) return res.status(404).json({ error: 'File not found' });
+    if (!file) return res.status(404).json({ error: 'File with id ' + (file_id||"{wrong file id format}") + ' not found!' });
     const user_id = req.session.user_id;
     const user_role = req.session.role;
     if (user_role !== 'admin' && file.uploaded_by !== user_id) {
@@ -89,7 +89,7 @@ filesRouter.delete('/:file_id', checkLogin, async (req: Request, res: Response) 
     await filesService.deleteFileUpload(file_id);
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete file!', details: err });
+    res.status(500).json({ error: 'Failed to delete file with id ' + req.params.file_id + '!', details: err });
   }
 });
 
@@ -108,6 +108,20 @@ filesRouter.get('/download/:file_id', checkLogin, async (req: Request, res: Resp
   } catch (err) {
     res.status(500).json({ error: 'Failed to download even though user is authorized!', details: err });
   }
+});
+
+// Error handling middleware for file uploads
+filesRouter.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'File too large, limit is ' + process.env.MAX_FILE_SIZE_MB + 'mb!' });
+  }
+  if (err && err.message && (
+    err.message.includes('Only image files are allowed') ||
+    err.message.includes('Only document files')
+  )) {
+    return res.status(415).json({ error: 'Unsupported file type!' });
+  }
+  next(err);
 });
 
 export default filesRouter;
