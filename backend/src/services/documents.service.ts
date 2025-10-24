@@ -233,4 +233,30 @@ export class DocumentsService {
     await pool.query('DELETE FROM document_editors WHERE document_id = ? AND user_id = ?', [document_id, user_id_to_remove]);
     return true;
   }
+
+  static async renderDocument(document_id: number, user_id: number, latex_snapshot: string, pdfPath: string): Promise<void> {
+        // 1. Upis u document_versions
+        const [rows] = await pool.query(
+            'SELECT MAX(version_number) AS max_version FROM document_versions WHERE document_id = ?',
+            [document_id]
+        );
+        const nextVersion = ((rows as any[])[0]?.max_version || 0) + 1;
+        await pool.query(
+            `INSERT INTO document_versions (document_id, version_number, edited_by, latex_snapshot, compiled_pdf_path, edited_at)
+            VALUES (?, ?, ?, ?, ?, NOW())`,
+            [document_id, nextVersion, user_id, latex_snapshot, pdfPath]
+        );
+        // 2. Upis u workflow_history (status: 'finished')
+        await pool.query(
+            `INSERT INTO workflow_history (document_id, status, changed_by, changed_at)
+            VALUES (?, 'finished', ?, NOW())`,
+            [document_id, user_id]
+        );
+        // 3. Upis u audit_log (action_type: 'compile')
+        await pool.query(
+            `INSERT INTO audit_log (user_id, action_type, entity_type, entity_id, action_timestamp)
+            VALUES (?, 'compile', 'document', ?, NOW())`,
+            [user_id, document_id]
+        );
+    }
 }

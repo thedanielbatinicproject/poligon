@@ -5,6 +5,36 @@ import { AuditService, AuditLogEntityType, AuditLogActionType } from '../service
 
 const documentsRouter = Router();
 
+// POST /api/documents/:document_id/render - Render document to PDF (creator/mentor, admin, editor)
+documentsRouter.post('/:document_id/render', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  try {
+    // Provjera prava: kreator (mentor), admin ili editor na dokumentu
+    const isAllowed = await DocumentsService.isEditor(document_id, user_id, ['owner', 'mentor', 'admin', 'editor']);
+    if (!isAllowed) {
+      return res.status(403).json({ error: 'You are not authorized to render this document.' });
+    }
+    // TODO: implement PDF rendering logic here
+    // Call example:
+    // await DocumentsService.renderDocument(document, user_id, pdfPath);
+
+    await AuditService.createAuditLog({
+        user_id: Number(req.session.user_id),
+        action_type: 'compile',
+        entity_type: 'document',
+        entity_id: document_id
+    });
+    return res.status(202).json({ message: 'Render request accepted. PDF rendering logic to be implemented.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to process render request.', details: err });
+  }
+});
+
 // POST /api/documents - Create new document (admin/mentor only)
 documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
   const role = req.session.role;
