@@ -187,4 +187,29 @@ export class DocumentsService {
     );
     return rows as Document[];
   }
+
+  /**
+   * Adds an editor to a document.
+   * Only owner (creator) or admin can add editors.
+   * @param document_id Document ID
+   * @param user_id_to_add User ID to add as editor
+   * @param role Role to assign ('editor', 'viewer', 'mentor')
+   * @param added_by User ID who is adding
+   * @returns true if added, false otherwise
+   */
+  static async addEditor(document_id: number, user_id_to_add: number, role: string, added_by: number): Promise<boolean> {
+    // Provjeri je li osoba koja dodaje admin ili owner
+    const [docRows] = await pool.query('SELECT created_by FROM documents WHERE document_id = ?', [document_id]);
+    if ((docRows as any[]).length === 0) return false;
+    const created_by = (docRows as any[])[0].created_by;
+    const [userRows] = await pool.query('SELECT role FROM users WHERE user_id = ?', [added_by]);
+    const isAdmin = (userRows as any[])[0]?.role === 'admin';
+    if (added_by !== created_by && !isAdmin) return false;
+    // Dodaj editor entry
+    await pool.query(
+      'INSERT INTO document_editors (document_id, user_id, role, added_by) VALUES (?, ?, ?, ?, NOW())',
+      [document_id, user_id_to_add, role, added_by]
+    );
+    return true;
+  }
 }
