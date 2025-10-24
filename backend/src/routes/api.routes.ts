@@ -1,13 +1,10 @@
 import { Router } from 'express';
 const apiRouter = Router();
+
 // import usersRouter from './users.routes';
-// import documentsRouter from './documents.routes';
 // import utilityRouter from './utility.routes';
 
-
-
 // apiRouter.use('/users', usersRouter);
-// apiRouter.use('/documents', documentsRouter);
 // apiRouter.use('/utility', utilityRouter);
 
 
