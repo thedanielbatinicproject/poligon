@@ -31,7 +31,9 @@ const sessionOptions: session.SessionOptions = {
   resave: false,
   saveUninitialized: false,
   store: new CustomSessionStore(),
-  cookie: { secure: false } // za dev, za prod koristi secure: true uz HTTPS
+
+  //TODO enable secure cookie in production
+  cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 * 365 * 10 } 
 };
 app.use(session(sessionOptions));
 
