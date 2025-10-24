@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware/auth.middleware';
+import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
 
 const documentsRouter = Router();
 
@@ -19,6 +20,12 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
     if (!doc) {
       return res.status(400).json({ error: 'Invalid document data or validation failed!' });
     }
+    await AuditService.createAuditLog({
+      user_id: Number(req.session.user_id),
+      action_type: 'create',
+      entity_type: 'document',
+      entity_id: doc.document_id
+    });
     res.status(201).json(doc);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create document!', details: err });

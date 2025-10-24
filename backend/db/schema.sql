@@ -81,7 +81,7 @@ CREATE TABLE workflow_history (
 CREATE TABLE audit_log (
   audit_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
-  action_type ENUM('edit', 'submit', 'grade', 'comment', 'upload', 'compile') NOT NULL,
+  action_type ENUM('edit', 'submit', 'grade', 'comment', 'upload', 'compile', 'delete', 'create') NOT NULL,
   entity_type ENUM('document', 'file', 'task') NOT NULL,
   entity_id INT UNSIGNED NOT NULL,
   action_timestamp DATETIME NOT NULL,

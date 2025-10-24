@@ -121,7 +121,7 @@ Stores all significant user actions for traceability.
 |----------------|-------------------------------------------------------|-------------|
 | audit_id       | INT UNSIGNED, PRIMARY KEY, AUTO_INCREMENT             | Unique log entry ID. |
 | user_id        | INT UNSIGNED, FK                                      | References `users.user_id`. |
-| action_type    | ENUM('edit', 'submit', 'grade', 'comment', 'upload', 'compile') | Type of action performed. |
+| action_type    | ENUM('edit', 'submit', 'grade', 'comment', 'upload', 'compile', 'create', 'delete') | Type of action performed. |
 | entity_type    | ENUM('document', 'file', 'task')                      | Affected entity type. |
 | entity_id      | INT UNSIGNED                                          | ID of the affected entity. |
 | action_timestamp | DATETIME, NOT NULL                                  | When the action occurred. |
