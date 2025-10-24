@@ -164,6 +164,31 @@ documentsRouter.post('/:document_id/editors', checkLogin, async (req: Request, r
   }
 });
 
+// DELETE /api/documents/:document_id/editors - Remove editor from document
+// Pravo micanja: samo owner (creator) ili admin
+
+documentsRouter.delete('/:document_id/editors', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const requester_id = req.session.user_id;
+  const role = req.session.role;
+  const { user_id } = req.body; // user_id to remove
+  if (!requester_id || !role) {
+    return res.status(401).json({ error: 'You are not authenticated.' });
+  }
+  if (!user_id) {
+    return res.status(400).json({ error: 'user_id that was sent in request body is invalid.' });
+  }
+  try {
+    const success = await DocumentsService.removeEditor(document_id, user_id, requester_id);
+    if (!success) {
+      return res.status(403).json({ error: 'You are not authorized to remove editor for this document.' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to remove editor.', details: err });
+  }
+});
+
 
 
 

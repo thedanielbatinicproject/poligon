@@ -212,4 +212,25 @@ export class DocumentsService {
     );
     return true;
   }
+
+  /**
+   * Removes an editor from a document.
+   * Only owner (creator) or admin can remove editors.
+   * @param document_id Document ID
+   * @param user_id_to_remove User ID to remove as editor
+   * @param requester_id User ID who is requesting removal
+   * @returns true if removed, false otherwise
+   */
+  static async removeEditor(document_id: number, user_id_to_remove: number, requester_id: number): Promise<boolean> {
+    // Provjeri je li osoba koja miče admin ili owner
+    const [docRows] = await pool.query('SELECT created_by FROM documents WHERE document_id = ?', [document_id]);
+    if ((docRows as any[]).length === 0) return false;
+    const created_by = (docRows as any[])[0].created_by;
+    const [userRows] = await pool.query('SELECT role FROM users WHERE user_id = ?', [requester_id]);
+    const isAdmin = (userRows as any[])[0]?.role === 'admin';
+    if (requester_id !== created_by && !isAdmin) return false;
+    // Izbriši editor entry
+    await pool.query('DELETE FROM document_editors WHERE document_id = ? AND user_id = ?', [document_id, user_id_to_remove]);
+    return true;
+  }
 }
