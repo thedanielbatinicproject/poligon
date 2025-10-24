@@ -75,13 +75,13 @@ authRouter.post('/callback/aaieduhr',
 authRouter.get('/status', async (req: Request, res: Response) => {
   // Provjeri je li korisnik prijavljen (npr. postoji user_id u sessionu)
   if (!req.session.user_id) {
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'User not authenticated!' });
   }
 
   // Dohvati korisnika iz baze
   const user = await getUserById(req.session.user_id);
   if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+    return res.status(404).json({ error: 'User not found in database! UserID may be ill-defined.' });
   }
 
   // Dohvati sve aktivne session ID-eve

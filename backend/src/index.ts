@@ -51,22 +51,18 @@ passport.deserializeUser((user, done) => {
 
 
 // Main routes
-app.use('/files', filesRouter);
-
 app.use('/api', apiRouter);
-
-app.use('/auth', authRouter);
 
 
 //Catch-all for undefined routes with 404 JSON responses
 app.use('/auth', (req, res) => {
-  res.status(404).json({ error: 'Required auth route is not accessible.' });
+  res.status(404).json({ error: 'Required auth route is not accessible. Maybe try your request via /api route.' });
 });
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Required API route is not accessible.' });
 });
 app.use('/uploads', (req, res) => {
-  res.status(404).json({ error: 'Required uploads route is not accessible.' });
+  res.status(404).json({ error: 'Required uploads route is not accessible. Maybe try your request via /api route.' });
 });
 app.use('/', (req, res) => {
   res.status(404).json({ error: 'Required resource is not accessible.' });
