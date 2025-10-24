@@ -15,7 +15,7 @@ declare module 'express-session' {
     created_at?: Date | string;
     last_activity?: Date | string;
     expires_at?: Date | string;
-    // ...dodaj još po potrebi
-    [key: string]: any; // omogućuje ti da dodaš dodatne atribute u budućnosti
+    // ...add more if needed
+    [key: string]: any; // allows to add additional attributes in the future
   }
 }

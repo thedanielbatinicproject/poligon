@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 // Provjera je li korisnik prijavljen
 export function checkLogin(req: Request, res: Response, next: NextFunction) {
   if (!req.session || !req.session.user_id) {
-    return res.status(401).json({ error: 'Resource you tried to access is restricted to authenticated users!' });
+    return res.status(401).json({ error: 'Resource you tried to access is restricted to users that are logged in!' });
   }
   next();
 }

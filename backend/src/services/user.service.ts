@@ -83,6 +83,16 @@ export async function editUser(userId: number, updates: Partial<User>): Promise<
 }
 
 // --- Session attribute updaters with validation ---
+/**
+ * Retrieves all users from the database, excluding those with role 'admin'.
+ * @returns Array of User objects (without admins)
+ */
+export async function getAllNonAdminUsers(): Promise<User[]> {
+  const [rows] = await pool.query(
+    "SELECT * FROM users WHERE role != 'admin'"
+  );
+  return rows as User[];
+}
 
 function isSidebarState(val: any): val is 'open' | 'closed' {
   return val === 'open' || val === 'closed';
