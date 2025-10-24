@@ -1,21 +1,55 @@
 // src/config/customSessionStore.ts
+
 import session from 'express-session';
-import db from '../db';
+
+import {
+  getSessionById,
+  upsertSession,
+  deleteSessionById,
+  touchSessionById
+} from '../services/session.service';
+
 
 class CustomSessionStore extends session.Store {
-  async get(sid, callback) {
-    // SELECT * FROM sessions WHERE session_id = ?
-    // Parse session_data i vrati kao JS objekt
+
+  constructor() {
+    super();
   }
-  async set(sid, sessionData, callback) {
-    // INSERT INTO sessions ... ON DUPLICATE KEY UPDATE ...
-    // Upisuj user_id, ip_address, user_agent, last_activity itd.
+
+  async get(sid: string, callback: (err: any, session?: any) => void) {
+    try {
+      const session = await getSessionById(sid);
+      callback(null, session);
+    } catch (err) {
+      callback(err);
+    }
   }
-  async destroy(sid, callback) {
-    // DELETE FROM sessions WHERE session_id = ?
+
+  async set(sid: string, sessionData: any, callback: (err?: any) => void) {
+    try {
+      await upsertSession(sid, sessionData);
+      callback();
+    } catch (err) {
+      callback(err);
+    }
   }
-  async touch(sid, sessionData, callback) {
-    // UPDATE sessions SET last_activity = NOW(), expires_at = ... WHERE session_id = ?
+
+  async destroy(sid: string, callback: (err?: any) => void) {
+    try {
+      await deleteSessionById(sid);
+      callback();
+    } catch (err) {
+      callback(err);
+    }
+  }
+
+  async touch(sid: string, sessionData: any, callback: (err?: any) => void) {
+    try {
+      await touchSessionById(sid, sessionData);
+      callback();
+    } catch (err) {
+      callback(err);
+    }
   }
 }
 

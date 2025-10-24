@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/express-mysql-session": "^3.0.7",
     "@types/morgan": "^1.9.6",
     "@types/multer": "^1.4.7",
     "@types/node": "^20.11.30",
