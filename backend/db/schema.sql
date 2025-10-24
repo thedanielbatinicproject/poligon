@@ -38,20 +38,11 @@ CREATE TABLE documents (
   FOREIGN KEY (created_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- DOCUMENT MENTORS
-CREATE TABLE document_mentors (
-  document_id INT UNSIGNED NOT NULL,
-  mentor_id INT UNSIGNED NOT NULL,
-  PRIMARY KEY (document_id, mentor_id),
-  FOREIGN KEY (document_id) REFERENCES documents(document_id),
-  FOREIGN KEY (mentor_id) REFERENCES users(user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- DOCUMENT EDITORS (many-to-many: documents <-> users)
 CREATE TABLE IF NOT EXISTS document_editors (
   document_id INT UNSIGNED NOT NULL,
   user_id INT UNSIGNED NOT NULL,
-  role ENUM('owner','editor','viewer') NOT NULL DEFAULT 'viewer',
+  role ENUM('owner','editor','viewer', 'mentor') NOT NULL DEFAULT 'viewer',
   added_by INT UNSIGNED DEFAULT NULL,
   added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (document_id, user_id),

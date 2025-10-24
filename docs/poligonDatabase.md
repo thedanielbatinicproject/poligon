@@ -63,21 +63,7 @@ Represents a document created by a user.
 **Relationships:**
 - One-to-many with `document_versions`.
 - Many-to-many with users through `document_editors`.
-- Many-to-many with mentors through `document_mentors`.
 - Referenced by `tasks.document_id`, `file_uploads.document_id`, `workflow_history.document_id`.
-
----
-
-## Table: `document_mentors`
-
-Links mentors to documents (many-to-many relationship).
-
-| Column       | Type               | Description |
-|--------------|---------------------|-------------|
-| document_id  | INT UNSIGNED, FK    | References `documents.document_id`. |
-| mentor_id    | INT UNSIGNED, FK    | References `users.user_id`. |
-
-**Primary Key:** (`document_id`, `mentor_id`)
 
 ---
 
@@ -89,7 +75,7 @@ Defines editing permissions for users on documents.
 |--------------|------------------------------------------------------|-------------|
 | document_id  | INT UNSIGNED, FK                                     | References `documents.document_id`. |
 | user_id      | INT UNSIGNED, FK                                     | References `users.user_id`. |
-| role         | ENUM('owner','editor','viewer')                      | Editing or viewing role. |
+| role         | ENUM('owner','editor','viewer', 'mentor')            | Editing or viewing role. |
 | added_by     | INT UNSIGNED, FK (nullable)                          | User who granted the permission. |
 | added_at     | DATETIME, DEFAULT CURRENT_TIMESTAMP                  | Timestamp when the permission was added. |
 

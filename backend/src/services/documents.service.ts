@@ -155,12 +155,17 @@ export class DocumentsService {
   }
 
   /**
-   * Gets all documents created by a specific mentor.
+   * Gets all documents where the user is a mentor (using document_mentors table).
    * @param mentor_id Mentor user ID
    * @returns Array of Document objects
    */
   static async getMentorDocuments(mentor_id: number): Promise<Document[]> {
-    const [rows] = await pool.query('SELECT * FROM documents WHERE created_by = ?', [mentor_id]);
+    const [rows] = await pool.query(
+      `SELECT d.* FROM documents d
+       JOIN document_mentors dm ON d.document_id = dm.document_id
+       WHERE dm.mentor_id = ?`,
+      [mentor_id]
+    );
     return rows as Document[];
   }
 }
