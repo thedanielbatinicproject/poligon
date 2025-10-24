@@ -71,6 +71,12 @@ documentsRouter.delete('/:document_id', checkLogin, async (req: Request, res: Re
     if (!deleted) {
       return res.status(403).json({ error: 'User is not authorized to delete this document or document not found.' });
     }
+    await AuditService.createAuditLog({
+      user_id: Number(req.session.user_id),
+      action_type: 'delete',
+      entity_type: 'document',
+      entity_id: document_id
+    });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete document even though user is authorized.', details: err });
@@ -93,6 +99,12 @@ documentsRouter.put('/:document_id', checkLogin, async (req: Request, res: Respo
     if (!updatedDoc) {
       return res.status(403).json({ error: 'Not authorized to edit this document or document not found.' });
     }
+    await AuditService.createAuditLog({
+        user_id: Number(req.session.user_id),
+        action_type: 'edit',
+        entity_type: 'document',
+        entity_id: document_id
+    });
     res.json(updatedDoc);
   } catch (err) {
     res.status(500).json({ error: 'Failed to edit document.', details: err });
@@ -100,7 +112,7 @@ documentsRouter.put('/:document_id', checkLogin, async (req: Request, res: Respo
 });
 
 // GET /api/documents/:document_id/content - Get latex_content for a document
-// Access rights: editor only, owner or mentor
+// Access rights: only editor, owner or mentor
 documentsRouter.get('/:document_id/content', checkLogin, async (req: Request, res: Response) => {
   const document_id = Number(req.params.document_id);
   const user_id = req.session.user_id;
@@ -141,6 +153,12 @@ documentsRouter.put('/:document_id/content', checkLogin, async (req: Request, re
     if (!updatedDoc) {
       return res.status(403).json({ error: 'Not authorized to update latex_content or document not found!' });
     }
+    await AuditService.createAuditLog({
+        user_id: Number(req.session.user_id),
+        action_type: 'edit',
+        entity_type: 'document',
+        entity_id: document_id
+    });
     res.json(updatedDoc);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update document content in database!', details: err });
@@ -195,9 +213,6 @@ documentsRouter.delete('/:document_id/editors', checkLogin, async (req: Request,
     res.status(500).json({ error: 'Failed to remove editor.', details: err });
   }
 });
-
-
-
 
 
 export default documentsRouter;
