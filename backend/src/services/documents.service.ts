@@ -1,5 +1,6 @@
 import pool from '../db';
 import { Document } from '../types/document';
+import { WorkflowStatus } from './documentWorkflow.service';
 
 // Helper: Valid status and language enums
 const VALID_STATUS = ['draft', 'submitted', 'under_review', 'finished', 'graded'];
@@ -165,7 +166,7 @@ export class DocumentsService {
    * @param document_id Document ID
    * @param user_id User ID
    * @param roles Array of roles to check (e.g. ['mentor','editor','owner'])
-   * @returns true if user has one of the roles, false otherwise
+   * @returns true if user has one of the roles on the requested document, false otherwise
    */
   static async isEditor(document_id: number, user_id: number, roles: string[] = ['editor','owner','mentor']): Promise<boolean> {
     const editors = await this.getDocumentEditors(document_id);
@@ -235,7 +236,7 @@ export class DocumentsService {
   }
 
   static async renderDocument(document_id: number, user_id: number, latex_snapshot: string, pdfPath: string): Promise<void> {
-        // 1. Upis u document_versions
+        // 1. Logging into document_versions
         const [rows] = await pool.query(
             'SELECT MAX(version_number) AS max_version FROM document_versions WHERE document_id = ?',
             [document_id]
@@ -246,17 +247,98 @@ export class DocumentsService {
             VALUES (?, ?, ?, ?, ?, NOW())`,
             [document_id, nextVersion, user_id, latex_snapshot, pdfPath]
         );
-        // 2. Upis u workflow_history (status: 'finished')
-        await pool.query(
-            `INSERT INTO workflow_history (document_id, status, changed_by, changed_at)
-            VALUES (?, 'finished', ?, NOW())`,
-            [document_id, user_id]
-        );
-        // 3. Upis u audit_log (action_type: 'compile')
-        await pool.query(
-            `INSERT INTO audit_log (user_id, action_type, entity_type, entity_id, action_timestamp)
-            VALUES (?, 'compile', 'document', ?, NOW())`,
-            [user_id, document_id]
-        );
-    }
+        // 2. Logging into workflow_history (status: 'finished')
+        // Handled in documents.routes
+        // 3. Logging in audit_log (action_type: 'compile')
+        // Already handled in documents.routes
+  }
+
+  /**
+   * Retrieves all version records for a specific document.
+   * Each version includes version number, editor, LaTeX snapshot, PDF path, and edit timestamp.
+   * Only versions for the given document_id are returned, ordered by version_number ascending.
+   *
+   * @param {number} document_id - The ID of the document to fetch versions for.
+   * @returns {Promise<any[]>} Array of version objects for the document.
+   *
+   * Example version object:
+   * {
+   *   version_id: number,
+   *   document_id: number,
+   *   version_number: number,
+   *   edited_by: number,
+   *   latex_snapshot: string,
+   *   compiled_pdf_path: string,
+   *   edited_at: Date
+   * }
+  */
+  static async getDocumentVersions(document_id: number): Promise<any[]> {
+    const [rows] = await pool.query(
+      'SELECT * FROM document_versions WHERE document_id = ? ORDER BY version_number ASC',
+      [document_id]
+    );
+    return rows as any[];
+  }
+
+  /**
+   * Gets a specific version for a document by document_id and version_id.
+   * @param {number} document_id - Document ID
+   * @param {number} version_id - Version ID
+   * @returns {Promise<any | null>} Version object or null if not found
+  */
+  static async getDocumentVersionById(document_id: number, version_id: number): Promise<any | null> {
+    const [rows] = await pool.query(
+      'SELECT * FROM document_versions WHERE document_id = ? AND version_id = ? LIMIT 1',
+      [document_id, version_id]
+    );
+    return (rows as any[])[0] || null;
+  }
+
+  /**
+   * Fetches the current status of a document from the documents table.
+   * @param {number} document_id - Document ID
+   * @returns {Promise<string | null>} Status string or null if not found
+  */
+  static async getDocumentStatus(document_id: number): Promise<WorkflowStatus | null> {
+    const [rows] = await pool.query(
+      'SELECT status FROM documents WHERE document_id = ? LIMIT 1',
+      [document_id]
+    );
+    const status = (rows as any[])[0]?.status || null;
+    const validStatuses: WorkflowStatus[] = ['draft', 'submitted', 'under_review', 'finished', 'graded'];
+    return validStatuses.includes(status as WorkflowStatus) ? (status as WorkflowStatus) : null;
+  }
+
+  /**
+   * Updates the status of a document in the documents table.
+   * Only allows valid WorkflowStatus values.
+   * @param {number} document_id - Document ID
+   * @param {WorkflowStatus} newStatus - New status to set
+   * @returns {Promise<boolean>} True if updated, false otherwise
+  */
+  static async updateDocumentStatus(document_id: number, newStatus: WorkflowStatus): Promise<boolean> {
+    const validStatuses: WorkflowStatus[] = ['draft', 'submitted', 'under_review', 'finished', 'graded'];
+    if (!validStatuses.includes(newStatus)) return false;
+    const [result] = await pool.query(
+      'UPDATE documents SET status = ?, updated_at = NOW() WHERE document_id = ?',
+      [newStatus, document_id]
+    );
+    return (result as any).affectedRows > 0;
+  }
+
+  /**
+   * Updates the grade of a document in the documents table.
+   * Only allows grades from 1 to 100 (or null to remove grade).
+   * @param {number} document_id - Document ID
+   * @param {number | null} newGrade - New grade to set (1-100 or null)
+   * @returns {Promise<boolean>} True if updated, false otherwise
+   */
+  static async updateDocumentGrade(document_id: number, newGrade: number | null): Promise<boolean> {
+    if (newGrade !== null && (newGrade < 1 || newGrade > 100)) return false;
+    const [result] = await pool.query(
+      'UPDATE documents SET grade = ?, updated_at = NOW() WHERE document_id = ?',
+      [newGrade, document_id]
+    );
+    return (result as any).affectedRows > 0;
+  }
 }

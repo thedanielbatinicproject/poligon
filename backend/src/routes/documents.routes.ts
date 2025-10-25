@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware/auth.middleware';
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
+import { DocumentWorkflowService } from '../services/documentWorkflow.service';
 
 const documentsRouter = Router();
 
@@ -22,7 +23,7 @@ documentsRouter.post('/:document_id/render', checkLogin, async (req: Request, re
     // TODO: implement PDF rendering logic here
     // Call example:
     // await DocumentsService.renderDocument(document, user_id, pdfPath);
-
+    //Logging in audit_log
     await AuditService.createAuditLog({
         user_id: Number(req.session.user_id),
         action_type: 'compile',
@@ -183,6 +184,10 @@ documentsRouter.put('/:document_id/content', checkLogin, async (req: Request, re
     if (!updatedDoc) {
       return res.status(403).json({ error: 'Not authorized to update latex_content or document not found!' });
     }
+    const status = await DocumentsService.getDocumentStatus(document_id);
+    if (status) {
+      await DocumentWorkflowService.addWorkflowEvent(document_id, status, Number(req.session.user_id));
+    }
     await AuditService.createAuditLog({
         user_id: Number(req.session.user_id),
         action_type: 'edit',
@@ -244,5 +249,151 @@ documentsRouter.delete('/:document_id/editors', checkLogin, async (req: Request,
   }
 });
 
+// GET /api/documents/:document_id/editors - Get all editors for a document
+documentsRouter.get('/:document_id/editors', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  try {
+    // Allow access if user is admin or is an editor/owner/mentor/viewer on the document
+    const isAllowed =
+      role === 'admin' ||
+      await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor', 'viewer']);
+    if (!isAllowed) {
+      return res.status(403).json({ error: 'You are not authorized to view editors for this document.' });
+    }
+    const editors = await DocumentsService.getDocumentEditors(document_id);
+    res.status(200).json(editors);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch document editors.', details: err });
+  }
+});
+
+// GET /api/documents/:document_id/versions - Get all versions for a document
+documentsRouter.get('/:document_id/versions', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  try {
+    // Allow access if user is admin or is an editor/owner/mentor/viewer on the document
+    const isAllowed =
+      role === 'admin' ||
+      await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor', 'viewer']);
+    if (!isAllowed) {
+      return res.status(403).json({ error: 'You are not authorized to view versions for this document.' });
+    }
+    const versions = await DocumentsService.getDocumentVersions(document_id);
+    res.status(200).json(versions);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch document versions.', details: err });
+  }
+});
+
+// GET /api/documents/:document_id/versions/:version_id/download - Download compiled PDF for a document version
+documentsRouter.get('/:document_id/versions/:version_id/download', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const version_id = Number(req.params.version_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  try {
+    // Allow access if user is admin or is an editor/owner/mentor/viewer on the document
+    const isAllowed =
+      role === 'admin' ||
+      await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor', 'viewer']);
+    if (!isAllowed) {
+      return res.status(403).json({ error: 'You are not authorized to download this document version.' });
+    }
+    // Fetch the version info
+    const version = await DocumentsService.getDocumentVersionById(document_id, version_id);
+    if (!version || !version.compiled_pdf_path) {
+      return res.status(404).json({ error: `PDF for version you requested - ${version_id} - not found in the database.` });
+    }
+    // Send the PDF file
+    return res.sendFile(version.compiled_pdf_path, { root: process.cwd() });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to download PDF from backend.', details: err });
+  }
+});
+
+// PUT /api/documents/:document_id/status - Change document status (admin or mentor only)
+documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  const { status } = req.body; // expected: 'draft', 'submitted', 'under_review', 'finished', 'graded'
+
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  // Only admin or mentor of this document can change status
+  const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
+  if (role !== 'admin' && !isMentor) {
+    return res.status(403).json({ error: `Only admin or mentor can change document status! Your user role is ${role}.` });
+  }
+
+  try {
+    // Update status in documents table
+    const updated = await DocumentsService.updateDocumentStatus(document_id, status);
+    if (!updated) {
+      return res.status(400).json({ error: 'Invalid status or document not found in database!' });
+    }
+    // Log to workflow history
+    await DocumentWorkflowService.addWorkflowEvent(document_id, status, user_id);
+    // Log to audit log
+    await AuditService.createAuditLog({
+      user_id,
+      action_type: 'edit',
+      entity_type: 'document',
+      entity_id: document_id
+    });
+    res.status(200).json({ success: true, newStatus: status });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to change document status.', details: err });
+  }
+});
+
+
+// PUT /api/documents/:document_id/grade - Only mentors of the document can change the grade
+documentsRouter.put('/:document_id/grade', checkMentor, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  const { grade } = req.body; // expected: number (1-100)
+
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  // Only mentor of this document can change grade (no admin access)
+  const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
+  if (!isMentor) {
+    return res.status(403).json({ error: 'Only mentor of this document can change the grade.' });
+  }
+
+  try {
+    const updated = await DocumentsService.updateDocumentGrade(document_id, grade);
+    if (!updated) {
+      return res.status(400).json({ error: 'Invalid grade or document not found.' });
+    }
+    // Log to audit log
+    await AuditService.createAuditLog({
+      user_id,
+      action_type: 'grade',
+      entity_type: 'document',
+      entity_id: document_id
+    });
+    res.status(200).json({ success: true, newGrade: grade });
+  } catch (err) {
+    res.status(500).json({ error: `Failed to change document grade for user: ${user_id} with role: ${role}.`, details: err });
+  }
+});
 
 export default documentsRouter;
