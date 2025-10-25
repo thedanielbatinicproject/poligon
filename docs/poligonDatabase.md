@@ -26,6 +26,24 @@ Stores information about all platform users.
 
 ---
 
+## Table: `local_users`
+
+Stores local login credentials for users who do not use AAI@EduHr integration. Login is performed exclusively via email, and each row is linked to a user from the `users` table.
+
+| Column        | Type                                      | Description |
+|---------------|-------------------------------------------|-------------|
+| user_id       | INT UNSIGNED, PRIMARY KEY, FK             | Reference to the user in the `users` table. |
+| email         | VARCHAR(255), NOT NULL, UNIQUE            | Email address for login. |
+| password_hash | VARCHAR(255), NOT NULL                    | Hashed password (bcrypt, argon2, etc.). |
+| created_at    | DATETIME, NOT NULL                        | Local user creation timestamp. |
+| updated_at    | DATETIME, NOT NULL                        | Last update timestamp. |
+
+**Relationships:**
+- `user_id` links the local login to the user in the `users` table.
+- Enables parallel existence of AAI and local users, but all user data is stored in the `users` table.
+
+---
+
 ## Table: `document_types`
 
 Defines categories for documents (e.g., thesis, report).

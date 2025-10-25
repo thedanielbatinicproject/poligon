@@ -5,6 +5,7 @@
  */
 import pool from '../db';
 import { User } from '../types/user';
+import passwordGenerator from 'password-generator';
 
 /**
  * Retrieves a user by their user_id from the database.
@@ -205,4 +206,22 @@ export async function getAllUsersReduced(): Promise<Array<{
 export async function getUserByEmail(email: string): Promise<User | null> {
   const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
   return (rows as any[])[0] || null;
+}
+
+/**
+ * Generates a memorable password for a new user.
+ * The password consists of pronounceable syllables (easy to remember),
+ * and is extended with four random digits for extra security.
+ * Example output: "flomax9222"
+ *
+ * @param length - Base length of the memorable part (default: 6)
+ * @returns A strong, memorable password string with base and 4 random digits.
+ */
+export function generateMemorablePassword(length: number = 6): string {
+  // Generate base memorable password (letters only, easy to remember)
+  const base = passwordGenerator(length, true);
+  // Add four random digits (1000-9999, always 4 digits)
+  const digits = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  // Combine all parts
+  return `${base}${digits}`;
 }
