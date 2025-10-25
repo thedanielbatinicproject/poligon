@@ -128,20 +128,53 @@ utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Respo
   }
 });
 
-// Delete a task
+// DELETE /api/tasks/:task_id - Delete a task with permission checks
 utilityRouter.delete('/tasks/:task_id', checkLogin, async (req: Request, res: Response) => {
   const task_id = Number(req.params.task_id);
-  // Optionally, add permission checks here if needed
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ error: 'User not logged in!' });
+
   try {
+    // Get the task object from UtilityService
+    const taskObj = await UtilityService.getTaskById(task_id);
+    if (!taskObj) {
+      return res.status(404).json({ error: 'Task not found.' });
+    }
+
+    // Admins can always delete
+    let canDelete = false;
+    if (user.role === 'admin') {
+      canDelete = true;
+    } else if (user.role === 'student') {
+      // Student can only delete their own tasks
+      if (taskObj.created_by === user.user_id) canDelete = true;
+    } else {
+      // For other roles, check if user is document creator
+      if (taskObj.document_id) {
+        const doc = await DocumentsService.getDocumentById(taskObj.document_id);
+        if (doc && doc.created_by === user.user_id) {
+          canDelete = true;
+        } else if (taskObj.created_by === user.user_id) {
+          canDelete = true;
+        }
+      } else {
+        if (taskObj.created_by === user.user_id) canDelete = true;
+      }
+    }
+
+    if (!canDelete) {
+      return res.status(403).json({ error: 'You are not allowed to delete this task because you are neither the creator of the task nor a document creator.' });
+    }
+
     const deleted = await UtilityService.deleteTask(task_id);
     if (!deleted) {
       return res.status(404).json({ error: 'Task not found or not deleted.' });
     }
     await AuditService.createAuditLog({
-        user_id: req.session.user.user_id,
-        action_type: 'delete',
-        entity_type: 'task',
-        entity_id: task_id
+      user_id: user.user_id,
+      action_type: 'delete',
+      entity_type: 'task',
+      entity_id: task_id
     });
     res.status(200).json({ success: true });
   } catch (err) {
@@ -149,8 +182,51 @@ utilityRouter.delete('/tasks/:task_id', checkLogin, async (req: Request, res: Re
   }
 });
 
+// GET /api/tasks/document/:document_id — Returns all tasks for the specified document
+utilityRouter.get('/tasks/document/:document_id', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  if (isNaN(document_id)) {
+    return res.status(400).json({ error: 'Invalid document_id.' });
+  }
+  try {
+    const tasks = await UtilityService.getTasksByDocument(document_id);
+    res.status(200).json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch tasks for document.', details: err });
+  }
+});
+
+// GET /api/tasks/user/ — Returns all tasks created by or assigned to the current logged-in user
+utilityRouter.get('/tasks/user/', checkLogin, async (req: Request, res: Response) => {
+  const user_id = Number(req.session.user.user_id);
+  if (isNaN(user_id)) {
+    return res.status(400).json({ error: 'Invalid user_id.' });
+  }
+  try {
+    const tasks = await UtilityService.getTasksByUser(user_id);
+    res.status(200).json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch tasks for user.', details: err });
+  }
+});
+
+// GET /api/tasks/user/:user_id — Returns all tasks created by or assigned to the specified user
+utilityRouter.get('/tasks/user/:user_id', checkAdmin, async (req: Request, res: Response) => {
+  const user_id = Number(req.params.user_id);
+  if (isNaN(user_id)) {
+    return res.status(400).json({ error: 'Invalid user_id.' });
+  }
+  try {
+    const tasks = await UtilityService.getTasksByUser(user_id);
+    res.status(200).json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch tasks for user.', details: err });
+  }
+});
+
 
 //USER MESAGES ROUTES
+
 
 
 export default utilityRouter;

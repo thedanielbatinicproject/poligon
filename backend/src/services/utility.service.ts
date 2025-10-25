@@ -71,9 +71,20 @@ export class UtilityService {
   }
 
   /**
-   * Fetches all tasks related to a specific document.
-   * @param document_id - The ID of the document
-   * @returns Array of task objects for the given document
+   * Retrieves all tasks associated with a specific document.
+   * Each returned object represents a task and includes:
+   * - task_id: Unique identifier for the task
+   * - created_by: User ID of the task creator
+   * - assigned_to: User ID of the assigned user (nullable)
+   * - document_id: ID of the related document (nullable)
+   * - task_title: Title of the task
+   * - task_description: Detailed description of the task
+   * - task_status: Current status ('open' or 'closed')
+   * - created_at: Timestamp when the task was created
+   * - updated_at: Timestamp when the task was last updated
+   * Results are ordered by creation date, newest first.
+   * @param document_id - The ID of the document to filter tasks by
+   * @returns Array of task objects linked to the specified document
   */
   static async getTasksByDocument(document_id: number): Promise<any[]> {
     const [rows] = await pool.query(
@@ -84,9 +95,20 @@ export class UtilityService {
   }
 
   /**
-   * Fetches all tasks created by or assigned to a specific user.
-   * @param user_id - The ID of the user
-   * @returns Array of task objects for the given user
+   * Retrieves all tasks either created by or assigned to a specific user.
+   * Each returned object represents a task and includes:
+   * - task_id: Unique identifier for the task
+   * - created_by: User ID of the task creator
+   * - assigned_to: User ID of the assigned user (nullable)
+   * - document_id: ID of the related document (nullable)
+   * - task_title: Title of the task
+   * - task_description: Detailed description of the task
+   * - task_status: Current status ('open' or 'closed')
+   * - created_at: Timestamp when the task was created
+   * - updated_at: Timestamp when the task was last updated
+   * Results are ordered by creation date, newest first.
+   * @param user_id - The ID of the user to filter tasks by
+   * @returns Array of task objects created by or assigned to the specified user
   */
   static async getTasksByUser(user_id: number): Promise<any[]> {
     const [rows] = await pool.query(
@@ -97,4 +119,25 @@ export class UtilityService {
     );
     return rows as any[];
   }
+
+  /**
+   * Retrieves a single task by its unique identifier.
+   * The returned object includes all columns from the tasks table:
+   * - task_id: Unique identifier for the task
+   * - created_by: User ID of the task creator
+   * - assigned_to: User ID of the assigned user (nullable)
+   * - document_id: ID of the related document (nullable)
+   * - task_title: Title of the task
+   * - task_description: Detailed description of the task
+   * - task_status: Current status ('open' or 'closed')
+   * - created_at: Timestamp when the task was created
+   * - updated_at: Timestamp when the task was last updated
+   * @param task_id - The ID of the task to retrieve
+   * @returns The task object if found, or null if no task exists with the given ID
+   */
+  static async getTaskById(task_id: number): Promise<any | null> {
+    const [rows] = await pool.query('SELECT * FROM tasks WHERE task_id = ?', [task_id]);
+    return (rows as any[])[0] || null;
+  }
+
 }
