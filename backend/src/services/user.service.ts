@@ -170,3 +170,28 @@ export async function updateScrollPosition(userId: number, scroll_position: any)
   if (typeof scroll_position !== 'number' || !Number.isInteger(scroll_position)) throw new Error('Invalid scroll_position');
   await pool.query('UPDATE sessions SET scroll_position = ? WHERE user_id = ?', [scroll_position, userId]);
 }
+
+
+/**
+ * Retrieves a reduced list of all users except admins.
+ * Each user object includes: user_id, first_name, last_name, email, role.
+ * @returns Array of reduced user objects.
+ */
+export async function getAllUsersReduced(): Promise<Array<{
+  user_id: number,
+  first_name: string,
+  last_name: string,
+  email: string,
+  role: string
+}>> {
+  const [rows] = await pool.query(
+    "SELECT user_id, first_name, last_name, email, role FROM users WHERE role != 'admin'"
+  );
+  return rows as Array<{
+    user_id: number,
+    first_name: string,
+    last_name: string,
+    email: string,
+    role: string
+  }>;
+}

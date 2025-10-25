@@ -241,7 +241,7 @@ utilityRouter.post('/messages', checkLogin, async (req: Request, res: Response) 
     const message_id = await UtilityService.addMessage(sender_id, receiver_id, message_content);
 
     // Emit message via socket.io
-    io.to(receiver_id).emit('receive_message', {
+    io.to(String(receiver_id)).emit('receive_message', {
       message_id,
       sender_id,
       receiver_id,
@@ -255,6 +255,7 @@ utilityRouter.post('/messages', checkLogin, async (req: Request, res: Response) 
   }
 });
 
+
 // DELETE /api/utility/messages/:message_id - Delete a message
 utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, res: Response) => {
   const message_id = Number(req.params.message_id);
@@ -265,16 +266,40 @@ utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, r
   }
 
   try {
+    // Dohvati poruku iz baze
+    const msg = await UtilityService.getMessageById(message_id);
+    if (!msg) {
+      return res.status(404).json({ error: 'Message not found.' });
+    }
+
+    // Pokušaj brisanja
     const deleted = await UtilityService.deleteMessage(message_id, user_id);
     if (!deleted) {
       return res.status(403).json({ error: 'You are not allowed to delete this message or message not found.' });
     }
+
+    // Emitiraj event oboma (sender i receiver)
+    const otherUserId = (msg.sender_id === user_id) ? msg.receiver_id : msg.sender_id;
+    io.to(String(user_id)).emit('message_deleted', { message_id });
+    io.to(String(otherUserId)).emit('message_deleted', { message_id });
+
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete message.', details: err });
   }
 });
 
+
+// GET /api/utility/messages/:user_id - Get all messages between logged-in user and specified user
+utilityRouter.get('/messages/:user_id', checkLogin, async (req: Request, res: Response) => {
+  const user1_id = req.session.user.user_id;
+  const user2_id = Number(req.params.user_id);
+  const messages = await UtilityService.getMessagesBetweenUsers(user1_id, user2_id);
+  res.status(200).json(messages);
+});
+
+
+//API ALLOWANCE ROUTES
 
 
 export default utilityRouter;

@@ -178,4 +178,55 @@ export class UtilityService {
     return (result as any).affectedRows > 0;
   }
 
+  /**
+   * Retrieves a single message from the database by its unique identifier.
+   * The returned object includes all columns from the messages table:
+   * - message_id: Unique identifier for the message
+   * - sender_id: User ID of the sender
+   * - receiver_id: User ID of the receiver
+   * - message_content: Text content of the message
+   * - sent_at: Timestamp when the message was sent
+   * @param message_id - The unique ID of the message to retrieve
+   * @returns The message object if found, or null if no message exists with the given ID
+  */
+  static async getMessageById(message_id: number): Promise<any | null> {
+    const [rows] = await pool.query('SELECT * FROM messages WHERE message_id = ?', [message_id]);
+    return (rows as any[])[0] || null;
+  }
+
+
+  /**
+   * Retrieves all messages exchanged between two users, ordered by sent time ascending.
+   * Each returned object includes:
+   * - message_id: Unique identifier for the message
+   * - sender_id: User ID of the sender
+   * - receiver_id: User ID of the receiver
+   * - message_content: Text content of the message
+   * - sent_at: Timestamp when the message was sent
+   * @param user1_id - The first user's ID
+   * @param user2_id - The second user's ID
+   * @returns Array of message objects representing the conversation history between the two users
+  */
+  static async getMessagesBetweenUsers(user1_id: number, user2_id: number): Promise<Array<{
+    message_id: number,
+    sender_id: number,
+    receiver_id: number,
+    message_content: string,
+    sent_at: Date
+  }>> {
+    const [rows] = await pool.query(
+      `SELECT * FROM messages
+      WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+      ORDER BY sent_at ASC`,
+      [user1_id, user2_id, user2_id, user1_id]
+    );
+    return rows as Array<{
+      message_id: number,
+      sender_id: number,
+      receiver_id: number,
+      message_content: string,
+      sent_at: Date
+    }>;
+  }
+
 }

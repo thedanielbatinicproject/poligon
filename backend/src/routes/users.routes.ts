@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { checkLogin, checkAdmin, checkMentor } from '../middleware/auth.middleware';
-import { getUserById, createUser, editUser } from '../services/user.service';
-import { getAllNonAdminUsers } from '../services/user.service';
+import { getUserById, createUser, editUser, getAllNonAdminUsers, getAllUsersReduced } from '../services/user.service';
 
 const usersRouter = Router();
 
@@ -89,6 +88,16 @@ usersRouter.get('/:user_id', checkLogin, async (req: Request, res: Response) => 
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: `Failed to fetch user with id ${userId}!`, details: err });
+  }
+});
+
+// /api/users/messaging - Get reduced user list for messaging, accessible to all logged-in users
+usersRouter.get('/messaging', checkLogin, async (req: Request, res: Response) => {
+  try {
+    const users = await getAllUsersReduced();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users for messaging!', details: err });
   }
 });
 
