@@ -341,4 +341,78 @@ export class DocumentsService {
     );
     return (result as any).affectedRows > 0;
   }
+
+
+  /**
+   * Gets all document types from the database.
+   * Each object contains: type_id, type_name, description.
+   * @returns {Promise<Array<{type_id: number, type_name: string, description: string}>>}
+   *
+   * Example:
+   * [
+   *   { type_id: 1, type_name: 'thesis', description: 'Final thesis document' },
+   *   { type_id: 2, type_name: 'report', description: 'Project report' }
+   * ]
+   */
+  static async getAllDocumentTypes(): Promise<Array<{type_id: number, type_name: string, description: string}>> {
+    const [rows] = await pool.query('SELECT * FROM document_types ORDER BY type_id ASC');
+    return rows as Array<{type_id: number, type_name: string, description: string}>;
+  }
+
+  /**
+   * Gets a single document type by its ID.
+   * @param {number} type_id - Document type ID
+   * @returns {Promise<{type_id: number, type_name: string, description: string} | null>}
+   *
+   * Example:
+   * { type_id: 1, type_name: 'thesis', description: 'Final thesis document' }
+   */
+  static async getDocumentTypeById(type_id: number): Promise<{type_id: number, type_name: string, description: string} | null> {
+    const [rows] = await pool.query('SELECT * FROM document_types WHERE type_id = ? LIMIT 1', [type_id]);
+    return (rows as any[])[0] || null;
+  }
+
+  /**
+   * Creates a new document type.
+   * @param {string} type_name - Name of the document type (e.g. 'thesis')
+   * @param {string} description - Description or metadata (e.g. 'Final thesis document')
+   * @returns {Promise<number>} Newly created type_id
+   *
+   * Example: returns 3 if new type_id is 3
+   */
+  static async createDocumentType(type_name: string, description: string): Promise<number> {
+    const [result] = await pool.query(
+      'INSERT INTO document_types (type_name, description) VALUES (?, ?)',
+      [type_name, description]
+    );
+    return (result as any).insertId;
+  }
+
+  /**
+   * Updates an existing document type.
+   * @param {number} type_id - Document type ID
+   * @param {string} type_name - New name (e.g. 'report')
+   * @param {string} description - New description (e.g. 'Project report')
+   * @returns {Promise<boolean>} True if updated, false otherwise
+   */
+  static async updateDocumentType(type_id: number, type_name: string, description: string): Promise<boolean> {
+    const [result] = await pool.query(
+      'UPDATE document_types SET type_name = ?, description = ? WHERE type_id = ?',
+      [type_name, description, type_id]
+    );
+    return (result as any).affectedRows > 0;
+  }
+
+  /**
+   * Deletes a document type by its ID and sets type_id to NULL in documents referencing this type.
+   * @param {number} type_id - Document type ID
+   * @returns {Promise<boolean>} True if deleted, false otherwise
+   */
+  static async deleteDocumentType(type_id: number): Promise<boolean> {
+  // Set type_id to NULL in documents referencing this type
+  await pool.query('UPDATE documents SET type_id = NULL WHERE type_id = ?', [type_id]);
+  // Delete the document type itself
+  const [result] = await pool.query('DELETE FROM document_types WHERE type_id = ?', [type_id]);
+  return (result as any).affectedRows > 0;
+  }
 }
