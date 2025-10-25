@@ -99,3 +99,13 @@ export async function touchSessionById(session_id: string, sessionData: SessionD
     [last_activity, expires_at, session_id]
   );
 }
+
+/**
+ * Retrieves a local user by their email address from the local_users table.
+ * @param email - The email address of the local user.
+ * @returns Local user object or null if not found.
+ */
+export async function getLocalUserByEmail(email: string): Promise<any | null> {
+  const [rows] = await pool.query('SELECT * FROM local_users WHERE email = ?', [email]);
+  return (rows as any[])[0] || null;
+}

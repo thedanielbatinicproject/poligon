@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { getUserById, getUserByPrincipalName, createUser, getUserByEmail, editUser } from '../services/user.service';
-import { getActiveSessionIdsForUser } from '../services/session.service';
+import { getActiveSessionIdsForUser, getLocalUserByEmail } from '../services/session.service';
 import passport from 'passport';
 import { SessionData } from 'express-session';
+import bcrypt from 'bcrypt';
 import { OID } from '../config/oid';
 
 const authRouter = Router();
@@ -13,7 +14,7 @@ authRouter.get('/login/aaieduhr', (req: Request, res: Response) => {
 });
 
 // POST /auth/callback/aaieduhr - SAML callback endpoint
-// Ova ruta: provjerava korisnika, kreira ga ako treba, puni session sa podatcima i vraća JSON odgovor - restful
+// This route: checks the user, creates them if needed, fills the session with data, and returns a JSON response - restful architecture
 authRouter.post('/callback/aaieduhr',
   passport.authenticate('saml', { failureRedirect: '/', failureFlash: true }),
   async (req: Request, res: Response) => {
@@ -92,6 +93,54 @@ authRouter.post('/callback/aaieduhr',
     }
   }
 );
+
+// POST /auth/login-local - Local user login
+authRouter.post('/login-local', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Missing email or password' });
+    }
+
+    // Find user by email
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials - user not found by that email!' });
+    }
+
+    // Find local user
+    const localUser = await getLocalUserByEmail(email);
+    if (!localUser) {
+      return res.status(401).json({ error: 'Invalid credentials - local user not found by that email!' });
+    }
+
+    // Find password
+    const match = await bcrypt.compare(password, localUser.password_hash);
+    if (!match) {
+      return res.status(401).json({ error: 'Invalid credentials - password mismatch!' });
+    }
+
+    // Set session data like in SAML login
+    const sessionData = {
+      user_id: user.user_id,
+      email: user.email,
+      givenName: user.first_name,
+      sn: user.last_name,
+      displayName: user.first_name + ' ' + user.last_name,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      last_route: '/dashboard',
+      theme: 'light',
+      sidebar_state: 'open',
+      cookie: req.session.cookie
+    };
+    Object.assign(req.session, sessionData);
+    req.session.save(() => res.status(200).json({ success: true }));
+
+  } catch (err) {
+    res.status(500).json({ error: 'Login failed!', details: err });
+  }
+});
 
 // GET /auth/status - Check current session/user
 authRouter.get('/status', async (req: Request, res: Response) => {

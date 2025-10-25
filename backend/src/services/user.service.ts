@@ -225,3 +225,56 @@ export function generateMemorablePassword(length: number = 6): string {
   // Combine all parts
   return `${base}${digits}`;
 }
+
+/**
+ * Creates a new local user in the local_users table.
+ * Used for local authentication (email/password).
+ * Links the local user to the main users table via user_id (foreign key).
+ * Stores hashed password i osnovne podatke.
+ * @param localUser - Object containing local user attributes:
+ *   - user_id: number (foreign key from users table)
+ *   - email: string (user's email)
+ *   - password_hash: string (bcrypt hashed password)
+ *   - first_name: string
+ *   - last_name: string
+ * @returns Newly created local user object, or null if creation failed.
+ */
+export async function createLocalUser(localUser: {
+  user_id: number,
+  email: string,
+  password_hash: string,
+  first_name: string,
+  last_name: string
+}): Promise<any | null> {
+  const [result] = await pool.query(
+    `INSERT INTO local_users (user_id, email, password_hash, first_name, last_name)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      localUser.user_id,
+      localUser.email,
+      localUser.password_hash,
+      localUser.first_name,
+      localUser.last_name
+    ]
+  );
+  if ((result as any).affectedRows === 1) {
+    return { ...localUser };
+  }
+  return null;
+}
+
+/**
+ * Changes the password for a local user.
+ * Only admin can change any user's password, others can change only their own.
+ * Also sets force_password_change to false after successful change.
+ * @param userId - The unique identifier of the user.
+ * @param passwordHash - The new hashed password.
+ * @returns true if password changed, false otherwise.
+ */
+export async function changeLocalUserPassword(userId: number, passwordHash: string): Promise<boolean> {
+  const [result] = await pool.query(
+    `UPDATE local_users SET password_hash = ?, force_password_change = false WHERE user_id = ?`,
+    [passwordHash, userId]
+  );
+  return (result as any).affectedRows === 1;
+}

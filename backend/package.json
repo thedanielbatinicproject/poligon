@@ -26,6 +26,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^4.17.21",
     "@types/express-mysql-session": "^3.0.7",
     "@types/morgan": "^1.9.6",

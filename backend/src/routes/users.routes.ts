@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { checkLogin, checkAdmin, checkMentor } from '../middleware/auth.middleware';
-import { getUserById, createUser, editUser, getAllNonAdminUsers, getAllUsersReduced } from '../services/user.service';
-
+import { getUserById, createUser, editUser, getAllNonAdminUsers, 
+        getAllUsersReduced, createLocalUser, generateMemorablePassword, 
+        getUserByEmail, changeLocalUserPassword } from '../services/user.service';
+import {sendPasswordEmail} from '../services/mail.service';
+import bcrypt from 'bcrypt';
 const usersRouter = Router();
 
 // /api/users/all Dohvati sve korisnike (osim admina), dostupno samo adminima i mentorima
@@ -91,13 +94,83 @@ usersRouter.get('/:user_id', checkLogin, async (req: Request, res: Response) => 
   }
 });
 
-// /api/users/messaging - Get reduced user list for messaging, accessible to all logged-in users
-usersRouter.get('/messaging', checkLogin, async (req: Request, res: Response) => {
+// /api/users/reduced - Get reduced user list for messaging, accessible to all logged-in users
+usersRouter.get('/reduced', checkLogin, async (req: Request, res: Response) => {
   try {
     const users = await getAllUsersReduced();
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch users for messaging!', details: err });
+  }
+});
+
+// /api/users/register-local - registration for local users
+usersRouter.post('/register-local', async (req, res) => {
+  try {
+    const { first_name, last_name, email } = req.body;
+    if (!first_name || !last_name || !email) {
+      return res.status(400).json({ error: 'Missing required fields: first_name, last_name, email' });
+    }
+    const existing = await getUserByEmail(email);
+    if (existing) {
+      return res.status(409).json({ error: 'User with this email already exists!' });
+    }
+    const password = generateMemorablePassword(6);
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await createUser({
+      principal_name: email,
+      first_name,
+      last_name,
+      email,
+      role: 'student',
+      preferred_language: 'hr'
+    });
+    if (!user) {
+      return res.status(500).json({ error: 'Failed to create user in users table.' });
+    }
+    const localUser = await createLocalUser({
+      user_id: user.user_id,
+      email,
+      password_hash: passwordHash,
+      first_name,
+      last_name
+    });
+    if (!localUser) {
+      return res.status(500).json({ error: 'Failed to create user in local_users table.' });
+    }
+    await sendPasswordEmail(email, password);
+    res.status(201).json({ success: true, user_id: user.user_id });
+  } catch (err) {
+    res.status(500).json({ error: 'Registration failed', details: err });
+  }
+});
+
+// /api/users/local-change-password - Change password for local users
+usersRouter.post('/local-change-password', checkLogin, async (req, res) => {
+  try {
+    const { user_id, new_password } = req.body;
+    const sessionUserId = req.session.user_id;
+    const sessionRole = req.session.role;
+
+    if (!user_id || !new_password) {
+      return res.status(400).json({ error: 'Missing required fields: user_id, new_password' });
+    }
+
+    // Only admin can change anyone's password, others can only change their own
+    if (sessionRole !== 'admin' && sessionUserId !== user_id) {
+      return res.status(403).json({ error: 'Not authorized to change this user\'s password! Userid you tried to change: ' + user_id });
+    }
+
+    const passwordHash = await bcrypt.hash(new_password, 10);
+    const result = await changeLocalUserPassword(user_id, passwordHash);
+
+    if (result) {
+      return res.json({ success: true });
+    } else {
+      return res.status(404).json({ error: 'User not found or password not changed!' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Password change failed!', details: err });
   }
 });
 

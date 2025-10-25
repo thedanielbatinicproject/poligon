@@ -13,7 +13,7 @@ CREATE TABLE users (
   updated_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE local_users (
+local_usersCREATE TABLE local_users (
   user_id INT UNSIGNED PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
