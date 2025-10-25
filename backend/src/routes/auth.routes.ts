@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getUserById, getUserByPrincipalName, createUser } from '../services/user.service';
+import { getUserById, getUserByPrincipalName, createUser, getUserByEmail, editUser } from '../services/user.service';
 import { getActiveSessionIdsForUser } from '../services/session.service';
 import passport from 'passport';
 import { SessionData } from 'express-session';
@@ -20,8 +20,9 @@ authRouter.post('/callback/aaieduhr',
     try {
       const profile = req.user as any;
       const principalName = profile[OID.eduPersonPrincipalName];
-      let user = await getUserByPrincipalName(principalName);
-      // Dinamičko mapiranje role prema eduPersonAffiliation
+      const email = profile[OID.email];
+
+      // Dynamic role assignment based on eduPersonAffiliation
       let role: 'student' | 'user' | 'mentor' | 'admin' = 'student';
       const affiliation = profile[OID.eduPersonAffiliation];
       if (affiliation) {
@@ -35,26 +36,47 @@ authRouter.post('/callback/aaieduhr',
           else if (affiliation.includes('student')) role = 'student';
         }
       }
+
+      // First try to find the user by principal_name
+      let user = await getUserByPrincipalName(principalName);
+
       if (!user) {
-        user = await createUser({
-          principal_name: principalName,
-          email: profile[OID.email],
-          first_name: profile[OID.givenName],
-          last_name: profile[OID.sn],
-          display_name: profile[OID.displayName],
-          affiliation,
-          role,
-        });
+        // If not found by principal_name, try by email
+        const userByEmail = await getUserByEmail(email);
+        if (userByEmail) {
+          // If a user with this email exists, update their data
+          await editUser(userByEmail.user_id, {
+            first_name: profile[OID.givenName],
+            last_name: profile[OID.sn],
+            role,
+            preferred_language: 'hr', // or from profile if exists
+          });
+          // Retrieve the user again with updated data
+          user = await getUserById(userByEmail.user_id);
+        } else {
+          // If not found, create a new user
+          user = await createUser({
+            principal_name: principalName,
+            email,
+            first_name: profile[OID.givenName],
+            last_name: profile[OID.sn],
+            role,
+            preferred_language: 'hr', // or from profile if exists
+            // Other fields from the database if you have them
+          });
+        }
       }
+
       if (!user) throw new Error('User creation failed');
+
       const sessionData: SessionData = {
         user_id: user.user_id,
-        email: profile[OID.email],
-        givenName: profile[OID.givenName],
-        sn: profile[OID.sn],
-        displayName: profile[OID.displayName],
+        email: user.email,
+        givenName: user.first_name,
+        sn: user.last_name,
+        displayName: user.first_name + ' ' + user.last_name,
         eduPersonPrincipalName: principalName,
-        eduPersonAffiliation: profile[OID.eduPersonAffiliation],
+        eduPersonAffiliation: affiliation,
         ip_address: req.ip,
         user_agent: req.headers['user-agent'],
         last_route: '/dashboard',

@@ -195,3 +195,14 @@ export async function getAllUsersReduced(): Promise<Array<{
     role: string
   }>;
 }
+
+
+/**
+ * Retrieves a user by their email address from the database.
+ * @param email - The email address of the user.
+ * @returns User object or null if not found.
+ */
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+  return (rows as any[])[0] || null;
+}
