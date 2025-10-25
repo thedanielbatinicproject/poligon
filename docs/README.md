@@ -4,4 +4,6 @@ Welcome to the documentation for the Poligon web application. For a list of all 
 
 For a detailed overview of the database architecture and table structure, please refer to the following documentation: [poligonDatabase.md](./poligonDatabase.md)
 
-For a complete overview of backend API routes and usage, see [api.md](./api.md)
+For a complete overview of backend API routes and usage, see [api.md](./apiInfo.md)
+
+For an overview of how frontend works, see [frontendInfo.md](./frontendInfo.md)
