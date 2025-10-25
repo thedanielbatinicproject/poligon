@@ -140,4 +140,42 @@ export class UtilityService {
     return (rows as any[])[0] || null;
   }
 
+  //USER MESSAGES
+  /**
+   * Inserts a new user-to-user message into the database.
+   * @param sender_id - User ID of the sender
+   * @param receiver_id - User ID of the receiver
+   * @param message_content - Text content of the message
+   * @returns The unique message_id of the newly created message
+  */
+  static async addMessage(sender_id: number, receiver_id: number, message_content: string): Promise<number> {
+    const [result] = await pool.query(
+      `INSERT INTO messages (sender_id, receiver_id, message_content, sent_at)
+      VALUES (?, ?, ?, NOW())`,
+      [sender_id, receiver_id, message_content]
+    );
+    return (result as any).insertId;
+  }
+
+  /**
+   * Deletes a message by its unique identifier.
+   * Only the sender or receiver of the message is authorized to delete it.
+   * @param message_id - The unique ID of the message to delete
+   * @param user_id - The user requesting deletion (must be sender or receiver)
+   * @returns True if the message was deleted, false if not found or not authorized
+   */
+  static async deleteMessage(message_id: number, user_id: number): Promise<boolean> {
+    // Check if the user is either the sender or receiver of the message
+    const [rows] = await pool.query(
+      `SELECT * FROM messages WHERE message_id = ? AND (sender_id = ? OR receiver_id = ?)`,
+      [message_id, user_id, user_id]
+    );
+    if ((rows as any[]).length === 0) return false;
+    const [result] = await pool.query(
+      `DELETE FROM messages WHERE message_id = ?`,
+      [message_id]
+    );
+    return (result as any).affectedRows > 0;
+  }
+
 }

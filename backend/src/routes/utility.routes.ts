@@ -3,6 +3,8 @@ import { UtilityService } from '../services/utility.service';
 import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin } from '../middleware/auth.middleware';
 import { AuditService } from '../services/audit.service';
+import { io } from '../index'; // emiting messages via socket.io
+
 
 const utilityRouter = Router();
 
@@ -226,6 +228,52 @@ utilityRouter.get('/tasks/user/:user_id', checkAdmin, async (req: Request, res: 
 
 
 //USER MESAGES ROUTES
+// POST /api/utility/messages - Send a message
+utilityRouter.post('/messages', checkLogin, async (req: Request, res: Response) => {
+  const sender_id = req.session.user.user_id;
+  const { message_content } = req.body;
+  const receiver_id = Number(req.body.receiver_id);
+  if (!receiver_id || typeof receiver_id !== 'number' || !message_content || typeof message_content !== 'string') {
+    return res.status(400).json({ error: 'receiver_id (number) and message_content (string) are required.' });
+  }
+
+  try {
+    const message_id = await UtilityService.addMessage(sender_id, receiver_id, message_content);
+
+    // Emit message via socket.io
+    io.to(receiver_id).emit('receive_message', {
+      message_id,
+      sender_id,
+      receiver_id,
+      message_content,
+      sent_at: new Date()
+    });
+
+    res.status(201).json({ success: true, message_id });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send message.', details: err });
+  }
+});
+
+// DELETE /api/utility/messages/:message_id - Delete a message
+utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, res: Response) => {
+  const message_id = Number(req.params.message_id);
+  const user_id = req.session.user.user_id;
+
+  if (isNaN(message_id)) {
+    return res.status(400).json({ error: 'Invalid message_id.' });
+  }
+
+  try {
+    const deleted = await UtilityService.deleteMessage(message_id, user_id);
+    if (!deleted) {
+      return res.status(403).json({ error: 'You are not allowed to delete this message or message not found.' });
+    }
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete message.', details: err });
+  }
+});
 
 
 
