@@ -131,9 +131,7 @@ usersRouter.post('/register-local', async (req, res) => {
     const localUser = await createLocalUser({
       user_id: user.user_id,
       email,
-      password_hash: passwordHash,
-      first_name,
-      last_name
+      password_hash: passwordHash
     });
     if (!localUser) {
       return res.status(500).json({ error: 'Failed to create user in local_users table.' });

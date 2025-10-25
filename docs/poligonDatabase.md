@@ -13,16 +13,23 @@ Stores information about all platform users.
 | Column             | Type                                              | Description |
 |--------------------|---------------------------------------------------|-------------|
 | user_id            | INT UNSIGNED, PRIMARY KEY, AUTO_INCREMENT         | Unique user identifier. |
+| principal_name     | VARCHAR(255), NOT NULL, UNIQUE                    | SSO/AAI identifier for federated login. |
 | first_name         | VARCHAR(100), NOT NULL                            | User's first name. |
 | last_name          | VARCHAR(100), NOT NULL                            | User's last name. |
 | email              | VARCHAR(255), NOT NULL, UNIQUE                    | Email address (must be unique). |
 | role               | ENUM('user', 'student', 'mentor', 'admin')        | User access role. Default is `user`. |
 | preferred_language | ENUM('hr', 'en')                                  | Language preference for UI. Default is `hr`. |
-| created_at         | DATETIME, NOT NULL                                | Account creation timestamp. |
-| updated_at         | DATETIME, NOT NULL                                | Last update timestamp. |
+| affiliation        | VARCHAR(255)                                      | User's institution or organization. |
+| display_name       | VARCHAR(255)                                      | Display name for UI. |
+| created_at         | DATETIME, NOT NULL, DEFAULT CURRENT_TIMESTAMP     | Account creation timestamp. |
+| updated_at         | DATETIME, NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Last update timestamp. |
 
+principal_name is used for SSO/AAI login.
+affiliation is optional for organisation affiliation.
+display_name je prikazno ime korisnika.
 **Relationships:**
 - Referenced by `documents.created_by`, `document_versions.edited_by`, `messages.sender_id`, `messages.receiver_id`, `tasks.created_by`, `tasks.assigned_to`, `audit_log.user_id`, `api_keys.user_id`, `sessions.user_id`, etc.
+
 
 ---
 

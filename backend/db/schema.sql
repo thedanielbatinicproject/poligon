@@ -4,13 +4,16 @@
 -- USERS
 CREATE TABLE users (
   user_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  principal_name VARCHAR(255) NOT NULL UNIQUE,
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   role ENUM('user', 'student', 'mentor', 'admin') NOT NULL DEFAULT 'user',
   preferred_language ENUM('hr', 'en') DEFAULT 'hr',
-  created_at DATETIME NOT NULL,
-  updated_at DATETIME NOT NULL
+  affiliation VARCHAR(255),
+  display_name VARCHAR(255),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 local_usersCREATE TABLE local_users (

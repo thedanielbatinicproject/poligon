@@ -3,6 +3,7 @@
  * Provides functions for user creation, retrieval, update, and validation.
  * All operations are type-safe and support enterprise authentication requirements.
  */
+import passport from 'passport';
 import pool from '../db';
 import { User } from '../types/user';
 import passwordGenerator from 'password-generator';
@@ -56,7 +57,7 @@ export async function createUser(user: Partial<User> & { principal_name: string,
       user.first_name || '',
       user.last_name || '',
       user.email || '',
-      user.role || 'student',
+      user.role || 'user',
       user.preferred_language || 'hr',
       user.affiliation || null,
       user.display_name || null
@@ -230,31 +231,27 @@ export function generateMemorablePassword(length: number = 6): string {
  * Creates a new local user in the local_users table.
  * Used for local authentication (email/password).
  * Links the local user to the main users table via user_id (foreign key).
- * Stores hashed password i osnovne podatke.
+ * Stores hashed password and email for login.
  * @param localUser - Object containing local user attributes:
  *   - user_id: number (foreign key from users table)
- *   - email: string (user's email)
+ *   - email: string (user's email, unique for login)
  *   - password_hash: string (bcrypt hashed password)
- *   - first_name: string
- *   - last_name: string
  * @returns Newly created local user object, or null if creation failed.
+ *
+ * Note: created_at and updated_at are set automatically by the database schema.
  */
 export async function createLocalUser(localUser: {
   user_id: number,
   email: string,
-  password_hash: string,
-  first_name: string,
-  last_name: string
+  password_hash: string
 }): Promise<any | null> {
   const [result] = await pool.query(
-    `INSERT INTO local_users (user_id, email, password_hash, first_name, last_name)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO local_users (user_id, email, password_hash)
+     VALUES (?, ?, ?)`,
     [
       localUser.user_id,
       localUser.email,
-      localUser.password_hash,
-      localUser.first_name,
-      localUser.last_name
+      localUser.password_hash
     ]
   );
   if ((result as any).affectedRows === 1) {
