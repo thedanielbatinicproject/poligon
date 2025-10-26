@@ -1,0 +1,22 @@
+:root {
+  --color-primary: #1d1640;      /* tekst, heading, logo */
+  --color-secondary: #3d276f;    /* podnaslovi, border */
+  --color-accent: #001d83;       /* linkovi, aktivni elementi */
+  --color-success: #39977f;      /* success, CTA */
+  --color-background: #ccebd8;   /* pozadina */
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-primary);
+}
+h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-secondary);
+}
+p {
+  font-size: 1rem;
+}
