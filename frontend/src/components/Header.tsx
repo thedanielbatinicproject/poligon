@@ -4,6 +4,12 @@ import { Button } from './ui/button';
 import Dialog from './ui/dialog';
 import AppToaster, { toastSuccess } from './ui/toast';
 import { getRoleFromCookie } from '../lib/auth';
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuLink,
+} from './ui/navigation-menu';
 
 const Header: React.FC = () => {
   const [authOpen, setAuthOpen] = useState(false);
@@ -27,13 +33,23 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-40">
-        <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-bold text-lg">Poligon</Link>
-          <div className="flex items-center gap-4">
-            {links.filter(l => l.show).map((l) => (
-              <Link key={l.to} to={l.to}>{l.label}</Link>
-            ))}
-            <Button variant="outline" onClick={() => setAuthOpen(true)}>Login</Button>
+        <nav className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="font-bold text-lg">Poligon</Link>
+
+            <div className="flex items-center gap-4">
+              <NavigationMenu>
+                <NavigationMenuList>
+                  {links.filter(l => l.show).map((l) => (
+                    <NavigationMenuItem key={l.to}>
+                      <NavigationMenuLink to={l.to}>{l.label}</NavigationMenuLink>
+                    </NavigationMenuItem>
+                  ))}
+                </NavigationMenuList>
+              </NavigationMenu>
+
+              <Button variant="outline" onClick={() => setAuthOpen(true)}>Login</Button>
+            </div>
           </div>
         </nav>
       </header>
