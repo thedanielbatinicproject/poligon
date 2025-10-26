@@ -41,3 +41,8 @@ export function refreshRoleCookie(days = 7) {
   // rewrite cookie to extend expiry
   setRoleCookie(parsed.role, days);
 }
+
+export function removeRoleCookie() {
+  // Delete cookie by setting expiry in the past
+  writeCookie(POLIGON_COOKIE, '', -1);
+}

@@ -6,9 +6,47 @@
 @import "tailwindcss";
 
 :root {
+  /* Fallbacks (hex) for browsers that don't support OKLCH */
   --radius: 0.65rem;
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #2563eb; /* blue-600 fallback */
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #374151;
+  --muted: #f8fafc;
+  --muted-foreground: #6b7280;
+  --accent: #eef2ff;
+  --accent-foreground: #374151;
+  --destructive: #dc2626;
+  --border: #e6e7eb;
+  --input: #e6e7eb;
+  --ring: #7c3aed;
+  --chart-1: #6366f1;
+  --chart-2: #3b82f6;
+  --chart-3: #06b6d4;
+  --chart-4: #0ea5a4;
+  --chart-5: #8b5cf6;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #0ea5a4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef2ff;
+  --sidebar-accent-foreground: #374151;
+  --sidebar-border: #e6e7eb;
+  --sidebar-ring: #7c3aed;
+
+  /* OKLCH (preferred, modern) values — these override the fallbacks in supporting browsers */
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
@@ -80,6 +118,11 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
+}
+
+/* Smooth theme transition for color/background changes */
+html, body, .bg-card, .text-foreground, .bg-primary {
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
 }
 
 /* small utility mappings for shadcn-style CSS variables used by components */
