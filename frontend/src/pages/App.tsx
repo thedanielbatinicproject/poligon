@@ -1,15 +1,16 @@
-import React from 'react';
-import { Box, Heading, Text } from '@chakra-ui/react';
+import React, { useState } from "react";
+import { Header, Role } from "../components/Header";
+// ...other imports
 
-const App: React.FC = () => (
-  <Box p={8} minH="100vh" bg="gray.50">
-    <Heading as="h1" size="2xl" mb={4} color="teal.600">
-      Poligon
-    </Heading>
-    <Text fontSize="xl" color="gray.700">
-      Welcome to Poligon 2.0 – your platform for writing academic and scientific papers.
-    </Text>
-  </Box>
-);
+function App() {
+  const [role, setRole] = useState<Role>("visitor"); // Example role state
+
+  return (
+    <>
+      <Header role={role} />
+      {/* ...rest of your app */}
+    </>
+  );
+}
 
 export default App;

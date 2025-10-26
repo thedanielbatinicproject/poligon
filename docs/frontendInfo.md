@@ -9,4 +9,13 @@ The Poligon frontend operates in four distinct modes based on user authenticatio
 
 Role detection is handled after login and determines available navigation, features, and permissions throughout the app.
 
-Further details on UI and feature restrictions for each mode will be documented as the frontend is developed.
+
+## Global Font Usage
+
+The frontend uses three custom fonts, applied globally via Chakra UI theme:
+
+- **Playfair Display**: Used for headings and titles
+- **Source Sans Pro**: Used for body text and paragraphs
+- **Open Sans**: Used for descriptions and supporting text
+
+Font files are located in `/src/assets/fonts/` and loaded via `@font-face` in the main CSS file. The Chakra UI theme is configured to use these fonts for the appropriate text styles, ensuring a consistent look across the application.
