@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -11,12 +11,21 @@ import AdminPanel from './pages/AdminPanel';
 import MentorPanel from './pages/MentorPanel';
 import NotFound from './pages/NotFound';
 
-const App: React.FC = () => (
-  <Router>
+import { refreshRoleCookie } from './lib/auth';
+
+const App: React.FC = () => {
+  useEffect(() => {
+    // Renew role cookie expiration on each page load/refresh
+    if (typeof window !== 'undefined') refreshRoleCookie();
+  }, []);
+
+  return (
+    <Router>
     <Header />
     <main className="min-h-screen p-4">
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/documents" element={<Documents />} />
         <Route path="/files" element={<Files />} />
@@ -28,6 +37,6 @@ const App: React.FC = () => (
     </main>
     <Footer />
   </Router>
-);
+)};
 
 export default App;
