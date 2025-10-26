@@ -1,13 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { ChakraProvider } from "@chakra-ui/react";
-import Defaulttheme from "./Defaulttheme";
+import DefaultTheme from "./Defaulttheme";
 import App from "./pages/App";
-import "./styles/global.css"; // Import your global styles
+import "./styles/global.css";
+import "./styles/aurora.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ChakraProvider theme={Defaulttheme}>
+    <ChakraProvider theme={DefaultTheme}>
       <App />
     </ChakraProvider>
   </React.StrictMode>

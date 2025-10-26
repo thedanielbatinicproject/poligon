@@ -10,6 +10,13 @@ The Poligon frontend operates in four distinct modes based on user authenticatio
 Role detection is handled after login and determines available navigation, features, and permissions throughout the app.
 
 
+
+## Session & Role Management
+
+The frontend uses a custom React hook (`useSession`) to fetch user and session info from `/api/status` on page load. Key session data (user_id, name, email, role, theme, sidebar state) is stored in a browser cookie (`poligon_info`) for fast UI personalization and access control. If the user is not logged in, the cookie is cleared and the app operates in visitor mode.
+
+This system ensures robust, scalable session management and role-based rendering across all frontend modes.
+
 ## Global Font Usage
 
 The frontend uses three custom fonts, applied globally via Chakra UI theme:

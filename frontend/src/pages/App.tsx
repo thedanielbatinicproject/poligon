@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { Header, Role } from "../components/Header";
-// ...other imports
+import { useSession } from "../hooks/useSession";
+
 
 function App() {
-  const [role, setRole] = useState<Role>("visitor"); // Example role state
+  const { session, role, loading } = useSession();
+  
 
+
+  if (loading) return <div>Loading...</div>;
   return (
     <>
       <Header role={role} />
