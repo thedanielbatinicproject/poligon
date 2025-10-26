@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import Dialog from './ui/dialog';
+import LoginForm from './LoginForm';
 import AppToaster, { toastSuccess } from './ui/toast';
 import { getRoleFromCookie } from '../lib/auth';
 import {
@@ -18,6 +19,17 @@ const Header: React.FC = () => {
   useEffect(() => {
     const r = getRoleFromCookie() || 'visitor';
     setRole(r);
+  }, []);
+
+  useEffect(() => {
+    const onRole = (e: Event) => {
+      // Custom event with detail.role
+      // @ts-ignore
+      const newRole = e?.detail?.role ?? getRoleFromCookie() ?? 'visitor';
+      setRole(newRole);
+    };
+    window.addEventListener('poligon:roleChanged', onRole as EventListener);
+    return () => window.removeEventListener('poligon:roleChanged', onRole as EventListener);
   }, []);
 
   const links = [
@@ -55,11 +67,7 @@ const Header: React.FC = () => {
       </header>
 
       <Dialog isOpen={authOpen} onClose={() => setAuthOpen(false)} title="Login">
-        <p className="mb-4">Demo login modal. Click confirm to toast success.</p>
-        <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={() => setAuthOpen(false)}>Cancel</Button>
-          <Button onClick={() => { toastSuccess('Logged in (demo)'); setAuthOpen(false); }}>Confirm</Button>
-        </div>
+        <LoginForm onSuccess={() => setAuthOpen(false)} onCancel={() => setAuthOpen(false)} />
       </Dialog>
 
       <AppToaster />
