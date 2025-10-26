@@ -1,6 +1,6 @@
 {
   "name": "poligon-frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Poligon frontend scaffold (React + Vite + Shadcn UI)",
   "scripts": {
     "dev": "vite",
@@ -8,14 +8,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-navigation-menu": "^1.2.14",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.548.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/react": "^18.2.41",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.16",
+    "tailwindcss-cli": "^0.1.2",
     "typescript": "^5.3.3",
-    "vite": "^5.2.8"
+    "vite": "^7.1.12"
   }
 }
