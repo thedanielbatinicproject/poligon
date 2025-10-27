@@ -1,5 +1,9 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+new webpack.DefinePlugin({
+  'process.env.REACT_APP_API_BASE': JSON.stringify(process.env.REACT_APP_API_BASE || '')
+})
 
 module.exports = {
   entry: path.resolve(__dirname, 'src', 'index.tsx'),

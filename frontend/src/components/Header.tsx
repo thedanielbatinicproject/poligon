@@ -4,8 +4,8 @@ import { Button } from './ui/button';
 import Dialog from './ui/dialog';
 import LoginForm from './LoginForm';
 import AppToaster, { toastSuccess } from './ui/toast';
-import { removeRoleCookie } from '../lib/auth';
-import { getRoleFromCookie } from '../lib/auth';
+import { logoutFromServer, getRoleFromCookie } from '../lib/serverAuth';
+import { useNavigate } from 'react-router-dom';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -17,6 +17,7 @@ import { toggleTheme } from '../lib/theme';
 const Header: React.FC = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [role, setRole] = useState<string>('visitor');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const r = getRoleFromCookie() || 'visitor';
@@ -47,9 +48,10 @@ const Header: React.FC = () => {
   const isAuthenticated = ['user', 'student', 'mentor', 'admin'].includes(role);
 
   const handleLogout = () => {
-    removeRoleCookie();
-    window.dispatchEvent(new CustomEvent('poligon:roleChanged', { detail: { role: 'visitor' } }));
+    // call server logout and clear local cookie
+    logoutFromServer();
     toastSuccess('Logged out');
+    navigate('/');
   };
 
   return (
