@@ -54,27 +54,27 @@ export default function Header(): JSX.Element {
 
         <nav className="nav-links" aria-label="Main navigation">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            Home
+            <span className="nav-link-label">Home</span>
           </NavLink>
 
           <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            Profile
+            <span className="nav-link-label">Profile</span>
           </NavLink>
 
           <NavLink to="/documents" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            Documents
+            <span className="nav-link-label">Documents</span>
           </NavLink>
 
           <NavLink to="/tasks" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            Tasks
+            <span className="nav-link-label">Tasks</span>
           </NavLink>
 
           <NavLink to="/mentor" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            Mentor
+            <span className="nav-link-label">Mentor</span>
           </NavLink>
 
           <NavLink to="/admin" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            Admin
+            <span className="nav-link-label">Admin</span>
           </NavLink>
 
           {/* Right side: auth controls */}
