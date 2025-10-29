@@ -213,7 +213,9 @@ body::before{
 /* make the theme toggle button more prominent with a variable border and subtle glow */
 .theme-toggle-btn{
   background: linear-gradient(180deg, rgba(var(--accent-rgb),0.06), transparent 60%);
-  border: 1px solid rgba(var(--accent-rgb),0.85);
+  /* fallback: use --accent (hex) if rgba(var(--accent-rgb),...) is not supported by the browser/build output */
+  border: 1px solid var(--accent) !important;
+  border: 1px solid rgba(var(--accent-rgb),0.85) !important;
   padding:8px; display:inline-flex; align-items:center; justify-content:center;
   border-radius:10px; transition:box-shadow var(--theme-transition) ease, transform var(--theme-transition) ease, border-color var(--theme-transition) ease;
 }
