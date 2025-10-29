@@ -59,6 +59,32 @@ app.use('/api', (req, res) => {
 app.use('/uploads', (req, res) => {
   res.status(404).json({ error: 'Required uploads route is not accessible. Maybe try your request via /api/uploads route.' });
 });
+
+
+// Serve static frontend in production (copied to backend/public by frontend postbuild)
+try {
+  const frontendPublic = path.resolve(__dirname, '..', 'public'); // backend/public
+  if (fs.existsSync(frontendPublic)) {
+    console.log('Serving frontend from', frontendPublic);
+
+    // Serve static assets (hashed files) with long cache
+    app.use(express.static(frontendPublic, { index: false, maxAge: '1y' }));
+
+    // SPA fallback: for GET requests not starting with /api and not requesting a file, return index.html
+    app.get('*', (req, res, next) => {
+      if (req.method !== 'GET') return next();
+      if (req.path.startsWith('/api')) return next();
+      if (path.extname(req.path)) return res.status(404).end(); // let missing assets be 404
+      return res.sendFile(path.join(frontendPublic, 'index.html'));
+    });
+  } else {
+    console.log('Frontend public not found at', frontendPublic, '- run frontend build first.');
+  }
+} catch (err) {
+  console.warn('Error enabling static frontend serving:', err);
+}
+
+
 app.use('/', (req, res) => {
   res.status(404).json({ error: 'Required resource is not accessible.' });
 });
