@@ -49,7 +49,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           )}
 
           <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center' }}>
-            <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{ padding: '6px 10px', borderRadius: 8 }}>
+            <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="btn btn-primary btn-sm">
               {mode === 'login' ? 'Create account' : 'Back to login'}
             </button>
           </div>

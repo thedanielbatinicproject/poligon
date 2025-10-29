@@ -83,7 +83,7 @@ export default function Header(): JSX.Element {
             {user ? (
               <>
                 <div className="auth-username">{user.first_name || user.firstName || user.name}</div>
-                <button onClick={() => session?.logout()} className="btn btn-ghost btn-sm auth-btn">
+                <button onClick={() => session?.logout()} className="btn btn-logout btn-sm auth-btn">
                   Logout
                 </button>
               </>

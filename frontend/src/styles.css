@@ -1,92 +1,97 @@
+
+/* ---------- THEME VARIABLES ---------- */
 :root{
-	/* Light theme - Green aurora inspired (high contrast) */
-	--bg: #fbfff8; /* very pale mint */
-	--panel: #ffffff; /* surface / cards */
-	--text: #03322b; /* dark teal for best readability */
-	--muted: #5b766a; /* muted text */
-	--primary: #009875; /* vivid aurora green */
-	--accent: #8ff7cf; /* soft accent glow */
+  /* Light theme - Green aurora inspired (high contrast) */
+  --bg: #fbfff8; /* very pale mint */
+  --panel: #ffffff; /* surface / cards */
+  --text: #03322b; /* dark teal for best readability */
+  --muted: #5b766a; /* muted text */
+  --primary: #009875; /* vivid aurora green */
+  --accent: #8ff7cf; /* soft accent glow */
+  --accent-rgb: 143,247,207;
 
-	/* Headings (provide clear hierarchy) */
-	--heading-1: #012f28;
-	--heading-2: #05443a;
-	--heading-3: #066a50;
+  /* Headings (provide clear hierarchy) */
+  --heading-1: #012f28;
+  --heading-2: #05443a;
+  --heading-3: #066a50;
 
-	/* UI elements */
-	--link: var(--primary);
-	--border: rgba(2,40,34,0.08);
-	--glass: rgba(255,255,255,0.75);
-	--glass-border: rgba(2,40,34,0.06);
-	--radius: 14px;
-	--shadow: 0 10px 30px rgba(2,6,23,0.06);
+  /* UI elements */
+  --link: var(--primary);
+  --border: rgba(2,40,34,0.08);
+  --glass: rgba(255,255,255,0.75);
+  --glass-border: rgba(2,40,34,0.06);
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(2,6,23,0.06);
 
-	/* Cards, code, and surfaces */
-	--card-bg: #ffffff;
-	--card-border: rgba(2,40,34,0.06);
-	--code-bg: #eefcf4;
+  /* Cards, code, and surfaces */
+  --card-bg: #ffffff;
+  --card-border: rgba(2,40,34,0.06);
+  --code-bg: #eefcf4;
 
-	/* Feedback colors */
-	--success: #007f59;
-	--warning: #ffb84d;
-	--danger: #d64545;
+  /* Feedback colors */
+  --success: #007f59;
+  --warning: #ffb84d;
+  --danger: #d64545;
 
-	/* Misc */
-	--font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  /* Misc */
+  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
 
 [data-theme="dark"]{
-	/* Dark theme - deep blue / purple aurora inspiration (high contrast) */
-	--bg: #031026; /* deep navy */
-	--panel: #07162a; /* slightly lighter surface */
-	--text: #e8f6ff; /* pale cyan/white for readability */
-	--muted: #92a8b3; /* muted text */
-	--primary: #6ec8ff; /* icy blue aurora */
-	--accent: #b78bff; /* purple glow accent */
+  /* Dark theme - deep blue / purple aurora inspiration (high contrast) */
+  --bg: #031026; /* deep navy */
+  --panel: #07162a; /* slightly lighter surface */
+  --text: #e8f6ff; /* pale cyan/white for readability */
+  --muted: #92a8b3; /* muted text */
+  --primary: #6ec8ff; /* icy blue aurora */
+  --accent: #b78bff; /* purple glow accent */
+  --accent-rgb: 183,139,255;
 
-	/* Headings */
-	--heading-1: #e8f6ff;
-	--heading-2: #d7eeff;
-	--heading-3: #bcdcff;
+  /* Headings */
+  --heading-1: #e8f6ff;
+  --heading-2: #d7eeff;
+  --heading-3: #bcdcff;
 
-	/* UI elements */
-	--link: var(--primary);
-	--border: rgba(255,255,255,0.06);
-	--glass: rgba(8,14,24,0.55);
-	--glass-border: rgba(255,255,255,0.04);
-	--radius: 14px;
-	--shadow: 0 10px 30px rgba(0,0,0,0.6);
+  /* UI elements */
+  --link: var(--primary);
+  --border: rgba(255,255,255,0.06);
+  --glass: rgba(8,14,24,0.55);
+  --glass-border: rgba(255,255,255,0.04);
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0,0,0,0.6);
 
-	/* Cards, code, and surfaces */
-	--card-bg: #071426;
-	--card-border: rgba(255,255,255,0.03);
-	--code-bg: #031826;
+  /* Cards, code, and surfaces */
+  --card-bg: #071426;
+  --card-border: rgba(255,255,255,0.03);
+  --code-bg: #031826;
 
-	/* Feedback colors */
-	--success: #32d6a4;
-	--warning: #ffb86b;
-	--danger: #ff6b88;
+  /* Feedback colors */
+  --success: #32d6a4;
+  --warning: #ffb86b;
+  --danger: #ff6b88;
 
-	/* Misc */
-	--font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  /* Misc */
+  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
 
+/* basic page */
 body{font-family: var(--font-sans); margin:0; background:var(--bg); color:var(--text)}
 main{max-width:900px;margin:24px auto;padding:0 16px}
 a{color:var(--primary)}
 
 /* theme transition helper */
 :root{
-	--theme-transition: 220ms;
+  --theme-transition: 220ms;
 }
 
 /* apply smooth transitions to common elements when theme changes */
 body, header, main, nav, .auth-modal, .auth-modal-overlay, button, input, a {
-	transition: background-color var(--theme-transition) ease, color var(--theme-transition) ease, border-color var(--theme-transition) ease, box-shadow var(--theme-transition) ease;
+  transition: background-color var(--theme-transition) ease, color var(--theme-transition) ease, border-color var(--theme-transition) ease, box-shadow var(--theme-transition) ease;
 }
 
 /* Auth modal / glass styling */
 .auth-modal-overlay{
-	position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;background:rgba(0,0,0,0.35);
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;background:rgba(0,0,0,0.35);
 }
 .auth-modal{
   width:420px;max-width:95%;border-radius:var(--radius);padding:0;background:var(--glass);backdrop-filter: blur(8px) saturate(120%);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--glass-border);
@@ -103,24 +108,24 @@ button:hover{transform:translateY(-1px)}
 
 /* Global subtle glassy background layer to give the whole site a soft aurora glow */
 body::before{
-	content: "";
-	position: fixed;
-	inset: 0;
-	pointer-events: none;
-	z-index: -1;
-	background: radial-gradient(ellipse at 10% 20%, rgba(138,255,206,0.10), transparent 10%),
-							radial-gradient(ellipse at 90% 80%, rgba(138,200,255,0.08), transparent 12%);
-	filter: blur(48px);
-	opacity: 0.9;
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(ellipse at 10% 20%, rgba(138,255,206,0.10), transparent 10%),
+              radial-gradient(ellipse at 90% 80%, rgba(138,200,255,0.08), transparent 12%);
+  filter: blur(48px);
+  opacity: 0.9;
 }
 
 /* Glass panel utility - use on cards/panels to get morphism */
 .glass-panel{
-	background: var(--glass);
-	border: 1px solid var(--glass-border);
-	backdrop-filter: blur(10px) saturate(120%);
-	box-shadow: var(--shadow);
-	border-radius: var(--radius);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px) saturate(120%);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
 }
 
 /* Auth form tokens and modern input/button styles */
@@ -128,12 +133,12 @@ body::before{
 .auth-label{display:block;font-size:13px;margin-bottom:8px;color:var(--muted);font-weight:600}
 .auth-input{margin-bottom:12px}
 .auth-input input{
-	width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);box-sizing:border-box;background:var(--card-bg);color:var(--text);outline:none;transition:box-shadow var(--theme-transition) ease,transform var(--theme-transition) ease,border-color var(--theme-transition) ease;
+  width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);box-sizing:border-box;background:var(--card-bg);color:var(--text);outline:none;transition:box-shadow var(--theme-transition) ease,transform var(--theme-transition) ease,border-color var(--theme-transition) ease;
 }
 .auth-input input:focus{
-	box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-	transform: translateY(-1px);
-	border-color: rgba(0,0,0,0.08);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+  border-color: rgba(0,0,0,0.08);
 }
 
 /* Buttons - modern, no heavy outlines, smooth hover */
@@ -142,10 +147,10 @@ body::before{
 .btn:hover:not(:disabled){transform:translateY(-3px)}
 
 .btn-primary{
-	background: linear-gradient(90deg,var(--primary),var(--accent));
-	color: var(--panel);
-	box-shadow: 0 8px 28px rgba(2,6,23,0.12);
-	border: none;
+  background: linear-gradient(90deg,var(--primary),var(--accent));
+  color: var(--panel);
+  box-shadow: 0 8px 28px rgba(2,6,23,0.12);
+  border: none;
 }
 
 .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
@@ -153,22 +158,43 @@ body::before{
 /* AAIedu image-button - thin border, modern look */
 .aaiedu-btn{display:inline-flex;align-items:center;justify-content:center;padding:6px;border-radius:10px;border:1px solid var(--border);background:transparent;cursor:pointer;transition:transform var(--theme-transition) ease,box-shadow var(--theme-transition) ease}
 .aaiedu-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.08)}
-.aaiedu-img{height:44px;display:block}
+.aaiedu-img{height:54px;display:block}
 
 .auth-sep{height:1px;background:linear-gradient(90deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));margin:14px 0;border-radius:1px}
+
+/* small centered heading used inside auth panels */
+.auth-heading{display:block;text-align:center;margin-bottom:10px;color:var(--muted);font-weight:700}
+
+/* subtle colored glow for glass panels (uses --accent-rgb) */
+.glass-panel{
+  /* existing properties kept, add subtle accent glow */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 6px 24px rgba(var(--accent-rgb),0.08);
+}
+
+/* ensure modal close button is visible in dark theme */
+.auth-close{position:absolute;right:14px;top:8px;border:none;background:transparent;font-size:20px;cursor:pointer;color:var(--text)}
 
 /* Make auth modal use the glass-panel styles */
 .auth-modal{padding:18px;}
 .auth-modal .glass-panel{padding:16px}
 
+/* Logout button explicit red color regardless of theme */
+.btn-logout{background:#d64545;color:#fff;border:none}
+.btn-logout:hover{background:#b03030}
+
 /* Header / Nav styles to match theme tokens */
 .site-header{
-	display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel);color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel);color:var(--text);
 }
 .site-title{font-weight:700;font-size:18px;color:var(--heading-1)}
 .nav-links{display:flex;gap:8px;align-items:center}
 .nav-link{padding:6px 10px;border-radius:8px;text-decoration:none;color:var(--text);font-weight:600;transition:background-color var(--theme-transition) ease,color var(--theme-transition) ease,transform var(--theme-transition) ease}
-.nav-link:hover{background:var(--card-bg);transform:translateY(-2px)}
+.nav-link:hover{background:transparent}
+.nav-link-label{display:inline-block;transition:transform var(--theme-transition) ease,color var(--theme-transition) ease}
+.nav-link:hover .nav-link-label{transform:scale(1.06)}
+
+/* Keep active background stable on hover; only scale the label */
+.nav-link.nav-link-active:hover{background:linear-gradient(90deg,var(--accent),rgba(255,255,255,0.02))}
 .nav-link-active{background:linear-gradient(90deg,var(--accent),rgba(255,255,255,0.02));color:var(--heading-2);box-shadow:0 6px 18px rgba(2,6,23,0.08)}
 
 .header-actions{display:flex;gap:8px;align-items:center;margin-left:12px}

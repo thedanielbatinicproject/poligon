@@ -48,13 +48,18 @@ export default function LoginForm({ onSuccess }: Props) {
 
   return (
     <div className="glass-panel">
-      <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'center' }}>
-        <button onClick={handleAaiClick} className="aaiedu-btn" aria-label="Login with AAIedu.hr">
-          <img src={aaiSrc} alt="AAIedu.hr" className="aaiedu-img" />
-        </button>
+      <div style={{ marginBottom: 6 }}>
+        <div className="auth-heading">Login with AAI@EduHr</div>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <button onClick={handleAaiClick} className="aaiedu-btn" aria-label="Login with AAIedu.hr">
+            <img src={aaiSrc} alt="AAIedu.hr" className="aaiedu-img" />
+          </button>
+        </div>
       </div>
 
       <div className="auth-sep" />
+
+      <div style={{ marginBottom: 8 }} className="auth-heading">Login with internal credentials</div>
 
       <form onSubmit={handleLocalLogin} aria-label="Local login form" className="auth-form">
         <div className="auth-input">
