@@ -20,6 +20,15 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
     const err: any = new Error('API error')
     err.status = res.status
     err.body = body
+    // notify global notifier if available
+    try {
+      const msg = (body && typeof body === 'object' && (body.error || body.message)) || String(body) || 'Request failed'
+      if ((window as any).__pushNotification) {
+        ;(window as any).__pushNotification(String(msg), undefined, true)
+      }
+    } catch (e) {
+      /* ignore notifier errors */
+    }
     throw err
   }
 
@@ -94,10 +103,15 @@ export async function postJSON(path: string, body: any) {
     } catch (e) {
       /* ignore */
     }
-    const err: any = new Error(message);
-    err.status = res.status;
-    err.body = data;
-    throw err;
+    const err: any = new Error(message)
+    err.status = res.status
+    err.body = data
+    try {
+      if ((window as any).__pushNotification) {
+        ;(window as any).__pushNotification(String(message), undefined, true)
+      }
+    } catch (e) {}
+    throw err
   }
   return data;
 }
@@ -128,10 +142,15 @@ export async function getJSON(path: string) {
         message = data;
       }
     } catch (e) {}
-    const err: any = new Error(message);
-    err.status = res.status;
-    err.body = data;
-    throw err;
+    const err: any = new Error(message)
+    err.status = res.status
+    err.body = data
+    try {
+      if ((window as any).__pushNotification) {
+        ;(window as any).__pushNotification(String(message), undefined, true)
+      }
+    } catch (e) {}
+    throw err
   }
   return data;
 }

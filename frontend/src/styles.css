@@ -222,5 +222,50 @@ body::before{
 .theme-toggle-btn:hover{transform:translateY(-3px); box-shadow: 0 10px 26px rgba(var(--accent-rgb),0.10)}
 .theme-toggle-btn:focus{outline:none; box-shadow: 0 6px 26px rgba(var(--accent-rgb),0.18); border-color: rgba(var(--accent-rgb),1)}
 
+/* Notifications - top-right stack (glass morphism + slide animations) */
+.notification-container{
+  position: fixed;
+  top: 64px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 99999;
+  align-items: flex-end;
+  max-width: 360px;
+  padding: 8px;
+  pointer-events: none; /* allow clicks through padding area */
+}
+
+.notification-item{
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 360px;
+  background: var(--glass);
+  backdrop-filter: blur(8px) saturate(120%);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--text);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.08);
+  transform: translateX(110%);
+  opacity: 0;
+  transition: transform 260ms ease, opacity 260ms ease;
+}
+.notification-item.entering{ transform: translateX(0); opacity: 1 }
+.notification-item.exiting{ transform: translateX(110%); opacity: 0 }
+.notification-item .notification-content{ flex: 1 }
+.notification-item .notification-close{ border: none; background: transparent; color: var(--muted); font-size: 18px; padding: 4px; cursor: pointer }
+.notification-item.is-error{ border-color: var(--danger); box-shadow: 0 12px 30px rgba(214,69,69,0.12) }
+
+/* Error variant polish */
+.notification-item.is-error{ background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02)); }
+.notification-item.is-error .notification-content{ color: var(--panel) }
+.notification-item.is-error .notification-close{ color: var(--panel) }
+
+
 
 

@@ -5,6 +5,7 @@ import App from './App'
 import './styles.css'
 import { SessionProvider } from './lib/session'
 import { ThemeProvider } from './lib/theme'
+import NotificationsProvider from './lib/notifications'
 
 const container = document.getElementById('root')!
 const root = createRoot(container)
@@ -13,7 +14,9 @@ root.render(
     <BrowserRouter>
       <ThemeProvider>
         <SessionProvider>
-          <App />
+          <NotificationsProvider>
+            <App />
+          </NotificationsProvider>
         </SessionProvider>
       </ThemeProvider>
     </BrowserRouter>
