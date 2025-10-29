@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import apiRouter from './routes/api.routes';
+import fs from 'fs';
 import passport from 'passport';
 import samlStrategy from './config/saml';
 
