@@ -6,15 +6,16 @@ import { useSession } from '../lib/session';
 
 const linkBase: React.CSSProperties = {
   textDecoration: 'none',
-  color: 'inherit',
+  color: 'var(--text)',
   padding: '6px 10px',
   borderRadius: 6,
   display: 'inline-block',
+  border: '1px solid transparent',
 };
 
 const linkActive: React.CSSProperties = {
-  backgroundColor: '#e6f0ff',
-  color: '#03396c',
+  backgroundColor: 'var(--accent)',
+  color: 'var(--heading-2)',
   fontWeight: 600,
 };
 
@@ -23,8 +24,9 @@ const headerStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '12px 20px',
-  borderBottom: '1px solid #eee',
-  background: '#ffffff',
+  borderBottom: '1px solid var(--border)',
+  background: 'var(--panel)',
+  color: 'var(--text)'
 };
 
 const navStyle: React.CSSProperties = {
@@ -47,48 +49,50 @@ export default function Header(): JSX.Element {
 
   return (
     <>
-      <header style={headerStyle}>
-        <div style={{ fontWeight: 700, fontSize: 18 }}>Poligon</div>
+      <header className="site-header">
+        <div className="site-title">Poligon</div>
 
-        <nav style={navStyle} aria-label="Main navigation">
-          <NavLink to="/" end style={({ isActive }) => (isActive ? { ...linkBase, ...linkActive } : linkBase)}>
+        <nav className="nav-links" aria-label="Main navigation">
+          <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
             Home
           </NavLink>
 
-          <NavLink to="/profile" style={({ isActive }) => (isActive ? { ...linkBase, ...linkActive } : linkBase)}>
+          <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
             Profile
           </NavLink>
 
-          <NavLink to="/documents" style={({ isActive }) => (isActive ? { ...linkBase, ...linkActive } : linkBase)}>
+          <NavLink to="/documents" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
             Documents
           </NavLink>
 
-          <NavLink to="/tasks" style={({ isActive }) => (isActive ? { ...linkBase, ...linkActive } : linkBase)}>
+          <NavLink to="/tasks" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
             Tasks
           </NavLink>
 
-          <NavLink to="/mentor" style={({ isActive }) => (isActive ? { ...linkBase, ...linkActive } : linkBase)}>
+          <NavLink to="/mentor" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
             Mentor
           </NavLink>
 
-          <NavLink to="/admin" style={({ isActive }) => (isActive ? { ...linkBase, ...linkActive } : linkBase)}>
+          <NavLink to="/admin" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
             Admin
           </NavLink>
 
           {/* Right side: auth controls */}
-          <div style={{ marginLeft: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="header-actions">
             <ThemeToggle />
             {user ? (
-              <button
-                onClick={() => session?.logout()}
-                style={{ ...linkBase, border: 'none', background: 'transparent', cursor: 'pointer' }}
-              >
-                {user.first_name || user.firstName || user.name} LOGOUT
-              </button>
+              <>
+                <div className="auth-username">{user.first_name || user.firstName || user.name}</div>
+                <button onClick={() => session?.logout()} className="btn btn-ghost btn-sm auth-btn">
+                  Logout
+                </button>
+              </>
             ) : (
-              <button onClick={() => setModalOpen(true)} style={{ ...linkBase }}>
-                Login / Register
-              </button>
+              <>
+                <button onClick={() => setModalOpen(true)} className="btn btn-primary btn-sm auth-btn">
+                  Login / Register
+                </button>
+              </>
             )}
           </div>
         </nav>

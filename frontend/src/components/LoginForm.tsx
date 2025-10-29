@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useSession } from '../lib/session'
+import { useTheme } from '../lib/theme'
 import aaieduImg from '../assets/images/aaieduhr.png'
+import aaieduImgDark from '../assets/images/aaieduhr-darktheme.png'
 
 type Props = {
   onSuccess?: () => void
@@ -40,87 +42,35 @@ export default function LoginForm({ onSuccess }: Props) {
     }
   }
 
+  const { theme } = useTheme()
+
+  const aaiSrc = theme === 'dark' ? aaieduImgDark : aaieduImg
+
   return (
-    <div>
+    <div className="glass-panel">
       <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'center' }}>
-        <button
-          onClick={handleAaiClick}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            padding: 0,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-          }}
-          aria-label="Login with AAIedu.hr"
-        >
-          <img src={aaieduImg} alt="AAIedu.hr" style={{ height: 44 }} />
+        <button onClick={handleAaiClick} className="aaiedu-btn" aria-label="Login with AAIedu.hr">
+          <img src={aaiSrc} alt="AAIedu.hr" className="aaiedu-img" />
         </button>
       </div>
 
-      <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '12px 0' }} />
+      <div className="auth-sep" />
 
-      <form onSubmit={handleLocalLogin} aria-label="Local login form">
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6 }}>Email</label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            required
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: 10,
-              border: '1px solid #e6e9ee',
-              outline: 'none',
-              boxSizing: 'border-box',
-              background: 'rgba(255,255,255,0.8)',
-            }}
-          />
+      <form onSubmit={handleLocalLogin} aria-label="Local login form" className="auth-form">
+        <div className="auth-input">
+          <label className="auth-label">Email</label>
+          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6 }}>Password</label>
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            required
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: 10,
-              border: '1px solid #e6e9ee',
-              outline: 'none',
-              boxSizing: 'border-box',
-              background: 'rgba(255,255,255,0.8)',
-            }}
-          />
+        <div className="auth-input">
+          <label className="auth-label">Password</label>
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
         </div>
 
-        {error && (
-          <div style={{ color: 'crimson', marginBottom: 10, fontSize: 13 }}>
-            {error}
-          </div>
-        )}
+        {error && <div style={{ color: 'var(--danger)', marginBottom: 10, fontSize: 13 }}>{error}</div>}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: '10px 16px',
-              borderRadius: 10,
-              border: 'none',
-              background: '#0b63d1',
-              color: '#fff',
-              cursor: loading ? 'default' : 'pointer',
-              boxShadow: '0 4px 12px rgba(11,99,209,0.12)',
-              transition: 'transform 140ms ease, box-shadow 140ms ease',
-            }}
-          >
+          <button type="submit" disabled={loading} className="btn btn-primary">
             {loading ? 'Logging in…' : 'Login'}
           </button>
         </div>
