@@ -1,18 +1,56 @@
-body{font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0}
+:root{
+	--bg: #ffffff;
+	--panel: #f8f9fb;
+	--text: #0b1723;
+	--muted: #6b7280;
+	--primary: #0b63d1;
+	--glass: rgba(255,255,255,0.55);
+	--glass-border: rgba(255,255,255,0.5);
+	--radius: 14px;
+	--shadow: 0 8px 30px rgba(2,6,23,0.08);
+	--font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+[data-theme="dark"]{
+	--bg: #071021;
+	--panel: #0f1724;
+	--text: #e6eef8;
+	--muted: #9aa6b2;
+	--primary: #4aa3ff;
+	--glass: rgba(18,24,32,0.6);
+	--glass-border: rgba(255,255,255,0.06);
+	--shadow: 0 8px 30px rgba(2,6,23,0.6);
+}
+
+body{font-family: var(--font-sans); margin:0; background:var(--bg); color:var(--text)}
 main{max-width:900px;margin:24px auto;padding:0 16px}
-a{color:#0366d6}
+a{color:var(--primary)}
+
+/* theme transition helper */
+:root{
+	--theme-transition: 220ms;
+}
+
+/* apply smooth transitions to common elements when theme changes */
+body, header, main, nav, .auth-modal, .auth-modal-overlay, button, input, a {
+	transition: background-color var(--theme-transition) ease, color var(--theme-transition) ease, border-color var(--theme-transition) ease, box-shadow var(--theme-transition) ease;
+}
 
 /* Auth modal / glass styling */
 .auth-modal-overlay{
 	position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;background:rgba(0,0,0,0.35);
 }
 .auth-modal{
-	width:420px;max-width:95%;border-radius:14px;padding:0;background:rgba(255,255,255,0.55);backdrop-filter: blur(8px) saturate(120%);box-shadow:0 8px 30px rgba(2,6,23,0.2);overflow:hidden;border:1px solid rgba(255,255,255,0.5);
+  width:420px;max-width:95%;border-radius:var(--radius);padding:0;background:var(--glass);backdrop-filter: blur(8px) saturate(120%);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--glass-border);
 }
 .auth-close{position:absolute;right:14px;top:8px;border:none;background:transparent;font-size:20px;cursor:pointer}
 
 /* small input, button niceties */
-input{border:1px solid #ddd}
+input{border:1px solid rgba(0,0,0,0.08);background:transparent}
 button{transition:all 160ms ease}
 button:hover{transform:translateY(-1px)}
+
+/* small helpers */
+.rounded { border-radius: 10px }
+
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import AuthModal from './AuthModal';
+import ThemeToggle from './ThemeToggle';
 import { useSession } from '../lib/session';
 
 const linkBase: React.CSSProperties = {
@@ -75,7 +76,8 @@ export default function Header(): JSX.Element {
           </NavLink>
 
           {/* Right side: auth controls */}
-          <div style={{ marginLeft: 12 }}>
+          <div style={{ marginLeft: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <ThemeToggle />
             {user ? (
               <button
                 onClick={() => session?.logout()}
