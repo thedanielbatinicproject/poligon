@@ -332,6 +332,13 @@ main{flex:1}
 }
 .site-footer .footer-link:hover{ color: var(--text); text-decoration: underline }
 
+/* NotFound page styles */
+.not-found-page{display:flex;align-items:center;justify-content:center;min-height: 60vh;padding: 28px;}
+.not-found-content{text-align:center;padding:36px;border-radius:12px;max-width:720px;}
+.not-found-code{font-size:96px;line-height:1;font-weight:800;color:var(--heading-1);margin-bottom:8px;}
+.not-found-title{font-size:28px;margin:6px 0 8px 0;color:var(--heading-2);}
+.not-found-desc{color:var(--muted);font-size:16px;margin:0 auto;max-width:640px;}
+
 
 
 
