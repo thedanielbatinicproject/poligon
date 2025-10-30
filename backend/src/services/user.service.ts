@@ -231,7 +231,7 @@ export async function getLocalUserByEmail(email: string): Promise<{
   password_hash: string;
   created_at?: string;
   updated_at?: string;
-  // include any other columns your schema exposes (force_password_change, etc.)
+  // include any other columns your schema exposes
 } | null> {
   if (!email || typeof email !== 'string') return null;
   const normalized = email.trim().toLowerCase();
@@ -293,14 +293,14 @@ export async function createLocalUser(localUser: {
 /**
  * Changes the password for a local user.
  * Only admin can change any user's password, others can change only their own.
- * Also sets force_password_change to false after successful change.
  * @param userId - The unique identifier of the user.
  * @param passwordHash - The new hashed password.
  * @returns true if password changed, false otherwise.
  */
 export async function changeLocalUserPassword(userId: number, passwordHash: string): Promise<boolean> {
+  // Keep this update compatible with minimal schema by only updating password_hash here.
   const [result] = await pool.query(
-    `UPDATE local_users SET password_hash = ?, force_password_change = false WHERE user_id = ?`,
+    `UPDATE local_users SET password_hash = ? WHERE user_id = ?`,
     [passwordHash, userId]
   );
   return (result as any).affectedRows === 1;

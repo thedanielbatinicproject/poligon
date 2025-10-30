@@ -186,29 +186,40 @@ usersRouter.post('/register-local', async (req, res) => {
 // POST /api/users/local-change-password - Change password for local users
 usersRouter.post('/local-change-password', checkLogin, async (req, res) => {
   try {
-    const { user_id, new_password } = req.body;
-    const sessionUserId = req.session.user_id;
+    // Coerce and validate inputs to avoid type-mismatch authorization errors
+    const rawUserId = req.body?.user_id;
+    const new_password = req.body?.new_password;
+    const sessionUserId = Number(req.session.user_id);
     const sessionRole = req.session.role;
 
-    if (!user_id || !new_password) {
+    if (!rawUserId || !new_password) {
       return res.status(400).json({ error: 'Missing required fields: user_id, new_password' });
+    }
+
+    const user_id = Number(rawUserId);
+    if (!Number.isInteger(user_id) || user_id <= 0) {
+      return res.status(400).json({ error: 'Invalid user_id' });
     }
 
     // Only admin can change anyone's password, others can only change their own
     if (sessionRole !== 'admin' && sessionUserId !== user_id) {
-      return res.status(403).json({ error: 'Not authorized to change this user\'s password! Userid you tried to change: ' + user_id });
+      return res.status(403).json({ error: `Not authorized to change this user's password! Tried to change user_id=${user_id}` });
     }
 
+    // Hash the new password and update local_users
     const passwordHash = await bcrypt.hash(new_password, 10);
     const result = await changeLocalUserPassword(user_id, passwordHash);
 
     if (result) {
       return res.json({ success: true });
     } else {
-      return res.status(404).json({ error: 'User not found or password not changed!' });
+      // If update affected 0 rows, return 404 with clear message
+      return res.status(404).json({ error: 'Local user not found or password not changed for provided user_id' });
     }
   } catch (err) {
-    res.status(500).json({ error: 'Password change failed!', details: err });
+    // log server-side error for debugging
+    console.error('Error in /api/users/local-change-password:', err);
+    res.status(500).json({ error: 'Password change failed!', details: String(err) });
   }
 });
 

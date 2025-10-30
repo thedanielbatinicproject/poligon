@@ -213,10 +213,33 @@ export default function Profile(): JSX.Element {
     try {
       setPwLoading(true)
       await postJSON('/api/users/local-change-password', { user_id: user.user_id, new_password: newPass })
-      notifier.push('Password changed — you will be logged out now', 3)
-      // logout and reload
-      try { await postJSON('/api/auth/logout', {}) } catch (e) {}
-      window.location.reload()
+      // show a professional confirmation message with a 10s countdown
+      // We'll update the notification each second so it displays remaining seconds.
+      const TOTAL = 10
+      let remaining = TOTAL
+
+      const makeMsg = (s: number) => `Password successfully changed. For security reasons, you will be logged out in ${s} second${s === 1 ? '' : 's'}. Please sign in again using your new password.`
+
+      // push initial notification with full TTL
+      let notifId = notifier.push(makeMsg(remaining), TOTAL)
+
+      const iv = window.setInterval(() => {
+        remaining -= 1
+        if (remaining <= 0) {
+          // final tick - stop the interval (logout will happen from the timeout below)
+          window.clearInterval(iv)
+          return
+        }
+        // update the existing notification in-place with remaining seconds
+        try { notifier.update(notifId, makeMsg(remaining), remaining) } catch (e) {}
+      }, 1000)
+
+      // after TOTAL seconds, logout and reload
+      setTimeout(async () => {
+        window.clearInterval(iv)
+        try { await postJSON('/api/auth/logout', {}) } catch (e) {}
+        window.location.reload()
+      }, TOTAL * 1000)
     } catch (err: any) {
       notifier.push(String(err?.message || err), undefined, true)
     } finally {
@@ -292,6 +315,7 @@ export default function Profile(): JSX.Element {
 
               <div style={{ marginTop: '0.75rem' }}>
                 <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Role: <strong>{user.role}</strong> (read-only)</div>
+                <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Affiliation: <strong>{user.affiliation || '—'}</strong></div>
                 <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Email: <strong>{user.email}</strong></div>
               </div>
             </div>

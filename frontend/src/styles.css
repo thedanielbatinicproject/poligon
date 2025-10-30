@@ -532,25 +532,27 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   box-shadow: 0 6px 14px rgba(var(--accent-rgb),0.10) !important;
 }
 
-/* Password show/hide toggle (only used for new password first input) */
-.pw-input-wrapper{ position: relative; }
-.pw-input-wrapper .auth-input{ padding-right: 86px; /* reserve space for the toggle */ }
+/* Password show/hide toggle (only used for new password first input)
+   - position the toggle absolutely so it never affects layout or inherits global button hover transforms
+   - keep both inputs constrained to the same outer max-width so boxes match visually */
+.pw-input-wrapper{ position: relative; width: 100%; max-width: 520px; }
+.pw-input-wrapper .auth-input{ box-sizing: border-box; padding-right: 48px; width: 100%; }
 .pw-toggle{
   position: absolute;
   right: 12px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-70%) !important;
   background: transparent;
-  border: none;
   color: var(--muted);
   cursor: pointer;
   padding: 6px 8px;
   font-weight: 600;
   border-radius: 8px;
+  display: inline-flex;align-items:center;justify-content:center;
+  transition: none !important;
 }
-.pw-toggle{ transition: none !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-.pw-toggle:hover{ color: var(--text); transform: none !important; box-shadow: none !important; }
-.pw-toggle:focus{ outline: none; box-shadow: none !important; }
+.pw-toggle:hover{ color: var(--text); }
+.pw-toggle:focus{ outline: none; }
 
 /* Ensure the password inputs in the password-area have identical sizing even when the first
    input reserves extra right padding for the toggle button. Box-sizing ensures padding doesn't
@@ -558,14 +560,13 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .password-area .auth-input, .password-area input.auth-input, .password-area .auth-input input, .password-area input {
   box-sizing: border-box;
   width: 100%;
-  max-width: 38ch;
-  padding-right: 14px; /* default padding for both inputs */
+  max-width: 520px; /* ensure both inputs share identical outer width */
+  padding-right: 14px; /* default inner padding for both inputs */
 }
 
-/* Reserve extra right padding only for the first input wrapper so the visual width stays identical
-   (we keep the container width the same; both inputs use width:100% so they render identical) */
+/* Reserve a modest extra right padding only for the first input wrapper so text doesn't overlap the toggle */
 .pw-input-wrapper .auth-input, .pw-input-wrapper .auth-input input {
-  padding-right: 86px;
+  padding-right: 48px;
 }
 
 

@@ -11,6 +11,8 @@ type Notification = {
 type NotificationsContextShape = {
   push: (message: string, durationSec?: number, isError?: boolean) => string
   remove: (id: string) => void
+  // update an existing notification in-place (if visible or queued)
+  update: (id: string, message: string, durationSec?: number) => boolean
 }
 
 const NotificationsContext = createContext<NotificationsContextShape | undefined>(undefined)
@@ -59,6 +61,45 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     const at = window.setTimeout(() => finalizeRemove(id), ANIM_MS)
     animTimers.current[id] = at
   }, [finalizeRemove])
+
+  // update an existing notification (visible or queued) in-place
+  const update = useCallback((id: string, message: string, durationSec?: number) => {
+    const durationMs = durationSec ? Math.max(2000, Math.floor(durationSec * 1000)) : wordsToDurationMs(message)
+
+    // if visible, update the visible item and reset its timer
+    let updated = false
+    setVisible((v) => {
+      const idx = v.findIndex((it) => it.id === id)
+      if (idx === -1) return v
+      updated = true
+      const copy = v.slice()
+      copy[idx] = { ...copy[idx], message, durationMs }
+      // clear any existing timer and set a new one
+      const t = timers.current[id]
+      if (t) {
+        window.clearTimeout(t)
+        delete timers.current[id]
+      }
+      const to = window.setTimeout(() => startExit(id), durationMs)
+      timers.current[id] = to
+      return copy
+    })
+
+    if (updated) return true
+
+    // otherwise, try to update in the queue
+    let queued = false
+    setQueue((q) => {
+      const idx = q.findIndex((it) => it.id === id)
+      if (idx === -1) return q
+      queued = true
+      const copy = q.slice()
+      copy[idx] = { ...copy[idx], message, durationMs }
+      return copy
+    })
+
+    return queued
+  }, [startExit])
 
   // Effect: promote items from queue into visible slots whenever queue or visible changes
   useEffect(() => {
@@ -159,7 +200,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [])
 
   return (
-    <NotificationsContext.Provider value={{ push, remove }}>
+    <NotificationsContext.Provider value={{ push, remove, update }}>
       {children}
 
       {/* Notification container rendered alongside children */}
