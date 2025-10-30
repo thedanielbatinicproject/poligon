@@ -32,6 +32,8 @@
   --success: #007f59;
   --warning: #ffb84d;
   --danger: #d64545;
+  --success-rgb: 0,127,89;
+  --danger-rgb: 214,69,69;
 
   /* Misc */
   --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -69,6 +71,8 @@
   --success: #32d6a4;
   --warning: #ffb86b;
   --danger: #ff6b88;
+  --success-rgb: 50,214,164;
+  --danger-rgb: 255,107,136;
 
   /* Misc */
   --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -241,16 +245,17 @@ body::before{
   pointer-events: auto;
   min-width: 280px;
   max-width: 360px;
-  background: var(--glass);
-  backdrop-filter: blur(8px) saturate(120%);
-  border: 1px solid var(--glass-border);
+  /* default: subtle success/green glass */
+  background: linear-gradient(135deg, rgba(var(--success-rgb),0.10), var(--glass));
+  backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(var(--success-rgb),0.12);
   border-radius: 12px;
   padding: 12px 14px;
-  color: var(--text);
+  color: var(--text); /* use theme text color for best contrast in light/dark */
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  box-shadow: 0 10px 30px rgba(2,6,23,0.08);
+  box-shadow: 0 12px 36px rgba(2,6,23,0.10);
   transform: translateX(110%);
   opacity: 0;
   transition: transform 260ms ease, opacity 260ms ease;
@@ -258,13 +263,19 @@ body::before{
 .notification-item.entering{ transform: translateX(0); opacity: 1 }
 .notification-item.exiting{ transform: translateX(110%); opacity: 0 }
 .notification-item .notification-content{ flex: 1 }
-.notification-item .notification-close{ border: none; background: transparent; color: var(--muted); font-size: 18px; padding: 4px; cursor: pointer }
-.notification-item.is-error{ border-color: var(--danger); box-shadow: 0 12px 30px rgba(214,69,69,0.12) }
+.notification-item .notification-close{ border: none; background: transparent; color: var(--text); font-size: 16px; padding: 6px 8px; cursor: pointer; border-radius:6px }
+.notification-item.is-error{
+  border-color: rgba(var(--danger-rgb),0.22);
+  box-shadow: 0 14px 40px rgba(var(--danger-rgb),0.10);
+  /* red glassy background for errors */
+  background: linear-gradient(135deg, rgba(var(--danger-rgb),0.12), rgba(0,0,0,0.06));
+}
+.notification-item.is-error .notification-content{ color: var(--text) }
+.notification-item.is-error .notification-close{ color: var(--text) }
 
-/* Error variant polish */
-.notification-item.is-error{ background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02)); }
-.notification-item.is-error .notification-content{ color: var(--panel) }
-.notification-item.is-error .notification-close{ color: var(--panel) }
+/* close button: use theme text variable and a subtle hover state */
+.notification-item .notification-close{ color: var(--text); transition: color 160ms ease, transform 160ms ease }
+.notification-item .notification-close:hover{ color: var(--heading-1); transform: scale(1.08) }
 
 
 

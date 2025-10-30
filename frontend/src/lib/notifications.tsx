@@ -31,10 +31,11 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   // Queue (pending) and visible lists
   const [queue, setQueue] = useState<Notification[]>([])
   const [visible, setVisible] = useState<Notification[]>([])
+  const visibleRef = useRef<Notification[]>([])
   const timers = useRef<Record<string, number>>({})
   const animTimers = useRef<Record<string, number>>({})
   const MAX_VISIBLE = 3
-  const ANIM_MS = 300
+  const ANIM_MS = 260
 
   const finalizeRemove = useCallback((id: string) => {
     // remove from visible and clear any timers
@@ -61,34 +62,56 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Effect: promote items from queue into visible slots whenever queue or visible changes
   useEffect(() => {
-    // fast loop to move as many items as possible into visible until MAX_VISIBLE
+    if (!queue || queue.length === 0) return
+    // try to promote as many as space allows
     setVisible((currentVisible) => {
-      let nextVisible = currentVisible.slice()
-      setQueue((currentQueue) => {
-        const qcopy = currentQueue.slice()
-        while (nextVisible.length < MAX_VISIBLE && qcopy.length > 0) {
-          const item = qcopy.shift()!
-          nextVisible = [...nextVisible, item]
-          // schedule auto-dismiss for this item
-          const to = window.setTimeout(() => startExit(item.id), item.durationMs)
-          timers.current[item.id] = to
-        }
-        return qcopy
+      const space = Math.max(0, MAX_VISIBLE - currentVisible.length)
+      if (space <= 0) return currentVisible
+      const promoteCount = Math.min(space, queue.length)
+      if (promoteCount <= 0) return currentVisible
+
+      const toPromote = queue.slice(0, promoteCount)
+      const remaining = queue.slice(promoteCount)
+
+      toPromote.forEach((item) => {
+        const to = window.setTimeout(() => startExit(item.id), item.durationMs)
+        timers.current[item.id] = to
       })
-      return nextVisible
+
+      // update queue to remaining items
+      setQueue(remaining)
+      const next = [...currentVisible, ...toPromote]
+      return next
     })
-  }, [queue, startExit])
+  }, [queue, visible.length, startExit])
+
+  // keep a ref of visible for sync checks inside event handlers
+  useEffect(() => {
+    visibleRef.current = visible
+  }, [visible])
 
   // public remove: if item is in visible, start exit; if in queue, remove directly
   const remove = useCallback((id: string) => {
-    // if in visible, start animated exit
-    let foundInVisible = false
-    setVisible((v) => {
-      foundInVisible = v.some((x) => x.id === id)
-      return v
-    })
-    if (foundInVisible) {
+    // synchronous check against ref to avoid relying on async setState
+    const isVisible = visibleRef.current.some((x) => x.id === id)
+    if (isVisible) {
+      // start animated exit for the clicked item
       startExit(id)
+
+      // immediately promote one item from the queue (if any) so the queue keeps draining
+      setQueue((prevQueue) => {
+        if (!prevQueue || prevQueue.length === 0) return prevQueue
+        const qcopy = prevQueue.slice()
+        const next = qcopy.shift()!
+        // add next to visible immediately
+        setVisible((v) => {
+          const to = window.setTimeout(() => startExit(next.id), next.durationMs)
+          timers.current[next.id] = to
+          return [...v, next]
+        })
+        return qcopy
+      })
+
       return
     }
     // otherwise remove from queue
@@ -151,11 +174,15 @@ function NotificationItem({ n, exiting, onRequestClose }: { n: Notification; exi
   // NotificationItem is controlled by parent for its exiting state. When the dismiss button
   // is clicked it calls onRequestClose which triggers the provider to mark the item as
   // exiting and remove it after the animation completes.
+  const handleClick = (e: React.MouseEvent) => {
+    onRequestClose()
+  }
+
   return (
     <div className={`notification-item ${n.isError ? 'is-error' : ''} ${exiting ? 'exiting' : 'entering'}`}>
       <div className="notification-content">{n.message}</div>
-      <button aria-label="Dismiss" className="notification-close" onClick={onRequestClose}>
-        x
+      <button type="button" aria-label="Dismiss" className="notification-close" onClick={handleClick}>
+        ×
       </button>
     </div>
   )
