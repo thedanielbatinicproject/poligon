@@ -304,8 +304,10 @@ utilityRouter.get('/messages/:user_id', checkLogin, async (req: Request, res: Re
 // editor_scroll_line, scroll_position, sidebar_state, theme
 utilityRouter.post('/session', checkLogin, async (req: Request, res: Response) => {
   try {
-    const user = req.session.user;
-    if (!user || !user.user_id) return res.status(401).json({ error: 'Not authenticated' });
+    // Support both session shapes: older code stored top-level user_id, newer code may store a user object.
+    const sessionUser = (req.session as any).user || null;
+    const sessionUserId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+    if (!sessionUserId) return res.status(401).json({ error: 'Not authenticated' });
 
     // pick only allowed keys from body
     const {
@@ -332,11 +334,12 @@ utilityRouter.post('/session', checkLogin, async (req: Request, res: Response) =
       return res.status(400).json({ error: 'No session attributes provided to update' });
     }
 
-    // 1) Update in-memory session object so subsequent handlers in this request see latest state
-    Object.assign(req.session, attrs);
+  // 1) Update in-memory session object so subsequent handlers in this request see latest state
+  Object.assign(req.session, attrs);
 
-    // 2) Persist to DB via UtilityService
-    const affected = await UtilityService.updateSessionAttributes(req.session.user.user_id, attrs);
+  // 2) Persist to DB via UtilityService. Use resolved sessionUserId.
+  // Pass the current session id so only this session row is updated (prevents updating other devices)
+  const affected = await UtilityService.updateSessionAttributes(sessionUserId, attrs, req.sessionID);
 
     // 3) Optionally, also call upsertSession to ensure serialized session_data is in sync with columns
     //    (uncomment if you want to persist full session_data JSON too)

@@ -30,7 +30,7 @@ All main routes start from `/api`:
 - **POST /api/users/** - Create a user (admin only)
 - **PUT /api/users/:user_id** - Edit user (admin or self)
 - **DELETE /api/users/:user_id** - Delete user (admin only)
-- **GET /api/users/:user_id** - Get single user data (admin, mentor, self)
+- **GET /api/users/check/:user_id** - Get single user data (admin, mentor, self)
 - **GET /api/users/reduced** - Get reduced user list for messaging
 - **POST /api/users/register-local** - Register local user (email, first name, last name)
 - **POST /api/users/local-change-password** - Change password (admin for anyone, others only for themselves)

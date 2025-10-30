@@ -75,13 +75,13 @@ usersRouter.delete('/:user_id', checkLogin, checkAdmin, async (req: Request, res
   }
 });
 
-// GET /api/users/:user_id Dohvati podatke za jednog korisnika (samo admin, mentor ili sam korisnik)
-usersRouter.get('/:user_id', checkLogin, async (req: Request, res: Response) => {
+// GET /api/users/check/:user_id Dohvati podatke za jednog korisnika (samo admin, mentor ili sam korisnik)
+usersRouter.get('/check/:user_id', checkLogin, async (req: Request, res: Response) => {
   const userId = Number(req.params.user_id);
   const sessionUserId = req.session.user_id;
   const sessionRole = req.session.role;
   if (sessionRole !== 'admin' && sessionRole !== 'mentor' && sessionUserId !== userId) {
-    return res.status(403).json({ error: 'Not authorized to view this user' });
+    return res.status(403).json({ error: 'Not authorized to view this user!!!' });
   }
   try {
     const user = await getUserById(userId);

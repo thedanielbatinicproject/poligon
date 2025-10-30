@@ -254,7 +254,9 @@ static async updateSessionAttributes(userId: number, attrs: Partial<{
   scroll_position: number;
   sidebar_state: 'open' | 'closed';
   theme: 'light' | 'dark' | 'auto';
-}>): Promise<number> {
+}>, sessionId?: string): Promise<number> {
+  // NOTE: accepts optional third parameter `sessionId?: string` which callers
+  // may supply (e.g. req.sessionID) to restrict updates to the current session.
   if (!userId || typeof userId !== 'number') {
     throw new Error('Invalid userId');
   }
@@ -320,8 +322,17 @@ static async updateSessionAttributes(userId: number, attrs: Partial<{
   // Always touch last_activity to reflect change
   setters.push('last_activity = NOW()');
 
-  const sql = `UPDATE sessions SET ${setters.join(', ')} WHERE user_id = ?`;
-  values.push(userId);
+  // If caller provided a sessionId (third parameter), restrict the update to that session row
+  // so we don't modify other active sessions for the same user. If sessionId is not provided
+  // we fall back to legacy behavior and update all sessions for the user.
+  let sql: string;
+  if (sessionId) {
+    sql = `UPDATE sessions SET ${setters.join(', ')} WHERE user_id = ? AND session_id = ?`;
+    values.push(userId, sessionId);
+  } else {
+    sql = `UPDATE sessions SET ${setters.join(', ')} WHERE user_id = ?`;
+    values.push(userId);
+  }
 
   const [result] = await pool.query(sql, values);
   const affected = (result as any).affectedRows || 0;
