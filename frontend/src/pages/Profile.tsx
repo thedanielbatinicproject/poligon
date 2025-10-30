@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from '../lib/session'
 import { getJSON, postJSON, apiFetch } from '../lib/api'
 import { useNotifications } from '../lib/notifications'
@@ -29,6 +29,7 @@ export default function Profile(): JSX.Element {
   const [userData, setUserData] = useState<any>(null)
   const [editable, setEditable] = useState<Record<string, any>>({})
   const [dirty, setDirty] = useState<Record<string, boolean>>({})
+  const origRef = useRef<Record<string, any>>({})
 
   // sessions
   const [activeSessionIds, setActiveSessionIds] = useState<string[]>([])
@@ -79,6 +80,14 @@ export default function Profile(): JSX.Element {
         principal_name: user.principal_name || user.email || '',
         display_name: (user.first_name || '') + ' ' + (user.last_name || ''),
       })
+      // store original values to compare for dirty checks
+      origRef.current = {
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        preferred_language: user.preferred_language || '',
+        principal_name: user.principal_name || user.email || '',
+        display_name: (user.first_name || '') + ' ' + (user.last_name || ''),
+      }
     }
   }, [user])
 
@@ -89,8 +98,10 @@ export default function Profile(): JSX.Element {
     try {
       await apiFetch(`/api/users/${user.user_id}`, { method: 'PUT', body: JSON.stringify(payload) })
       notifier.push(`Field ${field} successfully saved on database!`, 3)
+      // mark saved as no longer dirty and update original value snapshot
+      origRef.current = { ...origRef.current, [field]: editable[field] }
       setDirty((d) => ({ ...d, [field]: false }))
-      // refresh session/user info
+      // refresh session/user info to ensure server state sync
       await refresh()
     } catch (err: any) {
       notifier.push(String(err?.message || err), undefined, true)
@@ -99,7 +110,10 @@ export default function Profile(): JSX.Element {
 
   function onChangeField(field: string, value: any) {
     setEditable((s) => ({ ...s, [field]: value }))
-    setDirty((d) => ({ ...d, [field]: true }))
+    // compute dirty by comparing to original snapshot; ensures reverting hides Save
+    const orig = origRef.current?.[field]
+    const isDirty = (orig ?? '') !== (value ?? '')
+    setDirty((d) => ({ ...d, [field]: isDirty }))
   }
 
   // Determine current session id from the session cookie (express-session default cookie name: connect.sid)
@@ -218,26 +232,60 @@ export default function Profile(): JSX.Element {
           {!user && <p>Loading...</p>}
           {user && (
             <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {['first_name','last_name','preferred_language','principal_name','display_name'].map((f) => (
-                <div key={f} className="field-row">
-                  <div style={{ flex: 1 }}>
-                    <label className="auth-label" style={{ marginBottom: '0.4rem' }}>{f.replace('_',' ')}</label>
-                    {f === 'preferred_language' ? (
-                      <select className="auth-input" value={editable[f] || ''} onChange={(e) => onChangeField(f, e.target.value)}>
-                        <option value="hr">hr</option>
-                        <option value="en">en</option>
-                      </select>
-                    ) : (
-                      <input className="auth-input" style={{ width: '100%', padding: '0.8rem' }} value={editable[f] || ''} onChange={(e) => onChangeField(f, e.target.value)} />
-                    )}
-                  </div>
-                  <div style={{ alignSelf: 'end' }}>
-                    {dirty[f] ? (
-                      <button className="btn btn-primary" onClick={() => saveField(f)}>Save</button>
-                    ) : null}
-                  </div>
+              {/* First and Last name on same row */}
+              <div className="name-row">
+                <div className="col input-with-save">
+                  <label className="auth-label">first name</label>
+                  <input className="auth-input" value={editable.first_name || ''} onChange={(e) => onChangeField('first_name', e.target.value)} />
+                  {dirty.first_name ? (
+                    <button className="save-btn btn btn-primary" onClick={() => saveField('first_name')}>Save</button>
+                  ) : null}
                 </div>
-              ))}
+                <div className="col input-with-save">
+                  <label className="auth-label">last name</label>
+                  <input className="auth-input" value={editable.last_name || ''} onChange={(e) => onChangeField('last_name', e.target.value)} />
+                  {dirty.last_name ? (
+                    <button className="save-btn btn btn-primary" onClick={() => saveField('last_name')}>Save</button>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Preferred language + timestamps centered together */}
+              <div className="field-row" style={{ alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
+                <div className="col input-with-save" style={{ alignItems: 'flex-start' }}>
+                  <label className="auth-label">preferred language</label>
+                  <select className="auth-input auth-select" value={editable.preferred_language || ''} onChange={(e) => onChangeField('preferred_language', e.target.value)}>
+                    <option value="hr">hr</option>
+                    <option value="en">en</option>
+                  </select>
+                  {dirty.preferred_language ? (
+                    <button className="save-btn btn btn-primary" onClick={() => saveField('preferred_language')}>Save</button>
+                  ) : null}
+                </div>
+
+                <div className="timestamps" style={{ textAlign: 'left', alignSelf: 'center' }}>
+                  <div className="ts">created: <strong>{fmtZagreb(userData?.created_at || user.created_at)}</strong></div>
+                  <div className="ts">updated: <strong>{fmtZagreb(userData?.updated_at || user.updated_at)}</strong></div>
+                </div>
+              </div>
+
+              {/* Principal name and Display name on same row */}
+              <div className="name-row">
+                <div className="col input-with-save">
+                  <label className="auth-label">principal name</label>
+                  <input className="auth-input" value={editable.principal_name || ''} onChange={(e) => onChangeField('principal_name', e.target.value)} />
+                  {dirty.principal_name ? (
+                    <button className="save-btn btn btn-primary" onClick={() => saveField('principal_name')}>Save</button>
+                  ) : null}
+                </div>
+                <div className="col input-with-save">
+                  <label className="auth-label">display name</label>
+                  <input className="auth-input" value={editable.display_name || ''} onChange={(e) => onChangeField('display_name', e.target.value)} />
+                  {dirty.display_name ? (
+                    <button className="save-btn btn btn-primary" onClick={() => saveField('display_name')}>Save</button>
+                  ) : null}
+                </div>
+              </div>
 
               <div style={{ marginTop: '0.75rem' }}>
                 <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Role: <strong>{user.role}</strong> (read-only)</div>
@@ -296,11 +344,11 @@ export default function Profile(): JSX.Element {
 
         <div className="glass-panel profile-card" style={{ padding: '1.25rem', width: '100%' }}>
           <h3 style={{ marginTop: 0, fontSize: '1.25rem' }}>Change password</h3>
-          <div style={{ display: 'grid', gap: '0.6rem' }}>
+          <div className="password-area">
             <input type="password" placeholder="New password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="auth-input" />
             <input type="password" placeholder="Confirm new password" value={newPass2} onChange={(e) => setNewPass2(e.target.value)} className="auth-input" />
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" disabled={pwLoading} onClick={changePassword}>Change password</button>
+            <div className="actions">
+              <button className="btn btn-primary" style={{ minWidth: 160 }} disabled={pwLoading} onClick={changePassword}>Change password</button>
             </div>
           </div>
         </div>

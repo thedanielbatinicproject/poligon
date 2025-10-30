@@ -152,6 +152,16 @@ body::before{
 .btn:disabled{opacity:0.6;cursor:default}
 .btn:hover:not(:disabled){transform:translateY(-3px)}
 
+/* Save buttons shouldn't use translate/scale hover - use subtle accent box-shadow instead */
+.save-btn{
+  transition: box-shadow var(--theme-transition) ease, opacity var(--theme-transition) ease;
+  transform: none !important;
+}
+/* Ensure save buttons never use the global transform hover; use box-shadow only */
+.save-btn:hover{ transform: none !important; box-shadow: 0 8px 28px rgba(var(--accent-rgb),0.12) !important }
+.save-btn:active{ transform: none !important; box-shadow: 0 6px 18px rgba(var(--accent-rgb),0.10) !important }
+.btn.save-btn:hover{ transform: none !important }
+
 .btn-primary{
   background: linear-gradient(90deg,var(--primary),var(--accent));
   color: var(--panel);
@@ -418,6 +428,71 @@ input.auth-input, select.auth-input, textarea.auth-input {
 
 /* Make save buttons inline and slightly smaller so they fit next to inputs */
 .field-row .btn { white-space: nowrap; padding: 0.55rem 0.9rem; font-size: 0.95rem }
+.name-row{display:flex;gap:1rem;align-items:center;justify-content:center}
+.name-row .auth-input{flex:0 1 40ch}
+/* column helper: stack label + input and constrain width */
+.col{display:flex;flex-direction:column;gap:6px;flex:0 1 40ch;min-width:0}
+
+/* input-with-save positions a save button inside the input area */
+.input-with-save{position:relative;width:100%}
+.input-with-save .auth-input{padding-right:92px;box-sizing:border-box}
+.input-with-save .save-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:4;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;height:34px;min-height:34px;font-size:0.95rem}
+
+/* Ensure single-line inputs are not rendered as huge boxes: enforce reasonable height */
+input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-card .auth-input input {
+  height: 44px; /* consistent control height */
+  min-height: 40px;
+  line-height: 1.2;
+  padding: 10px 14px;
+  box-sizing: border-box;
+}
+
+/* Stronger fallback rules if other selectors override input sizing (use sparingly) */
+.profile-card input.auth-input, input.auth-input, .auth-input input {
+  display: inline-block !important;
+  height: 42px !important;
+  min-height: 38px !important;
+  max-height: 46px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+/* nicer select styling for preferred_language */
+.auth-select{appearance:none;padding:0.75rem 1rem;border-radius:8px;border:1px solid var(--border);background:linear-gradient(180deg, var(--card-bg), rgba(0,0,0,0.02));color:var(--text);font-weight:600}
+.auth-select:focus{box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+
+/* created/updated timestamps shown next to select */
+.timestamps{display:flex;flex-direction:column;gap:6px;margin-left:1rem;min-width:230px;text-align:right;color:var(--muted);font-size:0.95rem}
+.timestamps .ts{background:transparent;padding:6px 8px;border-radius:8px}
+
+/* Change password area: center and constrain width */
+.password-area{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:0.6rem;align-items:center}
+.password-area .auth-input input{max-width:100%;padding:10px 12px}
+.password-area .actions{display:flex;justify-content:center;margin-top:6px}
+
+/* Center block headings and make inputs taller but constrained width */
+.profile-card h3{ text-align: center }
+.profile-card .auth-input, .profile-card input.auth-input, .profile-card select.auth-input {
+  padding: 12px 14px;
+  font-size: 1rem;
+  border-radius: 10px;
+  height: auto;
+  box-sizing: border-box;
+  max-width: 40ch; /* limit overly wide inputs */
+  width: 100%;
+}
+
+/* Ensure field containers shrink before overflowing */
+.profile-card .field-row > div, .name-row > div { min-width: 0; max-width: 100% }
+
+/* Narrower password inputs for better visual weight */
+.password-area input.auth-input, .password-area input { max-width: 38ch }
+
+/* Make save buttons a bit smaller to fit inline */
+.field-row .btn { padding: 0.45rem 0.75rem; font-size: 0.95rem }
 
 /* Smooth button hover */
 .btn { transition: transform var(--theme-transition) ease, box-shadow var(--theme-transition) ease, opacity var(--theme-transition) ease }
