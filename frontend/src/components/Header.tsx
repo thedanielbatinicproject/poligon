@@ -65,6 +65,9 @@ export default function Header(): JSX.Element {
     <>
       <header className="site-header">
         <div className="site-title">
+          {isLoggedIn && role && (
+            <div className="site-role">Role: {String(role).toUpperCase()}</div>
+          )}
           <img src={theme === 'dark' ? PoligonLogoWhite : PoligonLogo} alt="Poligon" className="site-logo" />
           <span className="site-title-text">Poligon</span>
         </div>

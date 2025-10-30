@@ -1,6 +1,7 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
+import { Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Documents from './pages/Documents'
@@ -17,6 +18,7 @@ export default function App(): JSX.Element {
       <main style={{ padding: 16 }}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/profile" element={<RoleRoute element={<Profile />} />} />
           <Route path="/documents" element={<RoleRoute element={<Documents />} />} />
           <Route path="/tasks" element={<RoleRoute element={<Tasks />} />} />

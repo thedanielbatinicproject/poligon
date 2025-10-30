@@ -209,6 +209,9 @@ body::before{
 .site-logo{height:28px;width:auto;display:block}
 @media (min-width: 900px){ .site-logo{height:34px} }
 @media (min-width: 1400px){ .site-logo{height:42px} }
+
+/* small role label before the logo */
+.site-role{font-size:12px;color:var(--muted);font-weight:700;margin-right:6px;letter-spacing:0.06em}
 .nav-links{display:flex;gap:8px;align-items:center}
 .nav-link{padding:6px 10px;border-radius:8px;text-decoration:none;color:var(--text);font-weight:600;transition:background-color var(--theme-transition) ease,color var(--theme-transition) ease,transform var(--theme-transition) ease}
 .nav-link:hover{background:transparent}
