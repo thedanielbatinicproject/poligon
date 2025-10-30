@@ -79,7 +79,7 @@ All main routes start from `/api`:
 - **PUT /api/utility/document-types/:type_id** - Edit document type (admin)
 - **DELETE /api/utility/document-types/:type_id** - Delete document type (admin)
 - **POST /api/utility/session** - Update session attributes for the logged-in user (see body)
-- **DELETE /api/utility/session/:session_id** - Delete session based on given id (admin, or user for its sessions)
+- **DELETE /api/utility/session/:session_id** - Delete session based on given id (admin, or user for his sessions)
 
 
 ### Tasks
