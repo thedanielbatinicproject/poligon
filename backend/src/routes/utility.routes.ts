@@ -299,6 +299,64 @@ utilityRouter.get('/messages/:user_id', checkLogin, async (req: Request, res: Re
 });
 
 
+// POST /api/utility/session - update multiple small session attributes (only logged-in users)
+// Body may contain any subset of: last_route, last_document_id, editor_cursor_position,
+// editor_scroll_line, scroll_position, sidebar_state, theme
+utilityRouter.post('/session', checkLogin, async (req: Request, res: Response) => {
+  try {
+    const user = req.session.user;
+    if (!user || !user.user_id) return res.status(401).json({ error: 'Not authenticated' });
+
+    // pick only allowed keys from body
+    const {
+      last_route,
+      last_document_id,
+      editor_cursor_position,
+      editor_scroll_line,
+      scroll_position,
+      sidebar_state,
+      theme
+    } = req.body || {};
+
+    // Build attrs object only with provided values
+    const attrs: any = {};
+    if (typeof last_route !== 'undefined') attrs.last_route = last_route;
+    if (typeof last_document_id !== 'undefined') attrs.last_document_id = last_document_id;
+    if (typeof editor_cursor_position !== 'undefined') attrs.editor_cursor_position = editor_cursor_position;
+    if (typeof editor_scroll_line !== 'undefined') attrs.editor_scroll_line = editor_scroll_line;
+    if (typeof scroll_position !== 'undefined') attrs.scroll_position = scroll_position;
+    if (typeof sidebar_state !== 'undefined') attrs.sidebar_state = sidebar_state;
+    if (typeof theme !== 'undefined') attrs.theme = theme;
+
+    if (Object.keys(attrs).length === 0) {
+      return res.status(400).json({ error: 'No session attributes provided to update' });
+    }
+
+    // 1) Update in-memory session object so subsequent handlers in this request see latest state
+    Object.assign(req.session, attrs);
+
+    // 2) Persist to DB via UtilityService
+    const affected = await UtilityService.updateSessionAttributes(req.session.user.user_id, attrs);
+
+    // 3) Optionally, also call upsertSession to ensure serialized session_data is in sync with columns
+    //    (uncomment if you want to persist full session_data JSON too)
+    // await upsertSession(req.sessionID, req.session);
+
+    // Save session and respond
+    req.session.save((err: any) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to save session' });
+      }
+      return res.status(200).json({ success: true, updated: Object.keys(attrs), affectedRows: affected });
+    });
+  } catch (err) {
+    console.error('Failed to update session attributes:', err);
+    return res.status(500).json({ error: 'Failed to update session attributes', details: String(err) });
+  }
+});
+
+
 //API ALLOWANCE ROUTES
 //TODO: implement API allowance management routes here
 

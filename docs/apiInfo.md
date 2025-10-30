@@ -78,6 +78,8 @@ All main routes start from `/api`:
 - **POST /api/utility/document-types** - Add new document type (admin)
 - **PUT /api/utility/document-types/:type_id** - Edit document type (admin)
 - **DELETE /api/utility/document-types/:type_id** - Delete document type (admin)
+- **POST /api/utility/session** - Update session attributes for the logged-in user (see body)
+
 
 ### Tasks
 - **POST /api/utility/tasks** - Add task

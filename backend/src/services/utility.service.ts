@@ -229,4 +229,103 @@ export class UtilityService {
     }>;
   }
 
+  /**
+ * Updates one or more session columns in the `sessions` table for a given user.
+ * Only allowed keys are updated. The function builds a dynamic UPDATE query and
+ * validates types/lengths before writing to the DB.
+ *
+ * @param userId - user_id owning the session rows to update
+ * @param attrs - partial object with any of:
+ *   last_route?: string,
+ *   last_document_id?: number,
+ *   editor_cursor_position?: number,
+ *   editor_scroll_line?: number,
+ *   scroll_position?: number,
+ *   sidebar_state?: 'open' | 'closed',
+ *   theme?: 'light' | 'dark' | 'auto'
+ *
+ * @returns number of affected rows (0 or 1) - resolves to 1 on success
+ */
+static async updateSessionAttributes(userId: number, attrs: Partial<{
+  last_route: string;
+  last_document_id: number;
+  editor_cursor_position: number;
+  editor_scroll_line: number;
+  scroll_position: number;
+  sidebar_state: 'open' | 'closed';
+  theme: 'light' | 'dark' | 'auto';
+}>): Promise<number> {
+  if (!userId || typeof userId !== 'number') {
+    throw new Error('Invalid userId');
+  }
+
+  // Allowed keys and per-key validation
+  const setters: string[] = [];
+  const values: any[] = [];
+
+  if ('last_route' in attrs) {
+    const v = attrs.last_route;
+    if (typeof v !== 'string' || v.length > 255) throw new Error('Invalid last_route');
+    setters.push('last_route = ?');
+    values.push(v);
+  }
+
+  if ('last_document_id' in attrs) {
+    const v = attrs.last_document_id;
+    if (typeof v !== 'number' || !Number.isInteger(v)) throw new Error('Invalid last_document_id');
+    setters.push('last_document_id = ?');
+    values.push(v);
+  }
+
+  if ('editor_cursor_position' in attrs) {
+    const v = attrs.editor_cursor_position;
+    if (typeof v !== 'number' || !Number.isInteger(v)) throw new Error('Invalid editor_cursor_position');
+    setters.push('editor_cursor_position = ?');
+    values.push(v);
+  }
+
+  if ('editor_scroll_line' in attrs) {
+    const v = attrs.editor_scroll_line;
+    if (typeof v !== 'number' || !Number.isInteger(v)) throw new Error('Invalid editor_scroll_line');
+    setters.push('editor_scroll_line = ?');
+    values.push(v);
+  }
+
+  if ('scroll_position' in attrs) {
+    const v = attrs.scroll_position;
+    if (typeof v !== 'number' || !Number.isInteger(v)) throw new Error('Invalid scroll_position');
+    setters.push('scroll_position = ?');
+    values.push(v);
+  }
+
+  if ('sidebar_state' in attrs) {
+    const v = attrs.sidebar_state;
+    if (v !== 'open' && v !== 'closed') throw new Error('Invalid sidebar_state');
+    setters.push('sidebar_state = ?');
+    values.push(v);
+  }
+
+  if ('theme' in attrs) {
+    const v = attrs.theme;
+    if (v !== 'light' && v !== 'dark' && v !== 'auto') throw new Error('Invalid theme');
+    setters.push('theme = ?');
+    values.push(v);
+  }
+
+  if (setters.length === 0) {
+    // nothing to do
+    return 0;
+  }
+
+  // Always touch last_activity to reflect change
+  setters.push('last_activity = NOW()');
+
+  const sql = `UPDATE sessions SET ${setters.join(', ')} WHERE user_id = ?`;
+  values.push(userId);
+
+  const [result] = await pool.query(sql, values);
+  const affected = (result as any).affectedRows || 0;
+  return affected;
+}
+
 }
