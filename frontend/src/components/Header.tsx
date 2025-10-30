@@ -63,6 +63,18 @@ export default function Header(): JSX.Element {
   const displayUser = (user && (user.user ? user.user : user))
   const role = extractRole(displayUser)
   const isLoggedIn = !!displayUser
+  
+  const getHeaderName = (u: any) => {
+    if (!u) return ''
+    // prefer explicit display_name, then first+last, then email
+    const dn = (u.display_name || '').toString().trim()
+    if (dn) return dn
+    const fn = (u.first_name || '').toString().trim()
+    const ln = (u.last_name || '').toString().trim()
+    const combined = `${fn} ${ln}`.trim()
+    if (combined) return combined
+    return (u.email || '').toString()
+  }
 
   return (
     <>
@@ -115,7 +127,7 @@ export default function Header(): JSX.Element {
             <ThemeToggle />
             {user ? (
               <>
-                <div className="auth-username">{(displayUser?.first_name || displayUser?.last_name) ? `Welcome, ${displayUser?.first_name || ''} ${displayUser?.last_name || ''}!` : `Welcome, ${displayUser?.email}`}</div>
+                <div className="auth-username">{`Welcome, ${getHeaderName(displayUser)}!`}</div>
                 <button
                   onClick={async () => {
                     try {

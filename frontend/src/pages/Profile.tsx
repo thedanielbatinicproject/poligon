@@ -198,6 +198,7 @@ export default function Profile(): JSX.Element {
   const [newPass, setNewPass] = useState('')
   const [newPass2, setNewPass2] = useState('')
   const [pwLoading, setPwLoading] = useState(false)
+  const [showNewPass, setShowNewPass] = useState(false)
 
   async function changePassword() {
     if (!user) return
@@ -346,13 +347,24 @@ export default function Profile(): JSX.Element {
 
         <div className="glass-panel profile-card" style={{ padding: '1.25rem', width: '100%' }}>
           <h3 style={{ marginTop: 0, fontSize: '1.25rem' }}>Change password</h3>
-          <div className="password-area">
-            <input type="password" placeholder="New password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="auth-input" />
-            <input type="password" placeholder="Confirm new password" value={newPass2} onChange={(e) => setNewPass2(e.target.value)} className="auth-input" />
-            <div className="actions">
-              <button className="btn btn-primary" style={{ minWidth: 160 }} disabled={pwLoading} onClick={changePassword}>Change password</button>
-            </div>
-          </div>
+              <div className="password-area">
+                <div className="pw-input-wrapper">
+                  <input type={showNewPass ? 'text' : 'password'} placeholder="New password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="auth-input" />
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="pw-toggle"
+                    aria-pressed={showNewPass}
+                    aria-label={showNewPass ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowNewPass(s => !s)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowNewPass(s => !s) } }}
+                  >{showNewPass ? 'Hide' : 'Show'}</span>
+                </div>
+                <input type="password" placeholder="Confirm new password" value={newPass2} onChange={(e) => setNewPass2(e.target.value)} className="auth-input" />
+                <div className="actions">
+                  <button className="btn btn-primary" style={{ minWidth: 160 }} disabled={pwLoading} onClick={changePassword}>Change password</button>
+                </div>
+              </div>
         </div>
       </section>
 

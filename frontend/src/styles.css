@@ -532,6 +532,42 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   box-shadow: 0 6px 14px rgba(var(--accent-rgb),0.10) !important;
 }
 
+/* Password show/hide toggle (only used for new password first input) */
+.pw-input-wrapper{ position: relative; }
+.pw-input-wrapper .auth-input{ padding-right: 86px; /* reserve space for the toggle */ }
+.pw-toggle{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 8px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+.pw-toggle{ transition: none !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.pw-toggle:hover{ color: var(--text); transform: none !important; box-shadow: none !important; }
+.pw-toggle:focus{ outline: none; box-shadow: none !important; }
+
+/* Ensure the password inputs in the password-area have identical sizing even when the first
+   input reserves extra right padding for the toggle button. Box-sizing ensures padding doesn't
+   change the visual width. */
+.password-area .auth-input, .password-area input.auth-input, .password-area .auth-input input, .password-area input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 38ch;
+  padding-right: 14px; /* default padding for both inputs */
+}
+
+/* Reserve extra right padding only for the first input wrapper so the visual width stays identical
+   (we keep the container width the same; both inputs use width:100% so they render identical) */
+.pw-input-wrapper .auth-input, .pw-input-wrapper .auth-input input {
+  padding-right: 86px;
+}
+
 
 
 
