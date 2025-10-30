@@ -154,7 +154,6 @@ usersRouter.post('/register-local', async (req, res) => {
       first_name,
       last_name,
       email,
-      role: 'student',
       preferred_language: 'hr'
     });
 

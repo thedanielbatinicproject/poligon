@@ -18,9 +18,10 @@ export default function RegisterForm({ onRegistered }: { onRegistered?: () => vo
     try {
       const body = await registerLocal({ email, first_name: firstName, last_name: lastName })
       // backend will send email; do not auto-login. Show a success message and call onRegistered
-      const msg = 'Registration successful. Please check your email for login details.'
-      setSuccessMsg(msg)
-      try { push(msg) } catch (e) {}
+  const msg = 'Registration successful. Please check your email for login details.'
+  setSuccessMsg(msg)
+  // Show a longer-lived notification for registration confirmation (8 seconds)
+  try { push(msg, 8) } catch (e) {}
       onRegistered && onRegistered()
     } catch (err: any) {
       setError(err?.body?.error || err?.message || 'Registration failed')

@@ -305,4 +305,33 @@ body::before{
 
 
 
+/* app root layout so footer can stick to the bottom */
+.app-root{min-height:100vh;display:flex;flex-direction:column}
+main{flex:1}
+
+/* Footer - theme aware using CSS variables so colors change with theme */
+.site-footer{
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  padding: 14px 16px;
+}
+.site-footer-inner{
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.site-footer .footer-link{
+  color: var(--muted);
+  text-decoration: none;
+  font-weight:600;
+  margin-left: 12px;
+}
+.site-footer .footer-link:hover{ color: var(--text); text-decoration: underline }
+
+
+
 

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
+import Footer from './components/Footer'
 import { Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
@@ -13,7 +14,7 @@ import NotFound from './pages/NotFound'
 
 export default function App(): JSX.Element {
   return (
-    <div>
+    <div className="app-root">
       <Header />
       <main style={{ padding: 16 }}>
         <Routes>
@@ -27,6 +28,7 @@ export default function App(): JSX.Element {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   )
 }
