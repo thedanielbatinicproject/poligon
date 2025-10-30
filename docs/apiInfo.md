@@ -95,6 +95,7 @@ All main routes start from `/api`:
 - **POST /api/utility/messages** - Send message
 - **DELETE /api/utility/messages/:message_id** - Delete message
 - **GET /api/utility/messages/:user_id** - Get all messages between logged-in and specified user
+- **GET /api/utility/messages/partners** - Return a list of user_id's with whom the logged-in user has message history
 
 ---
 

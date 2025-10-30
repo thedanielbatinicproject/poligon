@@ -300,7 +300,24 @@ utilityRouter.get('/messages/:user_id', checkLogin, async (req: Request, res: Re
   res.status(200).json(messages);
 });
 
+// GET /api/utility/messages/partners - Return a list of user_id's with whom the logged-in user has message history
+utilityRouter.get('/messages/partners', checkLogin, async (req: Request, res: Response) => {
+  try {
+    const sessionUser = (req.session as any).user || null;
+    const userId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
+    const partners = await UtilityService.getMessagePartners(Number(userId));
+    // partners is an array of numbers (user_id)
+    res.status(200).json(partners);
+  } catch (err) {
+    console.error('Failed to fetch message partners:', err);
+    res.status(500).json({ error: 'Failed to fetch message partners!', details: String(err) });
+  }
+});
+
+
+//SESSION ROUTES
 // POST /api/utility/session - update multiple small session attributes (only logged-in users)
 // Body may contain any subset of: last_route, last_document_id, editor_cursor_position,
 // editor_scroll_line, scroll_position, sidebar_state, theme
@@ -480,9 +497,6 @@ utilityRouter.delete('/session/:session_id', checkLogin, async (req: Request, re
     return res.status(500).json({ error: 'Failed to delete session', details: String(err) });
   }
 });
-
-
-
 
 //API ALLOWANCE ROUTES
 //TODO: implement API allowance management routes here

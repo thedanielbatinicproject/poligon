@@ -230,6 +230,36 @@ export class UtilityService {
   }
 
   /**
+ * Retrieves distinct user_ids with whom the given user has exchanged messages.
+ * Returns an array of numeric user_id values (other participants).
+ * Results are ordered by last message timestamp (most recent first).
+ *
+ * @param userId - the logged-in user's id
+ * @returns Array of partner user_id numbers
+ */
+static async getMessagePartners(userId: number): Promise<number[]> {
+  if (!userId || typeof userId !== 'number') {
+    throw new Error('Invalid userId');
+  }
+
+  // We compute the "other" participant for each message row where the user was sender or receiver,
+  // group by that computed other_id and order by the latest sent_at so the most-recent partners come first.
+  const [rows] = await pool.query(
+    `SELECT DISTINCT
+       CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id,
+       MAX(sent_at) AS last_at
+     FROM messages
+     WHERE sender_id = ? OR receiver_id = ?
+     GROUP BY other_id
+     ORDER BY last_at DESC`,
+    [userId, userId, userId]
+  );
+
+  // rows is an array of objects { other_id: number, last_at: Date }
+  return (rows as any[]).map(r => Number(r.other_id));
+}
+
+  /**
  * Updates one or more session columns in the `sessions` table for a given user.
  * Only allowed keys are updated. The function builds a dynamic UPDATE query and
  * validates types/lengths before writing to the DB.

@@ -185,6 +185,16 @@ User-to-user messages.
 
 ---
 
+### Indexes (performance)
+
+To support fast lookups of a user's message history (filtering by sender or receiver and ordering by time), the following indexes are recommended and present in the schema:
+
+- `idx_messages_sender_sentat (sender_id, sent_at)` — speeds queries that search messages by a given sender and order them by send time (useful for recent-conversations and per-sender lookups).
+- `idx_messages_receiver_sentat (receiver_id, sent_at)` — speeds queries that search messages by a given receiver and order them by send time (useful for inbox-style lookups and recent-conversations).
+
+These indexes reduce full-table scans for queries that filter on `sender_id` or `receiver_id` and sort by `sent_at`, at the cost of additional disk space and slightly higher insert/update overhead.
+
+
 ## Table: `file_uploads`
 
 Stores file metadata linked to documents.

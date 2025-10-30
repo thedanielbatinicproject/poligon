@@ -126,6 +126,9 @@ CREATE TABLE messages (
   FOREIGN KEY (sender_id) REFERENCES users(user_id),
   FOREIGN KEY (receiver_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Indexes to speed up message lookups by participant and ordering by sent_at
+CREATE INDEX idx_messages_sender_sentat ON messages(sender_id, sent_at);
+CREATE INDEX idx_messages_receiver_sentat ON messages(receiver_id, sent_at);
 
 -- FILE UPLOADS
 CREATE TABLE file_uploads (
