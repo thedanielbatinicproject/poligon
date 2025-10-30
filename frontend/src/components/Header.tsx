@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import AuthModal from './AuthModal';
 import ThemeToggle from './ThemeToggle';
 import { useSession } from '../lib/session';
+import { useNotifications } from '../lib/notifications';
 
 const linkBase: React.CSSProperties = {
   textDecoration: 'none',
@@ -46,6 +47,7 @@ export default function Header(): JSX.Element {
   })()
 
   const user = session?.user
+  const { push } = useNotifications()
 
   return (
     <>
@@ -83,7 +85,17 @@ export default function Header(): JSX.Element {
             {user ? (
               <>
                 <div className="auth-username">{user.first_name || user.firstName || user.name}</div>
-                <button onClick={() => session?.logout()} className="btn btn-logout btn-sm auth-btn">
+                <button
+                  onClick={async () => {
+                    try {
+                      await session?.logout()
+                      try { push('Logged out successfully!') } catch (e) {}
+                    } catch (e: any) {
+                      try { push(e?.message || 'Logout failed! Please try again!', undefined, true) } catch (ee) {}
+                    }
+                  }}
+                  className="btn btn-logout btn-sm auth-btn"
+                >
                   Logout
                 </button>
               </>

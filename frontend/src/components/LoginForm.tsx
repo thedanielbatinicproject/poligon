@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useSession } from '../lib/session'
+import { useNotifications } from '../lib/notifications'
 import { useTheme } from '../lib/theme'
 import aaieduImg from '../assets/images/aaieduhr.png'
 import aaieduImgDark from '../assets/images/aaieduhr-darktheme.png'
@@ -21,6 +22,7 @@ export default function LoginForm({ onSuccess }: Props) {
     setLoading(true)
     try {
       await loginLocal(email.trim(), password)
+      try { push('Login successful!') } catch (e) {}
       onSuccess && onSuccess()
     } catch (err: any) {
       // backend errors normalized by api client: err.body or err.message
@@ -35,6 +37,7 @@ export default function LoginForm({ onSuccess }: Props) {
     setError(null)
     try {
       await openAaiPopup()
+      try { push('Login successful!') } catch (e) {}
       onSuccess && onSuccess()
     } catch (e: any) {
       // Popup blocked or timed out
@@ -43,6 +46,7 @@ export default function LoginForm({ onSuccess }: Props) {
   }
 
   const { theme } = useTheme()
+  const { push } = useNotifications()
 
   const aaiSrc = theme === 'dark' ? aaieduImgDark : aaieduImg
 

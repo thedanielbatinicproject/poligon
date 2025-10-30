@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useSession } from '../lib/session'
+import { useNotifications } from '../lib/notifications'
 
 export default function RegisterForm({ onRegistered }: { onRegistered?: () => void }) {
   const { registerLocal } = useSession()
@@ -17,7 +18,9 @@ export default function RegisterForm({ onRegistered }: { onRegistered?: () => vo
     try {
       const body = await registerLocal({ email, first_name: firstName, last_name: lastName })
       // backend will send email; do not auto-login. Show a success message and call onRegistered
-      setSuccessMsg('Registration successful. Please check your email for login details.')
+      const msg = 'Registration successful. Please check your email for login details.'
+      setSuccessMsg(msg)
+      try { push(msg) } catch (e) {}
       onRegistered && onRegistered()
     } catch (err: any) {
       setError(err?.body?.error || err?.message || 'Registration failed')
@@ -25,6 +28,8 @@ export default function RegisterForm({ onRegistered }: { onRegistered?: () => vo
       setLoading(false)
     }
   }
+
+  const { push } = useNotifications()
 
   return (
     <form onSubmit={submit} className="auth-form">

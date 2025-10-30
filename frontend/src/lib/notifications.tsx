@@ -127,7 +127,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     const msg = (message || '').trim() || (isError ? 'An error occurred' : 'Notification')
     if (!msg) return ''
     const id = `n_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`
-    const durationMs = durationSec ? Math.max(1000, Math.floor(durationSec * 1000)) : wordsToDurationMs(msg)
+  // Enforce a minimum duration of 2 seconds for all notifications. If caller
+  // provided durationSec, clamp it to at least 2000ms; otherwise compute from words.
+  const durationMs = durationSec ? Math.max(2000, Math.floor(durationSec * 1000)) : wordsToDurationMs(msg)
     const item: Notification = { id, message: msg, durationMs, isError }
     // enqueue (FIFO)
     setQueue((q) => [...q, item])
