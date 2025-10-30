@@ -159,13 +159,16 @@ authRouter.get('/status', async (req: Request, res: Response) => {
   const sessionIds = await getActiveSessionIdsForUser(req.session.user_id);
 
   // Vrati podatke
+  // Include current_session_id (server-side) so clients that cannot read HttpOnly cookies
+  // can still determine which active session belongs to this request.
   res.json({
     user_id: user.user_id,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
     role: user.role,
-    active_sessions: sessionIds
+    active_sessions: sessionIds,
+    current_session_id: req.sessionID || null
   });
 });
 

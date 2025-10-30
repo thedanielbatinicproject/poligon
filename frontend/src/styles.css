@@ -361,10 +361,19 @@ main{flex:1}
 .session-table td{white-space:normal;word-break:break-word;overflow-wrap:anywhere;vertical-align:top}
 .session-table td.session-id{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:18ch}
 .session-table td.user-agent{max-width:48ch}
-.session-current{background: linear-gradient(90deg,var(--success), rgba(var(--success-rgb),0.06));}
+.session-current{
+  /* subtle uniform highlight for current session using theme variables (no border) */
+  background: rgba(var(--success-rgb), 0.04);
+}
 
 /* Confirmation modal styles reuse existing auth modal classes, add small color variants */
-.confirm-yes{background: linear-gradient(90deg,var(--success),var(--accent));color:#fff}
+.confirm-yes{
+  /* Use theme variables only, avoid gradients for clarity */
+  background: var(--success);
+  color: var(--panel);
+  border: none;
+  box-shadow: 0 6px 18px rgba(var(--success-rgb),0.10);
+}
 .confirm-no{background:transparent;border:1px solid var(--danger);color:var(--danger)}
 
 /* Glassy blurred overlay for confirmation modal */

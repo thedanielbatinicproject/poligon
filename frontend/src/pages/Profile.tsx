@@ -43,8 +43,10 @@ export default function Profile(): JSX.Element {
         // fetch /api/auth/status to get user + active_sessions
         const st: any = await getJSON('/api/auth/status')
         setUserData(st)
-        const ids = Array.isArray(st.active_sessions) ? st.active_sessions : []
-        setActiveSessionIds(ids)
+  const ids = Array.isArray(st.active_sessions) ? st.active_sessions : []
+    setActiveSessionIds(ids)
+    // prefer server-provided current_session_id (handles HttpOnly cookies)
+    setCurrentSessionId(normalizeSessionId(st.current_session_id ?? getSessionIdFromCookie()))
 
         // fetch details for each session id
         const fetched: Record<string, any> = {}
@@ -131,7 +133,9 @@ export default function Profile(): JSX.Element {
     }
   }
 
-  const currentSessionId = useMemo(() => normalizeSessionId(getSessionIdFromCookie()), [])
+  // Keep current session id in state. Initialize from cookie (best-effort),
+  // but overwrite with server-provided `current_session_id` when we fetch /auth/status.
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(() => normalizeSessionId(getSessionIdFromCookie()))
 
   function openConfirmFor(sessionId: string) {
     setSelectedSessionId(sessionId)
@@ -146,8 +150,10 @@ export default function Profile(): JSX.Element {
       // refresh list
       // reload auth/status
       const st: any = await getJSON('/api/auth/status')
-      const ids = Array.isArray(st.active_sessions) ? st.active_sessions : []
-      setActiveSessionIds(ids)
+    const ids = Array.isArray(st.active_sessions) ? st.active_sessions : []
+    setActiveSessionIds(ids)
+    // prefer server-provided current_session_id (handles HttpOnly cookies)
+    setCurrentSessionId(normalizeSessionId(st.current_session_id ?? getSessionIdFromCookie()))
       // remove from rows
       setSessionRows((r) => {
         const copy = { ...r }
@@ -260,7 +266,8 @@ export default function Profile(): JSX.Element {
                 {activeSessionIds.map((sid) => {
                   const row = sessionRows[sid]
                   // some session rows store the actual session id under row.session.session_id
-                  const rowSessionIdRaw = row?.session?.session_id ?? sid
+                  // or under row.session_id; fall back to the active_sessions id (sid)
+                  const rowSessionIdRaw = row?.session?.session_id ?? row?.session_id ?? sid
                   const isCurrent = normalizeSessionId(rowSessionIdRaw) === currentSessionId
                   return (
                     <tr key={sid} className={isCurrent ? 'session-current' : ''}>
