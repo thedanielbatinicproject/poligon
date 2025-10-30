@@ -152,16 +152,6 @@ body::before{
 .btn:disabled{opacity:0.6;cursor:default}
 .btn:hover:not(:disabled){transform:translateY(-3px)}
 
-/* Save buttons shouldn't use translate/scale hover - use subtle accent box-shadow instead */
-.save-btn{
-  transition: box-shadow var(--theme-transition) ease, opacity var(--theme-transition) ease;
-  transform: none !important;
-}
-/* Ensure save buttons never use the global transform hover; use box-shadow only */
-.save-btn:hover{ transform: none !important; box-shadow: 0 8px 28px rgba(var(--accent-rgb),0.12) !important }
-.save-btn:active{ transform: none !important; box-shadow: 0 6px 18px rgba(var(--accent-rgb),0.10) !important }
-.btn.save-btn:hover{ transform: none !important }
-
 .btn-primary{
   background: linear-gradient(90deg,var(--primary),var(--accent));
   color: var(--panel);
@@ -433,10 +423,40 @@ input.auth-input, select.auth-input, textarea.auth-input {
 /* column helper: stack label + input and constrain width */
 .col{display:flex;flex-direction:column;gap:6px;flex:0 1 40ch;min-width:0}
 
-/* input-with-save positions a save button inside the input area */
+/* input-with-save places a save button visually inside the input at the right edge.
+   Use absolute positioning for the button while keeping the input full width and
+   add right padding to the input so text doesn't overlap the button. */
 .input-with-save{position:relative;width:100%}
-.input-with-save .auth-input{padding-right:92px;box-sizing:border-box}
-.input-with-save .save-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:4;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;height:34px;min-height:34px;font-size:0.95rem}
+.input-with-save .auth-input, .input-with-save .auth-input input, .input-with-save .auth-input select {
+  padding-right: 100px; /* reserve space for the save button */
+  box-sizing: border-box;
+}
+/* Save button visually inside the input at the right edge (compact pill). */
+.input-with-save .save-btn{
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(calc(-50%)) !important; /* nudge a couple px lower to visually center */
+  z-index: 6;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px; /* pill */
+  height: 34px; /* compact, matches desired visual */
+  min-height: 34px;
+  line-height: 1;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  color: var(--panel);
+  border: none;
+  box-shadow: 0 6px 14px rgba(var(--accent-rgb),0.10);
+  box-sizing: border-box;
+  will-change: box-shadow; /* minimize layout shifts */
+}
 
 /* Ensure single-line inputs are not rendered as huge boxes: enforce reasonable height */
 input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-card .auth-input input {
@@ -496,6 +516,21 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 
 /* Smooth button hover */
 .btn { transition: transform var(--theme-transition) ease, box-shadow var(--theme-transition) ease, opacity var(--theme-transition) ease }
+
+/* Ensure save buttons never translate on hover; use box-shadow only. High specificity. */
+.input-with-save .save-btn,
+.input-with-save .save-btn:focus,
+.input-with-save .save-btn:hover,
+.input-with-save .save-btn:active{
+  transform: translateY(calc(-50% + 3px)) !important; /* enforce consistent translate */
+}
+.input-with-save .save-btn:hover,
+.input-with-save .save-btn:focus{
+  box-shadow: 0 8px 22px rgba(var(--accent-rgb),0.16) !important;
+}
+.input-with-save .save-btn:active{
+  box-shadow: 0 6px 14px rgba(var(--accent-rgb),0.10) !important;
+}
 
 
 

@@ -78,7 +78,8 @@ export default function Profile(): JSX.Element {
         last_name: user.last_name || '',
         preferred_language: user.preferred_language || '',
         principal_name: user.principal_name || user.email || '',
-        display_name: (user.first_name || '') + ' ' + (user.last_name || ''),
+        // display_name is a standalone DB field, do not compute from first/last
+        display_name: user.display_name || '',
       })
       // store original values to compare for dirty checks
       origRef.current = {
@@ -86,7 +87,8 @@ export default function Profile(): JSX.Element {
         last_name: user.last_name || '',
         preferred_language: user.preferred_language || '',
         principal_name: user.principal_name || user.email || '',
-        display_name: (user.first_name || '') + ' ' + (user.last_name || ''),
+        // treat display_name as stored value
+        display_name: user.display_name || '',
       }
     }
   }, [user])
