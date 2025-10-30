@@ -5,6 +5,7 @@ import { checkLogin, checkAdmin } from '../middleware/auth.middleware';
 import { AuditService } from '../services/audit.service';
 import { io } from '../index'; // emiting messages via socket.io
 import sessionStore from '../config/sessionStore';
+import { getSessionById } from '../services/session.service';
 
 
 const utilityRouter = Router();
@@ -357,6 +358,53 @@ utilityRouter.post('/session', checkLogin, async (req: Request, res: Response) =
   } catch (err) {
     console.error('Failed to update session attributes:', err);
     return res.status(500).json({ error: 'Failed to update session attributes', details: String(err) });
+  }
+});
+
+
+// GET /api/utility/session/:session_id - return full session metadata for a given session_id
+// Accessible by: the session owner (user) or admin users
+utilityRouter.get('/session/:session_id', checkLogin, async (req: Request, res: Response) => {
+  try {
+    const sessionId = String(req.params.session_id || '').trim();
+    if (!sessionId) return res.status(400).json({ error: 'session_id is required' });
+
+    // Resolve requester id & role (support both session shapes)
+    const sessionObj: any = (req.session as any).user || null;
+    const requesterId = (req.session as any).user_id || (sessionObj && sessionObj.user_id) || null;
+    const requesterRole = (sessionObj && sessionObj.role) || (req.session as any).role || null;
+
+    if (!requesterId) return res.status(401).json({ error: 'Not authenticated' });
+
+    // Read session metadata from session service (returns merged session_data + explicit columns)
+    const targetSession = await getSessionById(sessionId);
+    if (!targetSession) return res.status(404).json({ error: 'Session not found' });
+
+    // Determine owner id from stored session shape
+    const ownerId = (targetSession as any).user_id || ((targetSession as any).user && (targetSession as any).user.user_id) || null;
+
+    const isOwner = Number(ownerId) === Number(requesterId);
+    const isAdmin = requesterRole === 'admin';
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to view this session' });
+    }
+
+    // Return relevant fields only to keep response compact
+    const response = {
+      session_id: sessionId,
+      last_route: (targetSession as any).last_route || null,
+      user_agent: (targetSession as any).user_agent || null,
+      ip_address: (targetSession as any).ip_address || null,
+      created_at: (targetSession as any).created_at || null,
+      expires_at: (targetSession as any).expires_at || null,
+      // include raw session_data if useful for debug (commented out by default)
+      // session_data: targetSession
+    };
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error('Failed to fetch session metadata:', err);
+    return res.status(500).json({ error: 'Failed to fetch session metadata', details: String(err) });
   }
 });
 

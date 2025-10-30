@@ -340,5 +340,24 @@ main{flex:1}
 .not-found-desc{color:var(--muted);font-size:16px;margin:0 auto;max-width:640px;}
 
 
+/* Profile page specific styles */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.profile-card{padding:14px}
+.profile-card .field-row{display:flex;gap:12px;align-items:center}
+.profile-card .field-row input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text)}
+
+/* subtle 3D hover effect for cards */
+.profile-card:hover{transform:translateY(-6px) rotateX(0.6deg);box-shadow: 0 18px 40px rgba(0,0,0,0.12)}
+
+/* Sessions table */
+.session-table{width:100%;border-collapse:collapse}
+.session-table th,.session-table td{padding:8px 6px;border-bottom:1px dashed var(--border);font-size:14px}
+.session-current{background: linear-gradient(90deg,var(--success), rgba(var(--success-rgb),0.06));}
+
+/* Confirmation modal styles reuse existing auth modal classes, add small color variants */
+.confirm-yes{background: linear-gradient(90deg,var(--success),var(--accent));color:#fff}
+.confirm-no{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+
+
 
 
