@@ -58,8 +58,11 @@ export default function Header(): JSX.Element {
     return (u.role || u.user?.role || u.data?.role || null) as string | null
   }
 
-  const role = extractRole(user)
-  const isLoggedIn = !!user
+  // normalize user shape: some APIs return { user: { ... } } while older code
+  // used the full body. Prefer the inner user object when available.
+  const displayUser = (user && (user.user ? user.user : user))
+  const role = extractRole(displayUser)
+  const isLoggedIn = !!displayUser
 
   return (
     <>
@@ -112,7 +115,7 @@ export default function Header(): JSX.Element {
             <ThemeToggle />
             {user ? (
               <>
-                <div className="auth-username">{user.user.first_name || user.user.last_name ? `Welcome, ${user.user.first_name} ${user.user.last_name}!` : `Welcome, ${user.user.email}`}</div>
+                <div className="auth-username">{(displayUser?.first_name || displayUser?.last_name) ? `Welcome, ${displayUser?.first_name || ''} ${displayUser?.last_name || ''}!` : `Welcome, ${displayUser?.email}`}</div>
                 <button
                   onClick={async () => {
                     try {

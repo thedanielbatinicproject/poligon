@@ -23,7 +23,8 @@ export default function RoleRoute({ element, allowedRoles }: RoleRouteProps) {
   })()
   const user = session?.user
   const loading = session?.loading
-  const role = extractRole(user)
+  const displayUser = (user && (user.user ? user.user : user))
+  const role = extractRole(displayUser)
   const { push } = useNotifications()
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function RoleRoute({ element, allowedRoles }: RoleRouteProps) {
     if (loading) return
 
     // If not authenticated, notify the user once and redirect to home.
-    if (!user) {
+    if (!displayUser) {
       try { push('You must be logged in to view this page.', undefined, true) } catch (e) {}
       return
     }
@@ -50,7 +51,7 @@ export default function RoleRoute({ element, allowedRoles }: RoleRouteProps) {
   if (loading) return null
 
   // Redirect if not allowed. Notification is posted via effect above.
-  if (!user) return <Navigate to="/" replace />
+  if (!displayUser) return <Navigate to="/" replace />
   if (allowedRoles && role && !allowedRoles.includes(role)) return <Navigate to="/" replace />
 
   return element

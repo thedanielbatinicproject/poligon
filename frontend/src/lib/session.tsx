@@ -1,13 +1,17 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import api, { apiFetch } from './api'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import api, { apiFetch, postJSON } from './api'
 import { setPoligonCookie, removePoligonCookie } from './cookies'
+import { useLocation } from 'react-router-dom'
 
 type User = any | null
+type SessionObj = any | null
 
 type SessionContextShape = {
   user: User
+  session: SessionObj
   loading: boolean
   refresh: () => Promise<void>
+  patchSession: (attrs: Record<string, any>) => Promise<void>
   loginLocal: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   registerLocal: (payload: { email: string; first_name: string; last_name: string }) => Promise<any>
@@ -18,27 +22,69 @@ const SessionContext = createContext<SessionContextShape | undefined>(undefined)
 
 export function useSession() {
   const ctx = useContext(SessionContext)
-  if (!ctx) throw new Error('useSession must be used inside SessionProvider')
+  if (!ctx) throw new Error('SESSION ERROR: useSession must be used inside SessionProvider')
   return ctx
 }
 
 export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User>(null)
+  const [session, setSession] = useState<SessionObj>(null)
   const [loading, setLoading] = useState(true)
+  const location = useLocation()
+  const routeTimer = useRef<number | null>(null)
 
   async function refresh() {
     setLoading(true)
     try {
       // prefer high-level api.status if available
       const body = await (api.status ? api.status() : apiFetch('/api/status', { method: 'GET' }))
-      // assume backend returns an object representing the session/user
-      setUser(body)
-      setPoligonCookie(body)
+      // modern API returns { session, user }
+      if (body && typeof body === 'object' && ('session' in body || 'user' in body)) {
+        setSession(body.session ?? null)
+        setUser(body.user ?? null)
+        setPoligonCookie(body)
+        // if server provided a theme, notify ThemeProvider via a window event so it can react
+        try {
+          const theme = body.session && body.session.theme
+          if (theme) {
+            ;(window as any).__SERVER_THEME__ = theme
+            window.dispatchEvent(new CustomEvent('server-theme', { detail: theme }))
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      } else {
+        // fallback: older API returned the user directly
+        setSession(null)
+        setUser(body)
+        setPoligonCookie(body)
+      }
     } catch (err: any) {
       setUser(null)
       removePoligonCookie()
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function patchSession(attrs: Record<string, any>) {
+    // only attempt when authenticated
+    if (!user) return
+    try {
+      const body = await postJSON('/api/utility/session', attrs)
+      // merge into local session state when successful
+      setSession((s: any) => ({ ...(s || {}), ...(attrs || {}) }))
+      // if theme was updated server-side, dispatch event so ThemeProvider can sync
+      if (attrs && typeof attrs.theme !== 'undefined') {
+        try {
+          ;(window as any).__SERVER_THEME__ = attrs.theme
+          window.dispatchEvent(new CustomEvent('server-theme', { detail: attrs.theme }))
+        } catch (e) {}
+      }
+      return body
+    } catch (e) {
+      // errors are surfaced by postJSON which triggers global notifications
+      throw e
     }
   }
 
@@ -79,8 +125,14 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         try {
           const body = await (api.status ? api.status() : apiFetch('/api/status', { method: 'GET' }))
           if (body) {
-            setUser(body)
-            setPoligonCookie(body)
+            if (body && typeof body === 'object' && ('session' in body || 'user' in body)) {
+              setSession(body.session ?? null)
+              setUser(body.user ?? null)
+              setPoligonCookie(body)
+            } else {
+              setUser(body)
+              setPoligonCookie(body)
+            }
             clearInterval(tid)
             try {
               popup.close()
@@ -108,8 +160,49 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Watch route changes and persist main routes to server (debounced)
+  useEffect(() => {
+    const allowed = ['/home', '/profile', '/documents', '/tasks', '/mentor', '/admin', '/']
+    const p = location.pathname || '/'
+    const match = allowed.some((a) => p === a || p.startsWith(a + '/'))
+    if (!match) return
+    // debounce 800ms
+    if (routeTimer.current) {
+      window.clearTimeout(routeTimer.current)
+      routeTimer.current = null
+    }
+    routeTimer.current = window.setTimeout(() => {
+      try {
+        // silently fire; postJSON surfaces errors globally
+        patchSession({ last_route: p })
+      } catch (e) {
+        /* ignore here */
+      }
+    }, 800)
+    return () => {
+      if (routeTimer.current) {
+        window.clearTimeout(routeTimer.current)
+        routeTimer.current = null
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, user])
+
+  // Listen for theme changes from ThemeProvider and persist to server
+  useEffect(() => {
+    function onLocalTheme(e: any) {
+      const t = e && e.detail ? e.detail : null
+      if (!t) return
+      // fire-and-forget; errors already surfaced by postJSON
+      patchSession({ theme: t }).catch(() => {})
+    }
+    window.addEventListener('local-theme-changed', onLocalTheme as EventListener)
+    return () => window.removeEventListener('local-theme-changed', onLocalTheme as EventListener)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   return (
-    <SessionContext.Provider value={{ user, loading, refresh, loginLocal, logout, registerLocal, openAaiPopup }}>
+    <SessionContext.Provider value={{ user, session, loading, refresh, patchSession, loginLocal, logout, registerLocal, openAaiPopup }}>
       {children}
     </SessionContext.Provider>
   )
