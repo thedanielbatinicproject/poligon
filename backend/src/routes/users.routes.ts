@@ -2,9 +2,10 @@ import { Router, Request, Response } from 'express';
 import { checkLogin, checkAdmin, checkMentor } from '../middleware/auth.middleware';
 import { getUserById, createUser, editUser, getAllNonAdminUsers, 
         getAllUsersReduced, createLocalUser, generateMemorablePassword, 
-        getUserByEmail, changeLocalUserPassword, getLocalUserByEmail } from '../services/user.service';
+        getUserByEmail, changeLocalUserPassword, getLocalUserByEmail, getRoleById } from '../services/user.service';
 import {sendPasswordEmail} from '../services/mail.service';
 import bcrypt from 'bcrypt';
+import { get } from 'http';
 const usersRouter = Router();
 
 // /api/users/all Dohvati sve korisnike (osim admina), dostupno samo adminima i mentorima
@@ -79,7 +80,10 @@ usersRouter.delete('/:user_id', checkLogin, checkAdmin, async (req: Request, res
 usersRouter.get('/check/:user_id', checkLogin, async (req: Request, res: Response) => {
   const userId = Number(req.params.user_id);
   const sessionUserId = req.session.user_id;
-  const sessionRole = req.session.role;
+  if (sessionUserId === undefined) {
+    return res.status(401).json({ error: 'User not authenticated!' });
+  }
+  const sessionRole = await getRoleById(sessionUserId);
   if (sessionRole !== 'admin' && sessionRole !== 'mentor' && sessionUserId !== userId) {
     return res.status(403).json({ error: 'Not authorized to view this user!!!' });
   }

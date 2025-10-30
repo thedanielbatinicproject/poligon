@@ -305,3 +305,16 @@ export async function changeLocalUserPassword(userId: number, passwordHash: stri
   );
   return (result as any).affectedRows === 1;
 }
+
+/**
+ * Retrieves only the role string for a given user_id.
+ * Lightweight helper used when samo role treba (izbjegava fetch cijelog user objekta).
+ * @param userId - numeric user_id
+ * @returns role string ('student'|'mentor'|'admin'|...) or null if not found
+ */
+export async function getRoleById(userId: number): Promise<string | null> {
+  if (!userId || typeof userId !== 'number') return null;
+  const [rows] = await pool.query('SELECT role FROM users WHERE user_id = ?', [userId]);
+  const row = (rows as any[])[0];
+  return row ? (row.role as string) : null;
+}
