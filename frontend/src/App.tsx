@@ -4,6 +4,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import { Navigate } from 'react-router-dom'
 import Home from './pages/Home'
+import RedirectToLastRoute from './components/RedirectToLastRoute'
 import Profile from './pages/Profile'
 import Documents from './pages/Documents'
 import RoleRoute from './components/RoleRoute'
@@ -18,7 +19,7 @@ export default function App(): JSX.Element {
       <Header />
       <main style={{ padding: 16 }}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<RedirectToLastRoute />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/profile" element={<RoleRoute element={<Profile />} />} />
           <Route path="/documents" element={<RoleRoute element={<Documents />} />} />
