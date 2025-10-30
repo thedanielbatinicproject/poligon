@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { checkLogin, checkAdmin, checkMentor } from '../middleware/auth.middleware';
 import { getUserById, createUser, editUser, getAllNonAdminUsers, 
         getAllUsersReduced, createLocalUser, generateMemorablePassword, 
-        getUserByEmail, changeLocalUserPassword } from '../services/user.service';
+        getUserByEmail, changeLocalUserPassword, getLocalUserByEmail } from '../services/user.service';
 import {sendPasswordEmail} from '../services/mail.service';
 import bcrypt from 'bcrypt';
 const usersRouter = Router();
@@ -94,7 +94,7 @@ usersRouter.get('/:user_id', checkLogin, async (req: Request, res: Response) => 
   }
 });
 
-// /api/users/reduced - Get reduced user list for messaging, accessible to all logged-in users
+// GET /api/users/reduced - Get reduced user list for messaging, accessible to all logged-in users
 usersRouter.get('/reduced', checkLogin, async (req: Request, res: Response) => {
   try {
     const users = await getAllUsersReduced();
@@ -104,38 +104,75 @@ usersRouter.get('/reduced', checkLogin, async (req: Request, res: Response) => {
   }
 });
 
-// /api/users/register-local - registration for local users
+// POST /api/users/register-local - registration for local users
 usersRouter.post('/register-local', async (req, res) => {
   try {
     const { first_name, last_name, email } = req.body;
     if (!first_name || !last_name || !email) {
       return res.status(400).json({ error: 'Missing required fields: first_name, last_name, email' });
     }
+
+    // postoji li korisnik u users tablici?
     const existing = await getUserByEmail(email);
+
+    // Ako korisnik već postoji u users
     if (existing) {
-      return res.status(409).json({ error: 'User with this email already exists!' });
+      // provjeri ima li već local_users zapis
+      const existingLocal = await getLocalUserByEmail(email);
+      if (existingLocal) {
+        // local account već postoji, signaliziraj 409 (ili custom poruku)
+        return res.status(409).json({ error: 'Local user with this email already exists!' });
+      }
+
+      // nema local_users zapisa -> napravimo local_user za postojećeg korisnika
+      const password = generateMemorablePassword(6);
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      const created = await createLocalUser({
+        user_id: existing.user_id,
+        email,
+        password_hash: passwordHash
+      });
+
+      if (!created) {
+        // moguće DB ograničenje; vrati grešku
+        return res.status(500).json({ error: 'Failed to create user in local_users table.' });
+      }
+
+      // pošalji email s lozinkom
+      await sendPasswordEmail(email, password);
+
+      return res.status(201).json({ success: true, user_id: existing.user_id });
     }
+
+    // ako ne postoji user u users - postojeća logika: kreiraj novog usera pa local_user
     const password = generateMemorablePassword(6);
     const passwordHash = await bcrypt.hash(password, 10);
+
     const user = await createUser({
-      principal_name: email,
+      principal_name: email, // ili neke prazne vrijednosti; prilagodi ako treba
       first_name,
       last_name,
       email,
       role: 'student',
       preferred_language: 'hr'
     });
+
     if (!user) {
-      return res.status(500).json({ error: 'Failed to create user in users table.' });
+      // createUser vraća null kad email već postoji (za svaki slučaj)
+      return res.status(409).json({ error: 'User with this email already exists!' });
     }
+
     const localUser = await createLocalUser({
       user_id: user.user_id,
       email,
       password_hash: passwordHash
     });
+
     if (!localUser) {
       return res.status(500).json({ error: 'Failed to create user in local_users table.' });
     }
+
     await sendPasswordEmail(email, password);
     res.status(201).json({ success: true, user_id: user.user_id });
   } catch (err) {
@@ -143,7 +180,7 @@ usersRouter.post('/register-local', async (req, res) => {
   }
 });
 
-// /api/users/local-change-password - Change password for local users
+// POST /api/users/local-change-password - Change password for local users
 usersRouter.post('/local-change-password', checkLogin, async (req, res) => {
   try {
     const { user_id, new_password } = req.body;

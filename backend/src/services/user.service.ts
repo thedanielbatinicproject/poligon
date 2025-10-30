@@ -210,6 +210,36 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 }
 
 /**
+ * Retrieves a local user (credential row) by their email address from the local_users table.
+ *
+ * This function is intended to centralize local-user lookups in the user service so
+ * other modules (routes, auth handlers) can reuse a single implementation and type.
+ *
+ * Behavior and notes:
+ * - Normalizes the email by trimming and lower-casing before lookup (assumes emails are stored normalized).
+ * - Returns the full local_users row as an object when found, or null when not found.
+ * - Caller should treat the returned object's `password_hash` as sensitive and never log it.
+ * - If you already have a `getLocalUserByEmail` in another service (e.g., `session.service.ts`),
+ *   remove or migrate that one to avoid duplicate implementations and exports.
+ *
+ * @param email - Email address to look up (will be trimmed and lowercased).
+ * @returns A promise resolving to the local_users row (object) or null if none found.
+ */
+export async function getLocalUserByEmail(email: string): Promise<{
+  user_id: number;
+  email: string;
+  password_hash: string;
+  created_at?: string;
+  updated_at?: string;
+  // include any other columns your schema exposes (force_password_change, etc.)
+} | null> {
+  if (!email || typeof email !== 'string') return null;
+  const normalized = email.trim().toLowerCase();
+  const [rows] = await pool.query('SELECT * FROM local_users WHERE email = ?', [normalized]);
+  return (rows as any[])[0] || null;
+}
+
+/**
  * Generates a memorable password for a new user.
  * The password consists of pronounceable syllables (easy to remember),
  * and is extended with four random digits for extra security.

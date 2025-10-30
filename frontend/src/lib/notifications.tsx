@@ -171,15 +171,25 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 }
 
 function NotificationItem({ n, exiting, onRequestClose }: { n: Notification; exiting?: boolean; onRequestClose: () => void }) {
-  // NotificationItem is controlled by parent for its exiting state. When the dismiss button
-  // is clicked it calls onRequestClose which triggers the provider to mark the item as
-  // exiting and remove it after the animation completes.
+  // NotificationItem is controlled by parent for its exiting state. We manage a small
+  // local "mounted" flag so the element is inserted into the DOM first and the
+  // `.entering` class is added on the next tick — this ensures the CSS transition
+  // runs (slide-in) instead of the element appearing instantly.
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setMounted(true), 20)
+    return () => window.clearTimeout(t)
+  }, [])
+
   const handleClick = (e: React.MouseEvent) => {
     onRequestClose()
   }
 
+  const stateClass = exiting ? 'exiting' : mounted ? 'entering' : 'pre-enter'
+
   return (
-    <div className={`notification-item ${n.isError ? 'is-error' : ''} ${exiting ? 'exiting' : 'entering'}`}>
+    <div className={`notification-item ${n.isError ? 'is-error' : ''} ${stateClass}`}>
       <div className="notification-content">{n.message}</div>
       <button type="button" aria-label="Dismiss" className="notification-close" onClick={handleClick}>
         ×
