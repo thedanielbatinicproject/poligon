@@ -188,9 +188,27 @@ body::before{
 
 /* Header / Nav styles to match theme tokens */
 .site-header{
-  display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel);color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 20px; /* base padding */
+  border-bottom:1px solid var(--border);
+  background:var(--panel);
+  color:var(--text);
 }
-.site-title{font-weight:700;font-size:18px;color:var(--heading-1)}
+
+/* increase header height on larger screens for better balance */
+@media (min-width: 1200px) {
+  .site-header{ padding:18px 40px }
+}
+
+.site-title{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--heading-1)}
+.site-title-text{font-weight:700;font-size:18px}
+
+/* Logo styling: match theme and be responsive */
+.site-logo{height:28px;width:auto;display:block}
+@media (min-width: 900px){ .site-logo{height:34px} }
+@media (min-width: 1400px){ .site-logo{height:42px} }
 .nav-links{display:flex;gap:8px;align-items:center}
 .nav-link{padding:6px 10px;border-radius:8px;text-decoration:none;color:var(--text);font-weight:600;transition:background-color var(--theme-transition) ease,color var(--theme-transition) ease,transform var(--theme-transition) ease}
 .nav-link:hover{background:transparent}

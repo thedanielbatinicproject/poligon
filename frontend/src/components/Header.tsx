@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import AuthModal from './AuthModal';
 import ThemeToggle from './ThemeToggle';
+import { useTheme } from '../lib/theme'
+import PoligonLogo from '../assets/images/PoligonLogoNoText.png'
+import PoligonLogoWhite from '../assets/images/PoligonLogoNoTextWhite.png'
 import { useSession } from '../lib/session';
 import { useNotifications } from '../lib/notifications';
 
@@ -48,11 +51,15 @@ export default function Header(): JSX.Element {
 
   const user = session?.user
   const { push } = useNotifications()
+  const { theme } = useTheme()
 
   return (
     <>
       <header className="site-header">
-        <div className="site-title">Poligon</div>
+        <div className="site-title">
+          <img src={theme === 'dark' ? PoligonLogoWhite : PoligonLogo} alt="Poligon" className="site-logo" />
+          <span className="site-title-text">Poligon</span>
+        </div>
 
         <nav className="nav-links" aria-label="Main navigation">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
@@ -84,7 +91,7 @@ export default function Header(): JSX.Element {
             <ThemeToggle />
             {user ? (
               <>
-                <div className="auth-username">{user.first_name || user.firstName || user.name}</div>
+                <div className="auth-username">{user.user.first_name || user.user.last_name ? `Welcome, ${user.user.first_name} ${user.user.last_name}!` : `Welcome, ${user.user.email}`}</div>
                 <button
                   onClick={async () => {
                     try {
