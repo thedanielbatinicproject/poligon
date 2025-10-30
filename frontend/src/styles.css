@@ -80,7 +80,9 @@
 
 /* basic page */
 body{font-family: var(--font-sans); margin:0; background:var(--bg); color:var(--text)}
-main{max-width:900px;margin:24px auto;padding:0 16px}
+/* make main content occupy 85% of the viewport width and stay centered */
+/* Use 65vw for a comfortable, centered reading width */
+main{width:65vw;max-width:none;margin:24px auto;padding:0 16px;box-sizing:border-box}
 a{color:var(--primary)}
 
 /* theme transition helper */
@@ -341,22 +343,75 @@ main{flex:1}
 
 
 /* Profile page specific styles */
-.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.profile-card{padding:14px}
-.profile-card .field-row{display:flex;gap:12px;align-items:center}
-.profile-card .field-row input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text)}
 
-/* subtle 3D hover effect for cards */
-.profile-card:hover{transform:translateY(-6px) rotateX(0.6deg);box-shadow: 0 18px 40px rgba(0,0,0,0.12)}
+.profile-grid{display:grid;grid-template-columns:1fr;gap:1.5rem}
+.profile-card{padding:1rem;border-radius:12px;transition:box-shadow var(--theme-transition) ease}
+.profile-card .field-row{display:flex;gap:1rem;align-items:center}
+.profile-card .field-row input{flex:1;min-width:0;padding:0.85rem;border-radius:0.6rem;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:1rem}
 
-/* Sessions table */
-.session-table{width:100%;border-collapse:collapse}
-.session-table th,.session-table td{padding:8px 6px;border-bottom:1px dashed var(--border);font-size:14px}
+/* On hover only animate box-shadow (no transform) using accent color */
+.profile-card:hover{box-shadow: 0 1.8rem 3.2rem rgba(var(--accent-rgb),0.10), 0 8px 30px rgba(2,6,23,0.06)}
+
+/* Sessions table scaled up and responsive */
+.session-table{width:100%;border-collapse:collapse;font-size:0.98rem}
+.session-table th,.session-table td{padding:0.75rem 0.6rem;border-bottom:1px dashed var(--border);font-size:0.95rem}
+
+/* Make table cells wrap by default so the table does not force horizontal scrolling.
+  Keep session id truncated and compact; let long user-agent and route values wrap. */
+.session-table td{white-space:normal;word-break:break-word;overflow-wrap:anywhere;vertical-align:top}
+.session-table td.session-id{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:18ch}
+.session-table td.user-agent{max-width:48ch}
 .session-current{background: linear-gradient(90deg,var(--success), rgba(var(--success-rgb),0.06));}
 
 /* Confirmation modal styles reuse existing auth modal classes, add small color variants */
 .confirm-yes{background: linear-gradient(90deg,var(--success),var(--accent));color:#fff}
 .confirm-no{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+
+/* Glassy blurred overlay for confirmation modal */
+.confirm-overlay{
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  /* semi-transparent background which slightly tints based on theme */
+  background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.12));
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+}
+
+/* ensure auth-modal-overlay base remains but confirm-overlay is stronger */
+.auth-modal-overlay{z-index:9999}
+
+/* Larger headings inside profile */
+.profile-card h3{font-size:1.125rem;margin-bottom:0.6rem}
+
+@media (min-width: 900px) {
+  .profile-card{padding:1.25rem}
+  .profile-card .field-row input{font-size:1.05rem}
+  .session-table th,.session-table td{font-size:1rem}
+}
+
+/* Ensure inputs and selects inside auth-input class inherit theme text color
+   and match card background (handles direct input.auth-input usage) */
+input.auth-input, select.auth-input, textarea.auth-input {
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+/* Also support wrapper usage: .auth-input input */
+.auth-input input, .auth-input select, .auth-input textarea {
+  color: var(--text);
+  background: var(--card-bg);
+}
+
+/* Make save buttons inline and slightly smaller so they fit next to inputs */
+.field-row .btn { white-space: nowrap; padding: 0.55rem 0.9rem; font-size: 0.95rem }
+
+/* Smooth button hover */
+.btn { transition: transform var(--theme-transition) ease, box-shadow var(--theme-transition) ease, opacity var(--theme-transition) ease }
 
 
 

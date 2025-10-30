@@ -116,7 +116,22 @@ export default function Profile(): JSX.Element {
     }
   }
 
-  const currentSessionId = useMemo(() => getSessionIdFromCookie(), [])
+  // Normalize session id values from various sources so comparisons are reliable.
+  const normalizeSessionId = (raw: string | null | undefined) => {
+    if (!raw) return null
+    try {
+      let v = String(raw)
+      // sometimes backend or frontend may provide encoded values
+      v = decodeURIComponent(v)
+      if (v.startsWith('s:')) v = v.slice(2)
+      if (v.includes('.')) v = v.split('.')[0]
+      return v
+    } catch (e) {
+      return String(raw)
+    }
+  }
+
+  const currentSessionId = useMemo(() => normalizeSessionId(getSessionIdFromCookie()), [])
 
   function openConfirmFor(sessionId: string) {
     setSelectedSessionId(sessionId)
@@ -140,7 +155,8 @@ export default function Profile(): JSX.Element {
         return copy
       })
       // if we deleted current session, force logout/refresh
-      if (selectedSessionId === currentSessionId) {
+      const deletedRowSessionId = sessionRows[selectedSessionId || '']?.session?.session_id || selectedSessionId
+      if (normalizeSessionId(deletedRowSessionId) === currentSessionId) {
         try {
           await postJSON('/api/auth/logout', {})
         } catch (_) {}
@@ -189,20 +205,27 @@ export default function Profile(): JSX.Element {
     <main>
       <h1 style={{ color: 'var(--heading-2)' }}>Profile</h1>
 
-      {/* General info cards */}
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-        <div className="glass-panel" style={{ padding: 14 }}>
-          <h3 style={{ marginTop: 0 }}>General information</h3>
+      {/* Stack blocks vertically: General information, Active sessions, Change password */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', marginBottom: '2.5rem', alignItems: 'stretch' }}>
+        <div className="glass-panel profile-card" style={{ padding: '1.25rem', width: '100%' }}>
+          <h3 style={{ marginTop: 0, fontSize: '1.25rem' }}>General information</h3>
           {!user && <p>Loading...</p>}
           {user && (
-            <div style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
               {['first_name','last_name','preferred_language','principal_name','display_name'].map((f) => (
-                <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <div key={f} className="field-row">
                   <div style={{ flex: 1 }}>
-                    <label className="auth-label" style={{ marginBottom: 6 }}>{f.replace('_',' ')}</label>
-                    <input className="auth-input" style={{ width: '100%' }} value={editable[f] || ''} onChange={(e) => onChangeField(f, e.target.value)} />
+                    <label className="auth-label" style={{ marginBottom: '0.4rem' }}>{f.replace('_',' ')}</label>
+                    {f === 'preferred_language' ? (
+                      <select className="auth-input" value={editable[f] || ''} onChange={(e) => onChangeField(f, e.target.value)}>
+                        <option value="hr">hr</option>
+                        <option value="en">en</option>
+                      </select>
+                    ) : (
+                      <input className="auth-input" style={{ width: '100%', padding: '0.8rem' }} value={editable[f] || ''} onChange={(e) => onChangeField(f, e.target.value)} />
+                    )}
                   </div>
-                  <div>
+                  <div style={{ alignSelf: 'end' }}>
                     {dirty[f] ? (
                       <button className="btn btn-primary" onClick={() => saveField(f)}>Save</button>
                     ) : null}
@@ -210,68 +233,67 @@ export default function Profile(): JSX.Element {
                 </div>
               ))}
 
-              <div style={{ marginTop: 10 }}>
-                <div style={{ color: 'var(--muted)', fontSize: 13 }}>Role: <strong>{user.role}</strong> (read-only)</div>
-                <div style={{ color: 'var(--muted)', fontSize: 13 }}>Email: <strong>{user.email}</strong></div>
+              <div style={{ marginTop: '0.75rem' }}>
+                <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Role: <strong>{user.role}</strong> (read-only)</div>
+                <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Email: <strong>{user.email}</strong></div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Sessions and password column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div className="glass-panel" style={{ padding: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Active sessions</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', color: 'var(--muted)' }}>
-                    <th>session_id</th>
-                    <th>last_route</th>
-                    <th>user_agent</th>
-                    <th>ip_address</th>
-                    <th>created_at</th>
-                    <th>expires_at</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeSessionIds.map((sid) => {
-                    const row = sessionRows[sid]
-                    const isCurrent = sid === currentSessionId
-                    return (
-                      <tr key={sid} style={{ background: isCurrent ? 'linear-gradient(90deg,var(--success), rgba(var(--success-rgb),0.06))' : 'transparent' }}>
-                        <td style={{ padding: '8px 6px', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <button className="btn btn-ghost" onClick={() => { navigator.clipboard?.writeText(sid); notifier.push('Copied session id', 2) }}>
-                            {sid.slice(0, 10)}…
-                          </button>
-                        </td>
-                        <td style={{ padding: '8px 6px' }}>{row ? row.last_route || '—' : '—'}</td>
-                        <td style={{ padding: '8px 6px', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row ? row.user_agent : ''}>{row ? (row.user_agent || '—') : '—'}</td>
-                        <td style={{ padding: '8px 6px' }}>{row ? (row.ip_address || '') : ''}</td>
-                        <td style={{ padding: '8px 6px' }}>{row ? fmtZagreb(row.created_at) : ''}</td>
-                        <td style={{ padding: '8px 6px' }}>{row ? fmtZagreb(row.expires_at) : ''}</td>
-                        <td style={{ padding: '8px 6px' }}>
-                          {!isCurrent && (
+        <div className="glass-panel profile-card" style={{ padding: '1.25rem', width: '100%' }}>
+          <h3 style={{ marginTop: 0, fontSize: '1.25rem' }}>Active sessions</h3>
+          <div>
+            <table className="session-table" style={{ width: '100%' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--muted)' }}>
+                  <th>session_id</th>
+                  <th>last_route</th>
+                  <th>user_agent</th>
+                  <th>ip_address</th>
+                  <th>created_at</th>
+                  <th>expires_at</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeSessionIds.map((sid) => {
+                  const row = sessionRows[sid]
+                  // some session rows store the actual session id under row.session.session_id
+                  const rowSessionIdRaw = row?.session?.session_id ?? sid
+                  const isCurrent = normalizeSessionId(rowSessionIdRaw) === currentSessionId
+                  return (
+                    <tr key={sid} className={isCurrent ? 'session-current' : ''}>
+                      <td className="session-id" style={{ maxWidth: '28vw' }}>
+                        <button className="btn btn-ghost" onClick={() => { navigator.clipboard?.writeText(sid); notifier.push('Copied session id', 2) }}>
+                          {sid.slice(0, 12)}…
+                        </button>
+                      </td>
+                      <td>{row ? row.last_route || '—' : '—'}</td>
+                      <td className="user-agent" style={{ maxWidth: '36vw' }} title={row ? row.user_agent : ''}>{row ? (row.user_agent || '—') : '—'}</td>
+                      <td>{row ? (row.ip_address || '') : ''}</td>
+                      <td>{row ? fmtZagreb(row.created_at) : ''}</td>
+                      <td>{row ? fmtZagreb(row.expires_at) : ''}</td>
+                      <td>
+                        {!isCurrent && (
                             <button className="btn btn-logout" onClick={() => openConfirmFor(sid)}>LOG OFF SESSION</button>
                           )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          <div className="glass-panel" style={{ padding: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Change password</h3>
-            <div style={{ display: 'grid', gap: 8 }}>
-              <input type="password" placeholder="New password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="auth-input" />
-              <input type="password" placeholder="Confirm new password" value={newPass2} onChange={(e) => setNewPass2(e.target.value)} className="auth-input" />
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="btn btn-primary" disabled={pwLoading} onClick={changePassword}>Change password</button>
-              </div>
+        <div className="glass-panel profile-card" style={{ padding: '1.25rem', width: '100%' }}>
+          <h3 style={{ marginTop: 0, fontSize: '1.25rem' }}>Change password</h3>
+          <div style={{ display: 'grid', gap: '0.6rem' }}>
+            <input type="password" placeholder="New password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="auth-input" />
+            <input type="password" placeholder="Confirm new password" value={newPass2} onChange={(e) => setNewPass2(e.target.value)} className="auth-input" />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" disabled={pwLoading} onClick={changePassword}>Change password</button>
             </div>
           </div>
         </div>
