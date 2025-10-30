@@ -247,7 +247,8 @@ body::before{
 /* Notifications - top-right stack (glass morphism + slide animations) */
 .notification-container{
   position: fixed;
-  top: 64px;
+  /* lowered so notifications appear below the taller header */
+  top: 30vh;
   right: 20px;
   display: flex;
   flex-direction: column;
@@ -257,6 +258,10 @@ body::before{
   max-width: 360px;
   padding: 8px;
   pointer-events: none; /* allow clicks through padding area */
+}
+
+@media (min-width: 1200px) {
+  .notification-container { top: 110px; }
 }
 
 .notification-item{

@@ -53,6 +53,14 @@ export default function Header(): JSX.Element {
   const { push } = useNotifications()
   const { theme } = useTheme()
 
+  function extractRole(u: any): string | null {
+    if (!u) return null
+    return (u.role || u.user?.role || u.data?.role || null) as string | null
+  }
+
+  const role = extractRole(user)
+  const isLoggedIn = !!user
+
   return (
     <>
       <header className="site-header">
@@ -66,25 +74,35 @@ export default function Header(): JSX.Element {
             <span className="nav-link-label">Home</span>
           </NavLink>
 
-          <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            <span className="nav-link-label">Profile</span>
-          </NavLink>
+          {isLoggedIn && (
+            <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
+              <span className="nav-link-label">Profile</span>
+            </NavLink>
+          )}
 
-          <NavLink to="/documents" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            <span className="nav-link-label">Documents</span>
-          </NavLink>
+          {isLoggedIn && (
+            <NavLink to="/documents" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
+              <span className="nav-link-label">Documents</span>
+            </NavLink>
+          )}
 
-          <NavLink to="/tasks" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            <span className="nav-link-label">Tasks</span>
-          </NavLink>
+          {isLoggedIn && (
+            <NavLink to="/tasks" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
+              <span className="nav-link-label">Tasks</span>
+            </NavLink>
+          )}
 
-          <NavLink to="/mentor" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            <span className="nav-link-label">Mentor</span>
-          </NavLink>
+          {(role === 'mentor' || role === 'admin') && (
+            <NavLink to="/mentor" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
+              <span className="nav-link-label">Mentor</span>
+            </NavLink>
+          )}
 
-          <NavLink to="/admin" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
-            <span className="nav-link-label">Admin</span>
-          </NavLink>
+          {role === 'admin' && (
+            <NavLink to="/admin" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
+              <span className="nav-link-label">Admin</span>
+            </NavLink>
+          )}
 
           {/* Right side: auth controls */}
           <div className="header-actions">
