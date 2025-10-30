@@ -4,6 +4,7 @@ import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin } from '../middleware/auth.middleware';
 import { AuditService } from '../services/audit.service';
 import { io } from '../index'; // emiting messages via socket.io
+import sessionStore from '../config/sessionStore';
 
 
 const utilityRouter = Router();
@@ -358,6 +359,81 @@ utilityRouter.post('/session', checkLogin, async (req: Request, res: Response) =
     return res.status(500).json({ error: 'Failed to update session attributes', details: String(err) });
   }
 });
+
+
+// DELETE /api/utility/session/:session_id - delete a session row
+// - a logged-in user can delete their own session
+// - an admin can delete any user's session
+utilityRouter.delete('/session/:session_id', checkLogin, async (req: Request, res: Response) => {
+  try {
+    const sessionId = String(req.params.session_id || '').trim();
+    if (!sessionId) return res.status(400).json({ error: 'session_id is required' });
+
+    // Resolve requester id & role (support both session shapes)
+    const sessionObj: any = (req.session as any).user || null;
+    const requesterId = (req.session as any).user_id || (sessionObj && sessionObj.user_id) || null;
+    const requesterRole = (sessionObj && sessionObj.role) || (req.session as any).role || null;
+
+    if (!requesterId) return res.status(401).json({ error: 'Not authenticated' });
+
+    // Ensure sessionStore is available and implements get/destroy
+    if (!sessionStore || typeof (sessionStore as any).get !== 'function' || typeof (sessionStore as any).destroy !== 'function') {
+      return res.status(500).json({ error: 'Session store not available on server' });
+    }
+
+    // Promisify store.get and store.destroy
+    const storeGet = (id: string) => new Promise<any>((resolve, reject) => {
+      (sessionStore as any).get(id, (err: any, sess: any) => {
+        if (err) return reject(err);
+        resolve(sess || null);
+      });
+    });
+    const storeDestroy = (id: string) => new Promise<void>((resolve, reject) => {
+      (sessionStore as any).destroy(id, (err: any) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
+    // Read target session from store
+    const targetSession = await storeGet(sessionId);
+    if (!targetSession) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Determine owner id from stored session shape
+    const ownerId = (targetSession as any).user_id || ((targetSession as any).user && (targetSession as any).user.user_id) || null;
+
+    const isOwner = Number(ownerId) === Number(requesterId);
+    const isAdmin = requesterRole === 'admin';
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to delete this session' });
+    }
+
+    // Destroy session in the store (this removes the persisted session data)
+    await storeDestroy(sessionId);
+
+    // If this was the current session, destroy req.session so user is logged out immediately
+    if (sessionId === req.sessionID) {
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error('Failed to destroy current session after store destroy:', err);
+          return res.status(200).json({ success: true, destroyedCurrent: false });
+        }
+        return res.status(200).json({ success: true, destroyedCurrent: true });
+      });
+      return; // response handled in callback
+    }
+
+    // Success for non-current session deletion
+    return res.status(200).json({ success: true, deletedSessionId: sessionId });
+  } catch (err) {
+    console.error('Failed to delete session via store:', err);
+    return res.status(500).json({ error: 'Failed to delete session', details: String(err) });
+  }
+});
+
+
 
 
 //API ALLOWANCE ROUTES
