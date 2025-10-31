@@ -71,18 +71,22 @@ utilityRouter.delete('/document-types/:type_id', checkAdmin, async (req: Request
 //TASK ROUTES
 // Add a new task
 utilityRouter.post('/tasks', checkLogin, async (req: Request, res: Response) => {
-  const { created_by, assigned_to, document_id, task_title, task_description, task_status } = req.body;
-  const user = req.session.user;
-  if (!user) return res.status(401).json({ error: 'User not logged in!' });
+  // Accept 'from' and 'due' from request body (ISO datetime strings). 'from' is required.
+  const { created_by, assigned_to, document_id, task_title, task_description, task_status, from, due } = req.body;
+  // Support both session shapes: nested user object or top-level user_id
+  const sessionUser = (req.session as any).user || null;
+  const sessionUserId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+  const sessionRole = (sessionUser && sessionUser.role) || (req.session as any).role || null;
+  if (!sessionUserId) return res.status(401).json({ error: 'User not logged in!' });
 
   // If document_id is provided, check permissions
   if (document_id) {
     // Admins can always add
-    if (user.role !== 'admin') {
+    if (sessionRole !== 'admin') {
       const doc = await DocumentsService.getDocumentById(document_id);
       if (!doc) return res.status(404).json({ error: 'Document not found.' });
-      const isCreator = doc.created_by === user.user_id;
-      const isEditor = await DocumentsService.isEditor(document_id, user.user_id, ['editor', 'owner', 'mentor']);
+      const isCreator = doc.created_by === Number(sessionUserId);
+      const isEditor = await DocumentsService.isEditor(document_id, Number(sessionUserId), ['editor', 'owner', 'mentor']);
       if (!isCreator && !isEditor) {
         return res.status(403).json({ error: 'You are not allowed to add tasks for this document because you are neither the creator nor an editor.' });
       }
@@ -91,15 +95,17 @@ utilityRouter.post('/tasks', checkLogin, async (req: Request, res: Response) => 
 
   try {
     const task_id = await UtilityService.addTask({
-      created_by: req.session.user.user_id,
+      created_by: Number(sessionUserId),
       assigned_to,
       document_id,
       task_title,
       task_description,
-      task_status
+      task_status,
+      task_from: from,
+      task_due: due ?? null
     });
   await AuditService.createAuditLog({
-    user_id: user.user_id,
+    user_id: Number(sessionUserId),
     action_type: 'create',
     entity_type: 'task',
     entity_id: task_id
@@ -107,6 +113,45 @@ utilityRouter.post('/tasks', checkLogin, async (req: Request, res: Response) => 
   res.status(201).json({ success: true, task_id });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update task.', details: err });
+  }
+});
+
+// PUT /api/tasks/:task_id - Update a task (with permission checks)
+utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Response) => {
+  const task_id = Number(req.params.task_id);
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ error: 'User not logged in!' });
+  if (isNaN(task_id)) return res.status(400).json({ error: 'Invalid task_id' });
+
+  try {
+    const existing = await UtilityService.getTaskById(task_id);
+    if (!existing) return res.status(404).json({ error: 'Task not found' });
+
+    // Permission: admin/mentor can edit any task; others only their own created tasks
+    const role = (req.session as any).role || (req.session as any).user?.role || null;
+    let canEdit = false;
+    if (role === 'admin' || role === 'mentor') canEdit = true;
+    if (existing.created_by === user.user_id) canEdit = true;
+
+    if (!canEdit) return res.status(403).json({ error: 'Not authorized to edit this task' });
+
+    const updates: any = {};
+    const allowed = ['task_title','task_description','assigned_to','document_id','task_status','from','due','task_from','task_due'];
+    // Accept both body keys 'from'/'due' and 'task_from'/'task_due'
+    for (const k of Object.keys(req.body)) {
+      if (allowed.includes(k)) {
+        if (k === 'from' || k === 'task_from') updates.task_from = req.body[k];
+        else if (k === 'due' || k === 'task_due') updates.task_due = req.body[k];
+        else updates[k] = req.body[k];
+      }
+    }
+
+    const ok = await UtilityService.updateTask(task_id, updates);
+    if (!ok) return res.status(400).json({ error: 'No valid fields provided or update failed' });
+    await AuditService.createAuditLog({ user_id: user.user_id, action_type: 'edit', entity_type: 'task', entity_id: task_id });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update task.', details: String(err) });
   }
 });
 
@@ -180,12 +225,14 @@ utilityRouter.get('/tasks/document/:document_id', checkLogin, async (req: Reques
 
 // GET /api/tasks/user/ — Returns all tasks created by or assigned to the current logged-in user
 utilityRouter.get('/tasks/user/', checkLogin, async (req: Request, res: Response) => {
-  const user_id = Number(req.session.user.user_id);
-  if (isNaN(user_id)) {
+  // support both session shapes
+  const sessionUser = (req.session as any).user || null;
+  const userId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+  if (!userId || isNaN(Number(userId))) {
     return res.status(400).json({ error: 'Invalid user_id.' });
   }
   try {
-    const tasks = await UtilityService.getTasksByUser(user_id);
+    const tasks = await UtilityService.getTasksByUser(Number(userId));
     res.status(200).json(tasks);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch tasks for user.', details: err });

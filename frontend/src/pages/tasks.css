@@ -1,0 +1,41 @@
+.rbc-calendar {
+  --rbc-bg: var(--bg);
+}
+.rbc-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.rbc-toolbar .rbc-btn-group button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+.rbc-event {
+  background-color: var(--accent, #3b82f6) !important;
+  color: white !important;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+.rbc-month-row .rbc-date-cell {
+  font-weight: 600;
+}
+.task-create-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.task-create-form input[type="text"], .task-create-form input[type="datetime-local"], .task-create-form input {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 4px;
+}
+.task-row { background: transparent; }

@@ -14,21 +14,28 @@ export class UtilityService {
     document_id?: number | null,
     task_title: string,
     task_description?: string,
-    task_status: 'open' | 'closed'
+    task_status: 'open' | 'closed',
+    task_from: string, // ISO datetime string - required
+    task_due?: string | null // ISO datetime string - optional
   }): Promise<number> {
     if (!data.created_by || !data.task_title || !data.task_status) {
       throw new Error('created_by, task_title, and task_status are required');
     }
+    if (!data.task_from) {
+      throw new Error('task_from (start datetime) is required');
+    }
     const [result] = await pool.query(
-      `INSERT INTO tasks (created_by, assigned_to, document_id, task_title, task_description, task_status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      `INSERT INTO tasks (created_by, assigned_to, document_id, task_title, task_description, task_status, task_from, task_due, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         data.created_by,
         data.assigned_to ?? null,
         data.document_id ?? null,
         data.task_title,
         data.task_description ?? '',
-        data.task_status
+        data.task_status,
+        data.task_from,
+        data.task_due ?? null
       ]
     );
     return (result as any).insertId;
@@ -45,9 +52,11 @@ export class UtilityService {
     task_description?: string,
     assigned_to?: number | null,
     document_id?: number | null,
-    task_status?: 'open' | 'closed'
+    task_status?: 'open' | 'closed',
+    task_from?: string,
+    task_due?: string | null
   }): Promise<boolean> {
-    const allowedFields = ['task_title', 'task_description', 'assigned_to', 'document_id', 'task_status'];
+    const allowedFields = ['task_title', 'task_description', 'assigned_to', 'document_id', 'task_status', 'task_from', 'task_due'];
     const fields = Object.keys(updates).filter(key => allowedFields.includes(key));
     if (fields.length === 0) return false;
     const setClause = fields.map(key => `${key} = ?`).join(', ');
