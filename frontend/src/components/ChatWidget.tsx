@@ -83,6 +83,24 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
     return () => { socket.off('receive_message', onReceive) }
   }, [socket, partnerId, user?.user_id])
 
+  // Listen for remote deletions so both sender and receiver remove the message in real time
+  React.useEffect(() => {
+    if (!socket) return
+    function onDeleted(payload: any) {
+      try {
+        const { message_id, sender_id, receiver_id } = payload || {}
+        // Determine whether this deletion belongs to the conversation currently open
+        const convoOther = (sender_id === user?.user_id) ? receiver_id : sender_id
+        if (convoOther !== partnerId) return
+        setAllMessages(prev => prev.filter(m => String(m.message_id) !== String(message_id)))
+      } catch (e) {
+        // ignore
+      }
+    }
+    socket.on('message_deleted', onDeleted)
+    return () => { socket.off('message_deleted', onDeleted) }
+  }, [socket, partnerId, user?.user_id])
+
   // close context menu on outside click or Escape; ignore immediate click after contextmenu (browser quirk)
   React.useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -392,7 +410,7 @@ export default function ChatWidget() {
     }
     socket.on('receive_message', onReceive)
     return () => { socket.off('receive_message', onReceive) }
-  }, [socket, partners, user?.user_id])
+  }, [socket, partners, user?.user_id, activePartner])
 
   function formatZagreb(iso: string) {
     try {

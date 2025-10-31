@@ -273,8 +273,10 @@ utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, r
 
     // Emitiraj event oboma (sender i receiver)
     const otherUserId = (msg.sender_id === user_id) ? msg.receiver_id : msg.sender_id;
-    io.to(String(user_id)).emit('message_deleted', { message_id });
-    io.to(String(otherUserId)).emit('message_deleted', { message_id });
+  // include sender and receiver ids so clients can determine which conversation
+  const payload = { message_id, sender_id: msg.sender_id, receiver_id: msg.receiver_id };
+  io.to(String(user_id)).emit('message_deleted', payload);
+  io.to(String(otherUserId)).emit('message_deleted', payload);
 
     res.status(200).json({ success: true });
   } catch (err) {
