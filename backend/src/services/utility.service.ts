@@ -239,7 +239,7 @@ export class UtilityService {
  * Results are ordered by last message timestamp (most recent first).
  *
  * @param userId - the logged-in user's id
- * @returns Array of partner user_id numbers
+ * @returns Array of partner objects: { other_id: number, last_at: Date, role?: string }
  */
 static async getMessagePartners(userId: number): Promise<number[]> {
   if (!userId || typeof userId !== 'number') {
@@ -248,6 +248,8 @@ static async getMessagePartners(userId: number): Promise<number[]> {
 
   // We compute the "other" participant for each message row where the user was sender or receiver,
   // group by that computed other_id and order by the latest sent_at so the most-recent partners come first.
+  // Join with users table to obtain role for each partner (if available). We still
+  // compute the 'other_id' similarly and order by last message timestamp.
   const [rows] = await pool.query(
     `SELECT DISTINCT
        CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id,
@@ -258,7 +260,7 @@ static async getMessagePartners(userId: number): Promise<number[]> {
      ORDER BY last_at DESC`,
     [userId, userId, userId]
   );
-
+  
   // rows is an array of objects { other_id: number, last_at: Date }
   return (rows as any[]).map(r => Number(r.other_id));
 }

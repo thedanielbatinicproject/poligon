@@ -175,8 +175,15 @@ export async function updateScrollPosition(userId: number, scroll_position: any)
 
 
 /**
- * Retrieves a reduced list of all users except admins.
- * Each user object includes: user_id, first_name, last_name, email, role.
+ * Retrieves a reduced list of users for messaging.
+ * By default this function excludes users with role 'admin' to preserve the previous
+ * behavior for ordinary users. When `includeAdmins` is true, the function returns
+ * all users (including admins).
+ *
+ * Each returned object includes: user_id, first_name, last_name, email, role.
+ *
+ * @param includeAdmins - If true, include users with role 'admin' in the result.
+ *                        Defaults to false to maintain backward compatibility.
  * @returns Array of reduced user objects.
  */
 export async function getAllUsersReduced(): Promise<Array<{

@@ -9,12 +9,14 @@ type Partner = {
   last_at?: string
   // whether we attempted to load last_at via messages fetch
   _loaded_last_at?: boolean
+  // optional role (provided by backend when available)
+  role?: string
 }
 
 // Inline ChatWindow to avoid module resolution issues with project TS config
 function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { partnerId: number, onClose: () => void, partnerName?: string, onMessageSent?: (id: number, sent_at: string) => void }) {
   const { socket } = useSocket()
-  const { user } = useSession()
+  const { user, session } = useSession()
   type Msg = {
     message_id?: number | string
     sender_id: number
@@ -153,7 +155,7 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
     <div className="chat-window">
       <div className="chat-window-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="chat-window-title">Conversation with {partnerName ?? `User ${partnerId}`}</div>
+          <div className="chat-window-title">Conversation with {partnerName ? partnerName : `admin (userid: ${partnerId})`}</div>
           <div style={{ marginLeft: 12 }} className="muted">{initialLoadedCount === null ? 'loading…' : (initialLoadedCount === 1 ? '1 message loaded' : `${initialLoadedCount} messages loaded`)}</div>
         </div>
         <div>
@@ -242,12 +244,12 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
 
 export default function ChatWidget() {
   const { socket } = useSocket()
-  const { user } = useSession()
+  const { user, session } = useSession()
   // open by default if a user is already logged in; otherwise closed.
   const [open, setOpen] = useState<boolean>(() => Boolean(user))
   const [partners, setPartners] = useState<Partner[]>([])
   const [unreadMap, setUnreadMap] = useState<Record<number, boolean>>({})
-  const [userMap, setUserMap] = useState<Record<number, { first_name: string, last_name: string }>>({})
+  const [userMap, setUserMap] = useState<Record<number, { first_name: string, last_name: string, role?: string }>>({})
   const [activePartner, setActivePartner] = useState<number | null>(null)
   const [showUserFinder, setShowUserFinder] = useState(false)
   const [animating, setAnimating] = useState(false)
@@ -332,6 +334,38 @@ export default function ChatWidget() {
           parsedPartners = (json as any[]).map(o => ({ other_id: Number(o.other_id), last_at: o.last_at ? String(o.last_at) : undefined }))
         }
         setPartners(parsedPartners)
+        // If the logged-in user is an admin or mentor, attempt to fetch missing
+        // user details (name) for partners that are not present in the reduced list.
+        // We use the existing documented endpoint GET /api/users/check/:user_id which
+        // is accessible to admins and mentors.
+        try {
+          const requesterRole = (session && (session.role || session.user_role)) || (user && (user.role || user.user_role)) || null
+            if (requesterRole === 'admin' || requesterRole === 'mentor') {
+            // build list of partner ids that are missing from userMap
+            const toFetch: number[] = []
+            for (const p of parsedPartners) {
+              if (!p) continue
+              if (!p.other_id) continue
+              if (!((userMap || {})[p.other_id])) toFetch.push(Number(p.other_id))
+            }
+            if (toFetch.length > 0) {
+              await Promise.all(toFetch.map(async id => {
+                try {
+                  const r = await fetch(`/api/users/check/${id}`, { credentials: 'include' })
+                  if (!r.ok) return
+                  const u = await r.json()
+                  if (u && u.first_name) {
+                    setUserMap(prev => ({ ...(prev || {}), [Number(id)]: { first_name: u.first_name, last_name: u.last_name, role: u.role } }))
+                  }
+                } catch (e) {
+                  // ignore per-user errors
+                }
+              }))
+            }
+          }
+        } catch (e) {
+          // ignore enrichment errors
+        }
 
         // attempt to enrich partners with last_at if backend didn't provide it
         try {
@@ -373,8 +407,8 @@ export default function ChatWidget() {
     let cancelled = false
     fetch('/api/users/reduced', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then((list: any[] | null) => {
       if (cancelled || !list) return
-      const m: Record<number, { first_name: string, last_name: string }> = {}
-      for (const u of list) m[Number(u.user_id)] = { first_name: u.first_name, last_name: u.last_name }
+      const m: Record<number, { first_name: string, last_name: string, role?: string }> = {}
+      for (const u of list) m[Number(u.user_id)] = { first_name: u.first_name, last_name: u.last_name, role: u.role }
       setUserMap(m)
     }).catch(() => {})
     return () => { cancelled = true }
@@ -596,7 +630,11 @@ export default function ChatWidget() {
       <div className={`chat-widget-body ${open ? 'open' : 'closed'}`}>
           <div className={`chat-content ${activePartner ? 'chat-active' : 'chat-history'} ${animating ? 'anim' : ''}`}>
             {activePartner ? (
-              <ChatWindowInline partnerId={activePartner} onClose={() => setActivePartner(null)} partnerName={userMap[activePartner] ? `${userMap[activePartner].first_name} ${userMap[activePartner].last_name}` : undefined} onMessageSent={(id, sent_at) => {
+              <ChatWindowInline partnerId={activePartner} onClose={() => setActivePartner(null)} partnerName={
+                userMap[activePartner]
+                  ? `${userMap[activePartner].first_name} ${userMap[activePartner].last_name}${(userMap[activePartner].role === 'admin' && (session?.role === 'admin' || session?.role === 'mentor' || user?.role === 'admin' || user?.role === 'mentor') ? ' (admin)' : '')}`
+                  : undefined
+              } onMessageSent={(id, sent_at) => {
                 setPartners(prev => {
                   const found = prev.find(p => p.other_id === id)
                   if (found) {
@@ -617,7 +655,12 @@ export default function ChatWidget() {
                     <div key={p.other_id} className="partner-row" onClick={() => { setActivePartner(p.other_id); setOpen(true); setAnimating(true); setTimeout(() => setAnimating(false), 320); setUnreadMap(prev=>{ const c = {...prev}; delete c[p.other_id]; return c }) }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {unreadMap[p.other_id] && <span className="partner-unread-dot" aria-hidden />}
-                        <div className="partner-name">{userMap[p.other_id] ? `${userMap[p.other_id].first_name} ${userMap[p.other_id].last_name}` : `User ${p.other_id}`}</div>
+                        <div className="partner-name">
+                          {userMap[p.other_id]
+                            ? `${userMap[p.other_id].first_name} ${userMap[p.other_id].last_name}${(userMap[p.other_id].role === 'admin' ? ' (admin)' : '')}`
+                            : `User with id ${p.other_id} (admin)`
+                          }
+                        </div>
                       </div>
                       <div className="partner-last muted">{p.last_at ? formatZagreb(p.last_at) : (p._loaded_last_at ? 'No messages' : 'Loading...')}</div>
                     </div>
