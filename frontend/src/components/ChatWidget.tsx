@@ -168,68 +168,46 @@ export default function ChatWidget() {
   const capturedElRef = useRef<HTMLElement | null>(null)
   const movedOnce = useRef(false)
 
-  // Prevent main page from scrolling when the mouse wheel is used over the widget.
-  // Approach:
-  // - listen for `wheel` on the document with { passive: false }
-  // - determine whether the wheel event occurred within the widget's bounding rect
-  // - if so, find the nearest scrollable ancestor inside the widget and decide
-  //   whether the scroll would be consumed by it; only allow the event when the
-  //   inner scrollable can scroll further in the wheel direction
   useEffect(() => {
     const el = widgetRef.current
     if (!el) return
 
-    const root = el as HTMLElement
-    function isPointInsideWidget(clientX: number, clientY: number) {
-      try {
-        const r = root.getBoundingClientRect()
-        return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom
-      } catch (err) { return false }
-    }
-
-    // find nearest scrollable ancestor from target up to root (widget)
-    function findScrollable(elm: HTMLElement | null, root: HTMLElement) : HTMLElement | null {
+    function findScrollable(elm: HTMLElement | null) : HTMLElement | null {
       let cur: HTMLElement | null = elm
-      while (cur && cur !== root) {
+      while (cur && cur !== el) {
         const style = window.getComputedStyle(cur)
         const overflowY = style.overflowY
         const canScroll = (overflowY === 'auto' || overflowY === 'scroll') && cur.scrollHeight > cur.clientHeight
         if (canScroll) return cur
         cur = cur.parentElement
       }
-      // as a fallback, check explicitly known scrollable areas inside widget
-      const body = root.querySelector('.chat-window-body, .userfinder-results') as HTMLElement | null
+      const body = (el as HTMLElement).querySelector('.chat-window-body, .userfinder-results') as HTMLElement | null
       if (body && body.scrollHeight > body.clientHeight) return body
       return null
     }
 
     function onDocWheel(e: WheelEvent) {
       try {
-        // ignore if event wasn't inside widget
-        if (!isPointInsideWidget(e.clientX, e.clientY)) return
-
-        // identify a scrollable element that would consume the wheel
+  const rect = (el as HTMLElement).getBoundingClientRect()
+        if (!(e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom)) return
         const target = e.target as HTMLElement | null
-        const scrollable = findScrollable(target, el as HTMLElement)
+        const scrollable = findScrollable(target)
         const delta = e.deltaY
         if (!scrollable) {
-          // nothing inside can scroll -> prevent page scrolling
           e.preventDefault(); e.stopPropagation(); return
         }
-
         const atTop = scrollable.scrollTop <= 0
         const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1
-        // if trying to scroll up when already at top, or down when at bottom, prevent page scroll
         if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
           e.preventDefault(); e.stopPropagation(); return
         }
-        // else allow inner scrolling
       } catch (err) {
         try { e.preventDefault(); e.stopPropagation() } catch (err) {}
       }
     }
 
     document.addEventListener('wheel', onDocWheel as EventListener, { passive: false })
+
     return () => {
       document.removeEventListener('wheel', onDocWheel as EventListener)
     }

@@ -32,6 +32,12 @@
   /* Cards, code, and surfaces */
   --card-bg: #ffffff;
   --card-border: rgba(2,40,34,0.06);
+  /* message/bubble specific tokens (light theme) */
+  --bubble-text: var(--text);
+  --message-border: rgba(2,40,34,0.12);
+  --msg-sent-bg: linear-gradient(90deg,var(--primary),var(--accent));
+  --msg-sent-border: rgba(var(--accent-rgb),0.14);
+  --msg-recv-bg: rgba(0,0,0,0.06);
   --code-bg: #eefcf4;
 
   /* Feedback colors */
@@ -73,6 +79,12 @@
   /* Cards, code, and surfaces */
   --card-bg: #071426;
   --card-border: rgba(255,255,255,0.03);
+  /* message/bubble specific tokens (dark theme) */
+  --bubble-text: var(--text);
+  --message-border: rgba(255,255,255,0.08);
+  --msg-sent-bg: linear-gradient(90deg,var(--primary),var(--accent));
+  --msg-sent-border: rgba(var(--accent-rgb),0.18);
+  --msg-recv-bg: rgba(255,255,255,0.04);
   --code-bg: #031826;
 
   /* Feedback colors */
@@ -681,8 +693,8 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .message { margin-bottom: 10px; max-width: 78%; }
 .message.sent { margin-left: auto; text-align: right }
 .message.received { margin-right: auto }
-.message-content { padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,0.04) }
-.message.sent .message-content { background: var(--accent, #0b84ff); color: white }
+.message-content { padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,0.06); color: var(--bubble-text); border: 1px solid var(--message-border) }
+.message.sent .message-content { background: linear-gradient(90deg,var(--primary),var(--accent)); color: var(--bubble-text); border: 1px solid rgba(var(--accent-rgb),0.14) }
 .message-meta { font-size: 11px; color: #666; margin-top: 4px }
 .chat-window-compose { display:flex; gap:8px; padding:8px; border-top:1px solid rgba(0,0,0,0.04); flex: 0 0 auto; align-items: center }
 .chat-window-compose textarea { flex:1; min-height:40px; max-height:120px; resize:vertical; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); box-sizing: border-box }
