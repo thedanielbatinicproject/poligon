@@ -31,7 +31,7 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
     let cancelled = false
     async function load() {
       try {
-  const res = await fetch(`/api/utility/messages/${partnerId}`, { credentials: 'include' })
+        const res = await fetch(`/api/utility/messages/${partnerId}`, { credentials: 'include' })
         if (!res.ok) return
         const json = await res.json()
         if (Array.isArray(json) && json.length === 0) {
@@ -44,8 +44,6 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
         setTimeout(() => { scrollerRef.current && (scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight) }, 50)
       } catch (e) {}
     }
-    load()
-    return () => { cancelled = true }
   }, [partnerId])
 
   React.useEffect(() => {
@@ -131,6 +129,7 @@ export default function ChatWidget() {
   // open by default if a user is already logged in; otherwise closed.
   const [open, setOpen] = useState<boolean>(() => Boolean(user))
   const [partners, setPartners] = useState<Partner[]>([])
+  const [unreadMap, setUnreadMap] = useState<Record<number, boolean>>({})
   const [userMap, setUserMap] = useState<Record<number, { first_name: string, last_name: string }>>({})
   const [activePartner, setActivePartner] = useState<number | null>(null)
   const [showUserFinder, setShowUserFinder] = useState(false)
@@ -238,6 +237,14 @@ export default function ChatWidget() {
             }
           }).catch(() => {})
       }
+        // mark unread if message is from someone else to me and I'm not currently viewing that dm
+        try {
+          const partnerId = payload.sender_id === user?.user_id ? payload.receiver_id : payload.sender_id
+          // only mark unread when sender is not me and not the active partner
+          if (payload.sender_id !== user?.user_id && partnerId !== activePartner) {
+            setUnreadMap(prev => ({ ...prev, [partnerId]: true }))
+          }
+        } catch (e) {}
     }
     socket.on('receive_message', onReceive)
     return () => { socket.off('receive_message', onReceive) }
@@ -444,8 +451,9 @@ export default function ChatWidget() {
               ) : (
                 <div className="chat-partners">
                   {partners.map(p => (
-                    <div key={p.other_id} className="partner-row" onClick={() => { setActivePartner(p.other_id); setOpen(true); setAnimating(true); setTimeout(() => setAnimating(false), 320) }}>
+                    <div key={p.other_id} className="partner-row" onClick={() => { setActivePartner(p.other_id); setOpen(true); setAnimating(true); setTimeout(() => setAnimating(false), 320); setUnreadMap(prev=>{ const c = {...prev}; delete c[p.other_id]; return c }) }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {unreadMap[p.other_id] && <span className="partner-unread-dot" aria-hidden />}
                         <div className="partner-name">{userMap[p.other_id] ? `${userMap[p.other_id].first_name} ${userMap[p.other_id].last_name}` : `User ${p.other_id}`}</div>
                       </div>
                       <div className="partner-last muted">{p.last_at ? formatZagreb(p.last_at) : (p._loaded_last_at ? 'No messages' : 'Loading...')}</div>
