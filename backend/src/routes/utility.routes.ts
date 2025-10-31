@@ -294,10 +294,23 @@ utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, r
 
 // GET /api/utility/messages/:user_id - Get all messages between logged-in user and specified user
 utilityRouter.get('/messages/:user_id', checkLogin, async (req: Request, res: Response) => {
-  const user1_id = req.session.user.user_id;
-  const user2_id = Number(req.params.user_id);
-  const messages = await UtilityService.getMessagesBetweenUsers(user1_id, user2_id);
-  res.status(200).json(messages);
+  try {
+    const sessionUser = (req.session as any).user || null;
+    const user1_id = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+    if (!user1_id) {
+      console.warn('GET /api/utility/messages/:user_id called without authenticated session. sessionID=', req.sessionID);
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const user2_id = Number(req.params.user_id);
+    if (isNaN(user2_id)) return res.status(400).json({ error: 'Invalid user_id parameter' });
+
+    const messages = await UtilityService.getMessagesBetweenUsers(Number(user1_id), user2_id);
+    res.status(200).json(messages);
+  } catch (err) {
+    console.error('Failed to fetch messages between users:', err);
+    res.status(500).json({ error: 'Failed to fetch messages', details: String(err) });
+  }
 });
 
 // GET /api/utility/messages/partners - Return a list of user_id's with whom the logged-in user has message history

@@ -9,6 +9,8 @@
   --primary: #009875; /* vivid aurora green */
   --accent: #8ff7cf; /* soft accent glow */
   --accent-rgb: 143,247,207;
+  /* explicit accent color variable (hex preferred). Falls back to --accent if not set.) */
+  --accent_color: var(--accent);
 
   /* Headings (provide clear hierarchy) */
   --heading-1: #012f28;
@@ -48,6 +50,8 @@
   --primary: #6ec8ff; /* icy blue aurora */
   --accent: #b78bff; /* purple glow accent */
   --accent-rgb: 183,139,255;
+  /* explicit accent color variable for dark theme */
+  --accent_color: var(--accent);
 
   /* Headings */
   --heading-1: #e8f6ff;
@@ -568,6 +572,59 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .pw-input-wrapper .auth-input, .pw-input-wrapper .auth-input input {
   padding-right: 48px;
 }
+
+/* Chat widget styles (added) */
+.chat-widget {
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  /* heavy frosted glass morphism */
+  background: rgba(255,255,255,0.06);
+  color: var(--text, #111);
+  border-radius: 14px;
+  border: 1px solid rgba(var(--accent-rgb),0.12);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 10px 30px rgba(2,6,23,0.18);
+  overflow: hidden;
+  font-family: var(--font-sans);
+  max-height: 40vh; /* cap widget height */
+  display: flex;
+  flex-direction: column;
+}
+.chat-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: grab;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.02));
+}
+/* ensure the header doesn't trigger browser gestures and allows pointer capture */
+.chat-widget-header { touch-action: none }
+/* Debug info in header */
+.chat-widget-body { display: flex; gap: 8px; padding: 8px; overflow: auto; flex: 1 1 auto }
+.chat-partners { width: 140px; max-height: calc(40vh - 90px); overflow: auto; border-right: 1px solid rgba(0,0,0,0.06); padding-right:8px }
+.partner-row { padding: 8px; border-radius: 8px; cursor: pointer; display:flex; justify-content:space-between }
+.partner-row:hover { background: rgba(0,0,0,0.03) }
+.partner-name { font-weight: 600 }
+.partner-last { font-size: 11px }
+.muted { color: #666; font-size: 12px }
+.chat-badge { background: var(--accent, #0b84ff); color: white; padding: 2px 8px; border-radius: 999px; font-size: 12px }
+
+.chat-window { width: 100%; max-width: 560px; display: flex; flex-direction: column; }
+.chat-window-header { display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid rgba(0,0,0,0.05) }
+.chat-window-body { padding: 12px; height: 360px; overflow: auto; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.02)); }
+.load-more { text-align:center; margin-bottom:8px; color: var(--accent, #0b84ff); cursor: pointer }
+.message { margin-bottom: 10px; max-width: 78%; }
+.message.sent { margin-left: auto; text-align: right }
+.message.received { margin-right: auto }
+.message-content { padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,0.04) }
+.message.sent .message-content { background: var(--accent, #0b84ff); color: white }
+.message-meta { font-size: 11px; color: #666; margin-top: 4px }
+.chat-window-compose { display:flex; gap:8px; padding:8px; border-top:1px solid rgba(0,0,0,0.04) }
+.chat-window-compose textarea { flex:1; min-height:40px; max-height:120px; resize:vertical; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.06) }
+.btn.primary { background: var(--accent, #0b84ff); color:white; border:none; padding:8px 12px; border-radius:8px }
+
 
 
 

@@ -6,6 +6,8 @@ import './styles.css'
 import { SessionProvider } from './lib/session'
 import { ThemeProvider } from './lib/theme'
 import NotificationsProvider from './lib/notifications'
+import { SocketProvider } from './components/SocketProvider'
+import ChatWidget from './components/ChatWidget'
 
 const container = document.getElementById('root')!
 const root = createRoot(container)
@@ -14,9 +16,12 @@ root.render(
     <BrowserRouter>
       <ThemeProvider>
         <SessionProvider>
-          <NotificationsProvider>
-            <App />
-          </NotificationsProvider>
+          <SocketProvider>
+            <NotificationsProvider>
+              <App />
+              <ChatWidget />
+            </NotificationsProvider>
+          </SocketProvider>
         </SessionProvider>
       </ThemeProvider>
     </BrowserRouter>
