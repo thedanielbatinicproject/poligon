@@ -642,17 +642,23 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .userfinder-table th,.userfinder-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
 .userfinder-row{cursor:pointer}
 .userfinder-row:hover{background:linear-gradient(90deg, rgba(var(--accent-rgb),0.06), transparent)}
-.partner-row { padding: 8px; border-radius: 8px; cursor: pointer; display:flex; justify-content:space-between }
+.partner-row { padding: 12px 8px; border-radius: 8px; cursor: pointer; display:flex; justify-content:space-between; align-items:center; position: relative; }
 .partner-row:hover { background: rgba(0,0,0,0.03) }
+/* give space above each row so the separator can sit in the gap */
+.partner-row + .partner-row { margin-top: 12px }
 
-/* subtle horizontal separator between partner rows that fades out at edges */
+/* separator rendered as an absolutely-positioned pseudo-element placed
+   above the row (so it doesn't overlap the row content). We constrain left/right
+   so the fade doesn't touch the rounded edges. */
 .partner-row + .partner-row::before {
   content: '';
-  display: block;
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: -10px; /* position in the gap above this row */
   height: 1px;
-  width: 100%;
-  margin: 6px 0;
   background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%);
+  pointer-events: none;
 }
 .partner-name { font-weight: 600 }
 .partner-last { font-size: 11px; color: var(--text-muted); margin-left: 8px }

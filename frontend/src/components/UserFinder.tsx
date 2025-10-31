@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import searchIcon from '../assets/icons/search.png'
+import searchIconWhite from '../assets/icons/search-white.png'
 import { useSession } from '../lib/session'
 import { createPortal } from 'react-dom'
 
@@ -69,7 +71,13 @@ export default function UserFinder({ open, onClose, onSelect }: { open: boolean,
         <div className="userfinder-body">
           <div className="userfinder-search">
             <input placeholder="Search users by name or email" value={query} onChange={e => setQuery(e.target.value)} />
-            <button className="accent-btn" onClick={() => { /* trigger matching - results update automatically */ }} aria-label="Search">🔍</button>
+            <button className="accent-btn" onClick={() => { /* trigger matching - results update automatically */ }} aria-label="Search">
+              {(() => {
+                const theme = (typeof document !== 'undefined' && document.documentElement && document.documentElement.getAttribute('data-theme')) || 'light'
+                const src = theme === 'dark' ? searchIconWhite : searchIcon
+                return <img src={src} alt="Search" style={{ height: 18, width: 18 }} />
+              })()}
+            </button>
           </div>
           <div className="userfinder-results">
             {loading && <div className="muted">Loading users…</div>}
