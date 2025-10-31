@@ -65,13 +65,7 @@ else if (typeof window !== 'undefined' && window.location && window.location.hos
   API_BASE = '';
 }
 
-// Helpful runtime debug logging when diagnosing network/CORS issues.
-try {
-  // eslint-disable-next-line no-console
-  console.debug('[api] API_BASE =', API_BASE || '(relative /api)', { env: _envBase, win: _winBase, location: typeof window !== 'undefined' ? window.location.href : undefined });
-} catch (e) {
-  /* ignore logging errors */
-}
+// Debug logging removed in production build to avoid noisy console output.
 
 async function parseResponse(res: Response) {
   const text = await res.text();

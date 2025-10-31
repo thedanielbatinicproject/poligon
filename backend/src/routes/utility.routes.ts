@@ -242,11 +242,14 @@ utilityRouter.post('/messages', checkLogin, async (req: Request, res: Response) 
 // DELETE /api/utility/messages/:message_id - Delete a message
 utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, res: Response) => {
   const message_id = Number(req.params.message_id);
-  const user_id = req.session.user.user_id;
+  // support both session shapes: top-level user_id or nested user object
+  const sessionUser = (req.session as any).user || null;
+  const user_id = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
 
   if (isNaN(message_id)) {
     return res.status(400).json({ error: 'Invalid message_id.' });
   }
+  if (!user_id) return res.status(401).json({ error: 'Not authenticated' });
 
   try {
     // Dohvati poruku iz baze
@@ -255,7 +258,14 @@ utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, r
       return res.status(404).json({ error: 'Message not found.' });
     }
 
-    // Pokušaj brisanja
+    // Permission check: non-admins may only delete messages they sent
+    const sessionUser = (req.session as any).user || null;
+    const userRole = (sessionUser && sessionUser.role) || (req.session as any).role || null;
+    if (userRole !== 'admin' && msg.sender_id !== Number(user_id)) {
+      return res.status(403).json({ error: 'You are not allowed to delete this message.' });
+    }
+
+    // Attempt deletion (service may perform additional checks)
     const deleted = await UtilityService.deleteMessage(message_id, user_id);
     if (!deleted) {
       return res.status(403).json({ error: 'You are not allowed to delete this message or message not found.' });

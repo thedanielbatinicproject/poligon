@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSocket } from './SocketProvider'
 import { useSession } from '../lib/session'
 import UserFinder from './UserFinder'
@@ -27,6 +28,8 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
   const [displayCount, setDisplayCount] = React.useState(50)
   const [body, setBody] = React.useState('')
   const scrollerRef = React.useRef<HTMLDivElement | null>(null)
+  const [contextMenu, setContextMenu] = React.useState<{ visible: boolean, x: number, y: number, messageId?: number | string }>({ visible: false, x: 0, y: 0 })
+  const lastOpenRef = React.useRef<number | null>(null)
 
   React.useEffect(() => {
     let cancelled = false
@@ -50,12 +53,10 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
           console.warn('[ChatWindowInline] unexpected messages response shape for partnerId=', partnerId, json)
         }
         if (msgs.length === 0) {
-          // helpful debug when a conversation should exist but server returned empty
-          console.warn('[ChatWindowInline] messages fetch returned empty array for partnerId=', partnerId, 'sessionUser=', user?.user_id)
+          // no messages returned for this partner
         }
         if (cancelled) return
-        try { msgs.sort((a: any, b: any) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()) } catch (err) {}
-        console.debug('[ChatWindowInline] loaded messages', { partnerId, count: msgs.length, sample: msgs.slice(0, 5) })
+  try { msgs.sort((a: any, b: any) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()) } catch (err) {}
         setAllMessages(msgs)
         // record how many messages the initial fetch returned (for quick visual debugging)
         setInitialLoadedCount(msgs.length)
@@ -81,6 +82,21 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
     socket.on('receive_message', onReceive)
     return () => { socket.off('receive_message', onReceive) }
   }, [socket, partnerId, user?.user_id])
+
+  // close context menu on outside click or Escape; ignore immediate click after contextmenu (browser quirk)
+  React.useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (lastOpenRef.current && (Date.now() - lastOpenRef.current) < 300) {
+        lastOpenRef.current = null
+        return
+      }
+      if (contextMenu.visible) setContextMenu({ visible: false, x: 0, y: 0 })
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && contextMenu.visible) setContextMenu({ visible: false, x: 0, y: 0 }) }
+    document.addEventListener('click', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onKey) }
+  }, [contextMenu.visible])
 
   const visible = allMessages.slice(Math.max(0, allMessages.length - displayCount))
 
@@ -126,22 +142,78 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
           <button className="dm-return" onClick={onClose}>Return</button>
         </div>
       </div>
-      <div className="chat-window-body" ref={scrollerRef}>
+      <div className="chat-window-body" ref={scrollerRef} onContextMenu={(e) => {
+        try {
+          const tgt = e.target as HTMLElement | null
+          const msgEl = tgt ? tgt.closest('.message') as HTMLElement | null : null
+          // Only open our delete context menu for messages that are marked as "sent" (i.e. messages the user sent)
+          if (msgEl && msgEl.classList.contains('sent')) {
+            e.preventDefault()
+            const mid = msgEl.getAttribute('data-message-id')
+            lastOpenRef.current = Date.now()
+            setContextMenu({ visible: true, x: (e as any).clientX, y: (e as any).clientY, messageId: mid ?? undefined })
+          }
+  } catch { }
+      }}>
         {displayCount < allMessages.length && (
           <div className="load-more" onClick={loadMore}>Load earlier messages</div>
         )}
         {visible.map((m, i) => {
           const mine = m.sender_id === user?.user_id
           return (
-            <div key={m.message_id ?? i} className={"message " + (mine ? 'sent' : 'received')}>
+            <div key={m.message_id ?? i} data-message-id={m.message_id} className={"message " + (mine ? 'sent' : 'received')}>
               <div className="message-content">{m.message_content}</div>
               <div className="message-meta muted">{new Date(m.sent_at).toLocaleString()} {m.status ? ` • ${m.status}` : ''}</div>
             </div>
           )
         })}
+        {contextMenu.visible && (typeof document !== 'undefined') && createPortal(
+          <div className="message-context-menu" style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 120000 }}>
+            <button className="delete-message-btn" onClick={async () => {
+              const id = contextMenu.messageId
+              setContextMenu({ visible: false, x: 0, y: 0 })
+              if (!id) return
+              try {
+                const res = await fetch(`/api/utility/messages/${id}`, { method: 'DELETE', credentials: 'include' })
+                if (!res.ok) throw new Error('delete failed')
+                setAllMessages(prev => prev.filter(mm => String(mm.message_id) !== String(id)))
+              } catch (e) { console.warn('Failed to delete message', e) }
+            }}>Delete message</button>
+          </div>, document.body
+        )}
       </div>
       <div className="chat-window-compose">
-        <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Type a message" />
+        <textarea
+          value={body}
+          onChange={e => setBody(e.target.value.replace(/\r?\n/g, ' '))}
+          onKeyDown={e => {
+            // Prevent inserting newlines — Enter sends the message
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              void send()
+            }
+          }}
+          onPaste={e => {
+            // sanitize pasted text by removing newlines
+            const clipboard = (e.clipboardData || (window as any).clipboardData)
+            const text = clipboard ? clipboard.getData('text') : ''
+            if (text && /\r|\n/.test(text)) {
+              e.preventDefault()
+              const sanitized = text.replace(/\r?\n+/g, ' ')
+              // insert sanitized text at cursor
+              const ta = e.target as HTMLTextAreaElement
+              const start = ta.selectionStart || 0
+              const end = ta.selectionEnd || 0
+              const newVal = ta.value.slice(0, start) + sanitized + ta.value.slice(end)
+              setBody(newVal)
+              // move caret after inserted text
+              requestAnimationFrame(() => {
+                try { ta.selectionStart = ta.selectionEnd = start + sanitized.length } catch (err) {}
+              })
+            }
+          }}
+          placeholder="Type a message"
+        />
         <div className="compose-actions">
           <button onClick={send} className="btn primary">Send</button>
         </div>
@@ -234,7 +306,7 @@ export default function ChatWidget() {
           console.warn('[ChatWidget] partners fetch returned non-array:', json)
           parsedPartners = []
         } else if (json.length === 0) {
-          console.info('[ChatWidget] partners fetch returned empty array (no conversations)')
+          // no partners/conversations found
           parsedPartners = []
         } else if (typeof json[0] === 'number') {
           parsedPartners = (json as number[]).map(n => ({ other_id: Number(n) }))

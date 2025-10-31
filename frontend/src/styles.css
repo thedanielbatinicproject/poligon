@@ -35,9 +35,11 @@
   /* message/bubble specific tokens (light theme) */
   --bubble-text: var(--text);
   --message-border: rgba(2,40,34,0.12);
-  --msg-sent-bg: linear-gradient(90deg,var(--primary),var(--accent));
-  --msg-sent-border: rgba(var(--accent-rgb),0.14);
-  --msg-recv-bg: rgba(0,0,0,0.06);
+  /* explicit sent/received bubbles - swap-able tokens */
+  --msg-sent-bg: rgba(0,0,0,0.06);
+  --msg-sent-border: rgba(2,40,34,0.12);
+  --msg-recv-bg: linear-gradient(90deg,var(--bg),var(--panel));
+  --msg-recv-border: rgba(var(--accent-rgb),0.14);
   --code-bg: #eefcf4;
 
   /* Feedback colors */
@@ -49,6 +51,8 @@
 
   /* Misc */
   --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  /* Input background for compose field (80% opacity feel) */
+  --input-bg: rgba(255,255,255,0.9);
 }
 
 [data-theme="dark"]{
@@ -82,9 +86,11 @@
   /* message/bubble specific tokens (dark theme) */
   --bubble-text: var(--text);
   --message-border: rgba(255,255,255,0.08);
-  --msg-sent-bg: linear-gradient(90deg,var(--primary),var(--accent));
-  --msg-sent-border: rgba(var(--accent-rgb),0.18);
-  --msg-recv-bg: rgba(255,255,255,0.04);
+  /* explicit sent/received bubbles - swapped for dark theme too */
+  --msg-sent-bg: rgba(255,255,255,0.04);
+  --msg-sent-border: rgba(255,255,255,0.08);
+  --msg-recv-bg: linear-gradient(90deg,var(--bg),var(--panel));
+  --msg-recv-border: rgba(var(--accent-rgb),0.18);
   --code-bg: #031826;
 
   /* Feedback colors */
@@ -98,6 +104,7 @@
   --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
   /* divider color used for subtle separators (dark theme) */
   --divider: rgba(255,255,255,0.2);
+  --input-bg: rgba(7,20,42,0.9);
 }
 
 /* basic page */
@@ -605,7 +612,8 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   box-shadow: 0 10px 30px rgba(2,6,23,0.18);
   overflow: hidden;
   font-family: var(--font-sans);
-  max-height: 40vh; /* cap widget height */
+  /* On common laptop screens (e.g. 1080p) make the widget taller so messages are more visible */
+  max-height: 60vh; /* increased from 40vh */
   display: flex;
   flex-direction: column;
 }
@@ -620,9 +628,9 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 /* ensure the header doesn't trigger browser gestures and allows pointer capture */
 .chat-widget-header { touch-action: none }
 /* Debug info in header */
-.chat-widget-body { display: block; padding: 8px; overflow: visible; flex: 1 1 auto; max-height: calc(40vh - 56px); transition: max-height .3s ease, opacity .3s ease, padding .3s ease }
+.chat-widget-body { display: block; padding: 8px; overflow: visible; flex: 1 1 auto; max-height: calc(60vh - 56px); transition: max-height .3s ease, opacity .3s ease, padding .3s ease }
 .chat-widget-body.closed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; overflow: hidden }
-.chat-widget-body.open { max-height: calc(40vh - 56px); opacity: 1 }
+.chat-widget-body.open { max-height: calc(60vh - 56px); opacity: 1 }
 .chat-partners { width: 100%; padding-right:8px; /* no scrolling here - only chat history should scroll */ }
 
 /* content area that swaps between history and a single DM block */
@@ -682,9 +690,22 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .chat-badge { background: var(--accent, #0b84ff); color: white; padding: 2px 8px; border-radius: 999px; font-size: 12px }
 
 .chat-window { width: 100%; max-width: 560px; display: flex; flex-direction: column; /* occupy available area inside widget-body */
-  height: calc(40vh - 56px); box-sizing: border-box; }
-.chat-window-header { display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid rgba(0,0,0,0.05); flex: 0 0 auto }
-.chat-window-header .chat-window-title{font-weight:700}
+  height: calc(60vh - 56px); box-sizing: border-box; }
+.chat-window-header {
+  display:flex;
+  justify-content:space-between;
+  align-items: center;
+  padding:10px 14px;
+  /* make header more visually distinct using theme variables */
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.06), transparent 60%);
+  color: var(--heading-2);
+  font-weight: 700;
+  flex: 0 0 auto;
+  /* subtle inner shadow to give the header separation from content */
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
+}
+.chat-window-header .chat-window-title{ font-weight:700; color: var(--heading-1) }
 .dm-return{background:linear-gradient(90deg,var(--primary),var(--accent));color:var(--panel);border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
 .dm-return:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(var(--accent-rgb),0.12)}
 .chat-widget-header .accent-btn{position:relative;z-index:30000}
@@ -693,11 +714,21 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .message { margin-bottom: 10px; max-width: 78%; }
 .message.sent { margin-left: auto; text-align: right }
 .message.received { margin-right: auto }
-.message-content { padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,0.06); color: var(--bubble-text); border: 1px solid var(--message-border) }
-.message.sent .message-content { background: linear-gradient(90deg,var(--primary),var(--accent)); color: var(--bubble-text); border: 1px solid rgba(var(--accent-rgb),0.14) }
+.message-content { padding: 8px 10px; border-radius: 8px; background: var(--msg-sent-bg); color: var(--bubble-text); border: 1px solid var(--msg-sent-border) }
+.message.sent .message-content { background: var(--msg-sent-bg); color: var(--bubble-text); border: 1px solid var(--msg-sent-border) }
+.message.received .message-content { background: var(--msg-recv-bg); color: var(--bubble-text); border: 1px solid var(--msg-recv-border) }
 .message-meta { font-size: 11px; color: #666; margin-top: 4px }
+/* Context menu for messages (right-click) */
+.message-context-menu{background:var(--panel);border:1px solid var(--border);padding:6px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.message-context-menu .delete-message-btn{background:#c92a2a;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer}
+.message-context-menu .delete-message-btn:hover{background:#a81f1f}
 .chat-window-compose { display:flex; gap:8px; padding:8px; border-top:1px solid rgba(0,0,0,0.04); flex: 0 0 auto; align-items: center }
-.chat-window-compose textarea { flex:1; min-height:40px; max-height:120px; resize:vertical; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); box-sizing: border-box }
+.chat-window-compose textarea { flex:1; min-height:40px; max-height:120px; resize:vertical; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); box-sizing: border-box; background: var(--input-bg); color: var(--text); }
+.chat-window-compose textarea { resize: none; }
+.chat-window-compose textarea::placeholder { color: var(--muted); opacity: 0.9 }
+
+/* Make send button in compose area more prominent and vertically aligned */
+.chat-window-compose .btn.primary { padding: 10px 14px; height: 40px; align-self: center; border-radius: 8px; box-shadow: 0 8px 20px rgba(var(--accent-rgb),0.12); }
 .btn.primary { background: var(--accent, #0b84ff); color:white; border:none; padding:8px 12px; border-radius:8px }
 
 /* chevron rotation for open/close */
@@ -716,6 +747,13 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   0%{box-shadow:0 0 0 0 rgba(255,138,45,0.8)}
   70%{box-shadow:0 0 0 8px rgba(255,138,45,0)}
   100%{box-shadow:0 0 0 0 rgba(255,138,45,0)}
+}
+
+/* For very tall displays keep the original, more compact widget height so it doesn't dominate the screen */
+@media (min-height: 1200px) {
+  .chat-widget { max-height: 40vh }
+  .chat-widget-body.open { max-height: calc(40vh - 56px) }
+  .chat-window { height: calc(40vh - 56px) }
 }
 
 
