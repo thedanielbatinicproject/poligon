@@ -23,6 +23,7 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
     status?: 'sending' | 'sent' | 'error'
   }
   const [allMessages, setAllMessages] = React.useState<Msg[]>([])
+  const [initialLoadedCount, setInitialLoadedCount] = React.useState<number | null>(null)
   const [displayCount, setDisplayCount] = React.useState(50)
   const [body, setBody] = React.useState('')
   const scrollerRef = React.useRef<HTMLDivElement | null>(null)
@@ -30,20 +31,43 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
   React.useEffect(() => {
     let cancelled = false
     async function load() {
+      // reset the visual counter when switching partners
+      setInitialLoadedCount(null)
       try {
         const res = await fetch(`/api/utility/messages/${partnerId}`, { credentials: 'include' })
-        if (!res.ok) return
+        if (!res.ok) {
+          console.warn('[ChatWindowInline] messages fetch not ok', res.status, partnerId)
+          // ensure the header doesn't stay in 'loading…' state forever
+          setInitialLoadedCount(0)
+          return
+        }
         const json = await res.json()
-        if (Array.isArray(json) && json.length === 0) {
+        // normalize possible shapes: Array or { rows: Array }
+        let msgs: any[] = []
+        if (Array.isArray(json)) msgs = json
+        else if (json && Array.isArray((json as any).rows)) msgs = (json as any).rows
+        else {
+          console.warn('[ChatWindowInline] unexpected messages response shape for partnerId=', partnerId, json)
+        }
+        if (msgs.length === 0) {
           // helpful debug when a conversation should exist but server returned empty
           console.warn('[ChatWindowInline] messages fetch returned empty array for partnerId=', partnerId, 'sessionUser=', user?.user_id)
         }
         if (cancelled) return
-        json.sort((a: any, b: any) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
-        setAllMessages(json)
+        try { msgs.sort((a: any, b: any) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()) } catch (err) {}
+        console.debug('[ChatWindowInline] loaded messages', { partnerId, count: msgs.length, sample: msgs.slice(0, 5) })
+        setAllMessages(msgs)
+        // record how many messages the initial fetch returned (for quick visual debugging)
+        setInitialLoadedCount(msgs.length)
         setTimeout(() => { scrollerRef.current && (scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight) }, 50)
-      } catch (e) {}
+      } catch (e) {
+        console.error('[ChatWindowInline] messages fetch failed', e)
+        // ensure we don't stay stuck showing 'loading…'
+        setInitialLoadedCount(0)
+      }
     }
+    load()
+    return () => { cancelled = true }
   }, [partnerId])
 
   React.useEffect(() => {
@@ -94,7 +118,10 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
   return (
     <div className="chat-window">
       <div className="chat-window-header">
-        <div className="chat-window-title">Conversation with {partnerName ?? `User ${partnerId}`}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="chat-window-title">Conversation with {partnerName ?? `User ${partnerId}`}</div>
+          <div style={{ marginLeft: 12 }} className="muted">{initialLoadedCount === null ? 'loading…' : (initialLoadedCount === 1 ? '1 message loaded' : `${initialLoadedCount} messages loaded`)}</div>
+        </div>
         <div>
           <button className="dm-return" onClick={onClose}>Return</button>
         </div>
@@ -140,6 +167,73 @@ export default function ChatWidget() {
   const wasDragged = useRef(false)
   const capturedElRef = useRef<HTMLElement | null>(null)
   const movedOnce = useRef(false)
+
+  // Prevent main page from scrolling when the mouse wheel is used over the widget.
+  // Approach:
+  // - listen for `wheel` on the document with { passive: false }
+  // - determine whether the wheel event occurred within the widget's bounding rect
+  // - if so, find the nearest scrollable ancestor inside the widget and decide
+  //   whether the scroll would be consumed by it; only allow the event when the
+  //   inner scrollable can scroll further in the wheel direction
+  useEffect(() => {
+    const el = widgetRef.current
+    if (!el) return
+
+    const root = el as HTMLElement
+    function isPointInsideWidget(clientX: number, clientY: number) {
+      try {
+        const r = root.getBoundingClientRect()
+        return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom
+      } catch (err) { return false }
+    }
+
+    // find nearest scrollable ancestor from target up to root (widget)
+    function findScrollable(elm: HTMLElement | null, root: HTMLElement) : HTMLElement | null {
+      let cur: HTMLElement | null = elm
+      while (cur && cur !== root) {
+        const style = window.getComputedStyle(cur)
+        const overflowY = style.overflowY
+        const canScroll = (overflowY === 'auto' || overflowY === 'scroll') && cur.scrollHeight > cur.clientHeight
+        if (canScroll) return cur
+        cur = cur.parentElement
+      }
+      // as a fallback, check explicitly known scrollable areas inside widget
+      const body = root.querySelector('.chat-window-body, .userfinder-results') as HTMLElement | null
+      if (body && body.scrollHeight > body.clientHeight) return body
+      return null
+    }
+
+    function onDocWheel(e: WheelEvent) {
+      try {
+        // ignore if event wasn't inside widget
+        if (!isPointInsideWidget(e.clientX, e.clientY)) return
+
+        // identify a scrollable element that would consume the wheel
+        const target = e.target as HTMLElement | null
+        const scrollable = findScrollable(target, el as HTMLElement)
+        const delta = e.deltaY
+        if (!scrollable) {
+          // nothing inside can scroll -> prevent page scrolling
+          e.preventDefault(); e.stopPropagation(); return
+        }
+
+        const atTop = scrollable.scrollTop <= 0
+        const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1
+        // if trying to scroll up when already at top, or down when at bottom, prevent page scroll
+        if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
+          e.preventDefault(); e.stopPropagation(); return
+        }
+        // else allow inner scrolling
+      } catch (err) {
+        try { e.preventDefault(); e.stopPropagation() } catch (err) {}
+      }
+    }
+
+    document.addEventListener('wheel', onDocWheel as EventListener, { passive: false })
+    return () => {
+      document.removeEventListener('wheel', onDocWheel as EventListener)
+    }
+  }, [])
 
   useEffect(() => {
     // load partners only for logged-in users
@@ -420,6 +514,7 @@ export default function ChatWidget() {
         onPointerDown={handleHeaderPointerDown}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="header-unread-dot" aria-hidden={true} style={{ visibility: Object.keys(unreadMap).length ? 'visible' : 'hidden' }} />
           <strong>Chat</strong>
           <span className="chat-badge">{partners.length}</span>
         </div>

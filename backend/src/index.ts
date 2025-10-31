@@ -2,6 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import sessionStore from './config/sessionStore';
 import morgan from 'morgan';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import apiRouter from './routes/api.routes';
@@ -23,6 +24,31 @@ const port = process.env.PORT || 5000;
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// CORS - allow frontend origin(s). When using credentials (cookies) the
+// Access-Control-Allow-Origin must be an explicit origin (not '*').
+// Configure allowed origins via CORS_ALLOWED_ORIGINS env var (comma separated).
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map((s) => s.trim())
+  : null;
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // If no origin (e.g., server-to-server or curl), allow it
+    if (!origin) return callback(null, true);
+    // If no allowedOrigins configured, reflect the request origin (dev friendly)
+    if (!allowedOrigins) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    return callback(new Error('CORS origin not allowed'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
+// Preflight handler
+app.options('*', cors(corsOptions));
 
 // Session middleware (custom store za tvoju sessions tablicu)
 import CustomSessionStore from './config/customSessionStore';

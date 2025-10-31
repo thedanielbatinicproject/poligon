@@ -38,15 +38,25 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
 // Minimal API client for backend calls. Uses credentials: 'include' so server session cookie is sent.
 // Avoid referencing `process` directly in the browser. Prefer (in order):
 // 1) injected env via process.env (when available), 2) a window global `__POLIGON_API_BASE__`, 3) empty string (same-origin)
-// Resolve API base in a safe, dev-friendly way:
-// 1) process.env.REACT_APP_API_BASE (injected at build time)
-// 2) window.__POLIGON_API_BASE__ (runtime override)
-// 3) If running on localhost and no explicit API base is provided, prefer an empty string
-//    so the webpack dev-server proxy (if used) will forward /api to the backend and avoid CORS.
+// Resolve API base in a safe, dev-friendly way (priority):
+// 1) build-time env (process.env.REACT_APP_API_BASE) for CRA-style apps
+// 2) Vite build-time env (import.meta.env.VITE_API_BASE)
+// 3) runtime override: window.__POLIGON_API_BASE__
+// 4) if running on localhost prefer relative '' so dev-server proxy will forward /api
 const _envBase = (typeof process !== 'undefined' && (process as any)?.env?.REACT_APP_API_BASE) || '';
+// Vite exposes import.meta.env — read safely
+let _viteBase = ''
+try {
+  // Vite exposes import.meta.env — use it if available at build/runtime
+  // @ts-ignore
+  _viteBase = (import.meta as any)?.env?.VITE_API_BASE || ''
+} catch (e) {
+  _viteBase = ''
+}
 const _winBase = (typeof window !== 'undefined' && (window as any).__POLIGON_API_BASE__) || '';
 let API_BASE: string = '';
 if (_envBase) API_BASE = _envBase;
+else if (_viteBase) API_BASE = _viteBase;
 else if (_winBase) API_BASE = _winBase;
 else if (typeof window !== 'undefined' && window.location && window.location.hostname === 'localhost') {
   // prefer relative paths in local dev so dev-server proxy handles forwarding
