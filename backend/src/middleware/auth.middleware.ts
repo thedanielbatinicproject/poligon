@@ -2,7 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 
 // Provjera je li korisnik prijavljen
 export function checkLogin(req: Request, res: Response, next: NextFunction) {
-  if (!req.session || !req.session.user_id) {
+  // Support both session shapes: older code stored top-level user_id, newer code may store a user object.
+  const sessionUser = (req.session as any).user || null
+  const sessionUserId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null
+  if (!req.session || !sessionUserId) {
     return res.status(401).json({ error: 'Resource you tried to access is restricted to users that are logged in!' });
   }
   next();

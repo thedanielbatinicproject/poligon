@@ -214,19 +214,23 @@ export class UtilityService {
     message_content: string,
     sent_at: Date
   }>> {
-    const [rows] = await pool.query(
-      `SELECT * FROM messages
+    // Ensure we fetch ALL messages where either user is sender or receiver
+    // and order by sent_at ascending (oldest first). Use explicit columns to avoid
+    // returning unexpected metadata fields and add message_id as a tie-breaker.
+    const sql = `
+      SELECT message_id, sender_id, receiver_id, message_content, sent_at
+      FROM messages
       WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-      ORDER BY sent_at ASC`,
-      [user1_id, user2_id, user2_id, user1_id]
-    );
-    return rows as Array<{
-      message_id: number,
-      sender_id: number,
-      receiver_id: number,
-      message_content: string,
-      sent_at: Date
-    }>;
+      ORDER BY sent_at ASC, message_id ASC
+    `;
+    const [rows] = await pool.query(sql, [user1_id, user2_id, user2_id, user1_id]);
+    return (rows as any[]).map(r => ({
+      message_id: Number(r.message_id),
+      sender_id: Number(r.sender_id),
+      receiver_id: Number(r.receiver_id),
+      message_content: r.message_content,
+      sent_at: r.sent_at instanceof Date ? r.sent_at : new Date(r.sent_at)
+    }));
   }
 
   /**

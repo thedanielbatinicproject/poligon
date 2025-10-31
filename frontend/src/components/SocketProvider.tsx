@@ -34,7 +34,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     function onConnect() {
       // register the user id on the server so server can join room
       try {
-        s.emit('register_user', { user_id: user.user_id })
+        // send primitive id (server expects a room name string/number)
+        s.emit('register_user', user.user_id)
       } catch (e) {}
     }
 

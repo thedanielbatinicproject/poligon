@@ -103,7 +103,16 @@ io.on('connection', (socket) => {
 
   // Registracija usera u sobu
   socket.on('register_user', (userId) => {
-    socket.join(userId);
+    try {
+      // support both primitive id or object { user_id }
+      const id = (typeof userId === 'object' && userId && (userId as any).user_id) ? (userId as any).user_id : userId;
+      if (typeof id !== 'undefined' && id !== null) {
+        socket.join(String(id));
+        console.log('socket joined room for user:', String(id));
+      }
+    } catch (err) {
+      console.warn('register_user handler error', err);
+    }
   });
 
   // Slanje poruke

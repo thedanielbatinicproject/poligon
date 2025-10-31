@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useSocket } from './SocketProvider'
 import { useSession } from '../lib/session'
+import UserFinder from './UserFinder'
 
 type Partner = {
   other_id: number
   last_at?: string
+  // whether we attempted to load last_at via messages fetch
+  _loaded_last_at?: boolean
 }
 
 // Inline ChatWindow to avoid module resolution issues with project TS config
-function ChatWindowInline({ partnerId, onClose }: { partnerId: number, onClose: () => void }) {
+function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { partnerId: number, onClose: () => void, partnerName?: string, onMessageSent?: (id: number, sent_at: string) => void }) {
   const { socket } = useSocket()
   const { user } = useSession()
   type Msg = {
@@ -31,6 +34,10 @@ function ChatWindowInline({ partnerId, onClose }: { partnerId: number, onClose: 
   const res = await fetch(`/api/utility/messages/${partnerId}`, { credentials: 'include' })
         if (!res.ok) return
         const json = await res.json()
+        if (Array.isArray(json) && json.length === 0) {
+          // helpful debug when a conversation should exist but server returned empty
+          console.warn('[ChatWindowInline] messages fetch returned empty array for partnerId=', partnerId, 'sessionUser=', user?.user_id)
+        }
         if (cancelled) return
         json.sort((a: any, b: any) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
         setAllMessages(json)
@@ -78,6 +85,8 @@ function ChatWindowInline({ partnerId, onClose }: { partnerId: number, onClose: 
       if (!res.ok) throw new Error('send failed')
       const json = await res.json()
       setAllMessages(prev => prev.map(m => m.message_id === tempId ? { ...m, message_id: json.message_id ?? m.message_id, status: 'sent' } : m))
+      // notify parent so partners list can be updated immediately
+      try { onMessageSent && onMessageSent(partnerId, msg.sent_at) } catch (e) {}
     } catch (e) {
       setAllMessages(prev => prev.map(m => m.message_id === tempId ? { ...m, status: 'error' } : m))
     }
@@ -87,8 +96,10 @@ function ChatWindowInline({ partnerId, onClose }: { partnerId: number, onClose: 
   return (
     <div className="chat-window">
       <div className="chat-window-header">
-        <div>Conversation with User {partnerId}</div>
-        <div style={{ cursor: 'pointer' }} onClick={onClose}>×</div>
+        <div className="chat-window-title">Conversation with {partnerName ?? `User ${partnerId}`}</div>
+        <div>
+          <button className="dm-return" onClick={onClose}>Return</button>
+        </div>
       </div>
       <div className="chat-window-body" ref={scrollerRef}>
         {displayCount < allMessages.length && (
@@ -120,9 +131,12 @@ export default function ChatWidget() {
   // open by default if a user is already logged in; otherwise closed.
   const [open, setOpen] = useState<boolean>(() => Boolean(user))
   const [partners, setPartners] = useState<Partner[]>([])
+  const [userMap, setUserMap] = useState<Record<number, { first_name: string, last_name: string }>>({})
   const [activePartner, setActivePartner] = useState<number | null>(null)
+  const [showUserFinder, setShowUserFinder] = useState(false)
+  const [animating, setAnimating] = useState(false)
   const widgetRef = useRef<HTMLDivElement | null>(null)
-  const posRef = useRef({ x: 20, y: 80 })
+  const posRef = useRef({ x: 20, y: 140 })
   const dragging = useRef(false)
   const wasDragged = useRef(false)
   const capturedElRef = useRef<HTMLElement | null>(null)
@@ -134,17 +148,75 @@ export default function ChatWidget() {
       setPartners([])
       return
     }
-    async function load() {
+    (async () => {
       try {
-  const res = await fetch('/api/utility/messages/partners', { credentials: 'include' })
-        if (!res.ok) return
+        const res = await fetch('/api/utility/messages/partners', { credentials: 'include' })
+        if (!res.ok) {
+          console.warn('[ChatWidget] partners fetch not ok', res.status)
+          setPartners([])
+          return
+        }
         const json = await res.json()
-        setPartners(json)
+        // normalize backend response: it may return an array of numbers or array of { other_id, last_at }
+        let parsedPartners: Partner[] = []
+        if (!Array.isArray(json)) {
+          console.warn('[ChatWidget] partners fetch returned non-array:', json)
+          parsedPartners = []
+        } else if (json.length === 0) {
+          console.info('[ChatWidget] partners fetch returned empty array (no conversations)')
+          parsedPartners = []
+        } else if (typeof json[0] === 'number') {
+          parsedPartners = (json as number[]).map(n => ({ other_id: Number(n) }))
+        } else {
+          parsedPartners = (json as any[]).map(o => ({ other_id: Number(o.other_id), last_at: o.last_at ? String(o.last_at) : undefined }))
+        }
+        setPartners(parsedPartners)
+
+        // attempt to enrich partners with last_at if backend didn't provide it
+        try {
+          if (parsedPartners.length > 0 && parsedPartners.length <= 40) {
+            const needs = parsedPartners.filter(p => !p.last_at)
+            await Promise.all(needs.map(async p => {
+              try {
+                const r = await fetch(`/api/utility/messages/${p.other_id}`, { credentials: 'include' })
+                if (!r.ok) {
+                  // mark as attempted
+                  p._loaded_last_at = true
+                  return
+                }
+                const msgs = await r.json()
+                if (Array.isArray(msgs) && msgs.length > 0) {
+                  const last = msgs[msgs.length - 1]
+                  p.last_at = last.sent_at
+                }
+              } catch (e) {
+                // ignore per-partner errors
+              }
+              p._loaded_last_at = true
+            }))
+            // update state with enriched data
+            setPartners(parsedPartners.map(x => ({ ...x })))
+          }
+        } catch (e) {
+          // ignore enrichment errors
+        }
       } catch (e) {
-        // ignore
+        console.error('[ChatWidget] failed to load partners', e)
       }
-    }
-    load()
+    })()
+  }, [user])
+
+  // load reduced users map so we can show full names in DM header
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    fetch('/api/users/reduced', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then((list: any[] | null) => {
+      if (cancelled || !list) return
+      const m: Record<number, { first_name: string, last_name: string }> = {}
+      for (const u of list) m[Number(u.user_id)] = { first_name: u.first_name, last_name: u.last_name }
+      setUserMap(m)
+    }).catch(() => {})
+    return () => { cancelled = true }
   }, [user])
 
   useEffect(() => {
@@ -154,13 +226,43 @@ export default function ChatWidget() {
       const other = payload.sender_id === user?.user_id ? payload.receiver_id : payload.sender_id
       const found = partners.find(p => p.other_id === other)
       if (!found) {
-  // reload partners simply
-  fetch('/api/utility/messages/partners', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(j => j && setPartners(j)).catch(() => {})
+        // reload partners and normalize like above
+        fetch('/api/utility/messages/partners', { credentials: 'include' })
+          .then(r => r.ok ? r.json() : null)
+          .then((j: any) => {
+            if (!j) return
+            if (Array.isArray(j) && j.length > 0 && typeof j[0] === 'number') {
+              setPartners((j as number[]).map(n => ({ other_id: Number(n) })))
+            } else if (Array.isArray(j)) {
+              setPartners((j as any[]).map(o => ({ other_id: Number(o.other_id), last_at: o.last_at ? String(o.last_at) : undefined })))
+            }
+          }).catch(() => {})
       }
     }
     socket.on('receive_message', onReceive)
     return () => { socket.off('receive_message', onReceive) }
   }, [socket, partners, user?.user_id])
+
+  function formatZagreb(iso: string) {
+    try {
+      const d = new Date(iso)
+      // Use Intl.DateTimeFormat for Europe/Zagreb
+      const dt = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Zagreb',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      })
+      // dt formats like 31/10/2025, 14:23:45 — convert to dd.mm.yyyy HH:MM:SS
+      const parts = dt.formatToParts(d)
+      const map: any = {}
+      for (const p of parts) map[p.type] = p.value
+      const formatted = `${map.day}.${map.month}.${map.year}. ${map.hour}:${map.minute}:${map.second}`
+      return `Last message at ${formatted}`
+    } catch (e) {
+      return `Last message at ${iso}`
+    }
+  }
 
   // When user becomes available, ensure widget is open by default.
   useEffect(() => {
@@ -227,6 +329,14 @@ export default function ChatWidget() {
   function handleHeaderPointerDown(e: React.PointerEvent<HTMLElement>) {
     // only primary pointer
     if (e.isPrimary === false) return
+    // if pointerdown started on an interactive control inside the header (buttons/links/inputs),
+    // don't start dragging or capture the pointer so that the nested control receives the event
+    try {
+      const tgt = e.target as HTMLElement | null
+      if (tgt && (tgt.closest('button, a, input, textarea, select, .accent-btn, .uf-close') )) {
+        return
+      }
+    } catch (err) {}
     // start tracking
     dragging.current = true
     movedRef.current = false
@@ -295,34 +405,57 @@ export default function ChatWidget() {
     <div
       ref={widgetRef}
       className={`chat-widget ${open ? 'open' : ''}`}
-      style={ movedOnce.current ? { left: posRef.current.x + 'px', top: posRef.current.y + 'px', position: 'fixed', zIndex: 9999 } : { right: '20px', bottom: '80px', position: 'fixed', zIndex: 9999 } }
+      style={ movedOnce.current ? { left: posRef.current.x + 'px', top: posRef.current.y + 'px', position: 'fixed', zIndex: 9999 } : { right: '20px', bottom: '140px', position: 'fixed', zIndex: 9999 } }
     >
       <div
         className="chat-widget-header"
-        onClick={() => { if (wasDragged.current) { wasDragged.current = false; return } setOpen(s => !s) }}
+        onClick={(e) => { if (wasDragged.current) { wasDragged.current = false; return } /* ignore clicks coming from nested interactive elements */ if ((e.target as HTMLElement) !== e.currentTarget) return; setOpen(s => !s) }}
         onPointerDown={handleHeaderPointerDown}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <strong>Chat</strong>
           <span className="chat-badge">{partners.length}</span>
         </div>
+        <div style={{ marginLeft: 8 }}>
+          <button className="accent-btn small" onClick={(e) => { e.stopPropagation(); setShowUserFinder(true) }}>New chat</button>
+        </div>
         <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div className={`chat-chevron ${open ? 'open' : ''}`} style={{ fontSize: 12, color: 'var(--muted)', transition: 'transform .3s ease' }}>{open ? '▾' : '▸'}</div>
         </div>
       </div>
       <div className={`chat-widget-body ${open ? 'open' : 'closed'}`}>
-          <div className="chat-partners">
-            {partners.length === 0 && <div className="muted">No conversations yet</div>}
-            {partners.map(p => (
-              <div key={p.other_id} className="partner-row" onClick={() => setActivePartner(p.other_id)}>
-                <div className="partner-name">User {p.other_id}</div>
-                <div className="partner-last muted">{p.last_at ? new Date(p.last_at).toLocaleString() : ''}</div>
-              </div>
-            ))}
+          <div className={`chat-content ${activePartner ? 'chat-active' : 'chat-history'} ${animating ? 'anim' : ''}`}>
+            {activePartner ? (
+              <ChatWindowInline partnerId={activePartner} onClose={() => setActivePartner(null)} partnerName={userMap[activePartner] ? `${userMap[activePartner].first_name} ${userMap[activePartner].last_name}` : undefined} onMessageSent={(id, sent_at) => {
+                setPartners(prev => {
+                  const found = prev.find(p => p.other_id === id)
+                  if (found) {
+                    return prev.map(p => p.other_id === id ? { ...p, last_at: sent_at, _loaded_last_at: true } : p)
+                  }
+                  return [{ other_id: id, last_at: sent_at, _loaded_last_at: true }, ...prev]
+                })
+              }} />
+            ) : (
+              partners.length === 0 ? (
+                <div className="partners-empty full-width">
+                  <div className="empty-text">No conversations yet.</div>
+                  <button className="accent-btn" onClick={(e) => { e.stopPropagation(); setShowUserFinder(true) }}><span className="accent-btn-text">New chat</span></button>
+                </div>
+              ) : (
+                <div className="chat-partners">
+                  {partners.map(p => (
+                    <div key={p.other_id} className="partner-row" onClick={() => { setActivePartner(p.other_id); setOpen(true); setAnimating(true); setTimeout(() => setAnimating(false), 320) }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div className="partner-name">{userMap[p.other_id] ? `${userMap[p.other_id].first_name} ${userMap[p.other_id].last_name}` : `User ${p.other_id}`}</div>
+                      </div>
+                      <div className="partner-last muted">{p.last_at ? formatZagreb(p.last_at) : (p._loaded_last_at ? 'No messages' : 'Loading...')}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
           </div>
-          {activePartner && (
-            <ChatWindowInline partnerId={activePartner} onClose={() => setActivePartner(null)} />
-          )}
+      <UserFinder open={showUserFinder} onClose={() => setShowUserFinder(false)} onSelect={(id) => { setActivePartner(id); setShowUserFinder(false); setOpen(true) }} />
       </div>
     </div>
   )

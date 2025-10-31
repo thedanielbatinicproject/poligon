@@ -98,35 +98,13 @@ utilityRouter.post('/tasks', checkLogin, async (req: Request, res: Response) => 
       task_description,
       task_status
     });
-    await AuditService.createAuditLog({
-        user_id: user.user_id,
-        action_type: 'create',
-        entity_type: 'task',
-        entity_id: task_id
-    });
-    res.status(201).json({ success: true, task_id });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create task.', details: err });
-  }
-});
-
-// Update a task
-utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Response) => {
-  const task_id = Number(req.params.task_id);
-  const updates = req.body;
-  // Optionally, add permission checks here if needed
-  try {
-    const updated = await UtilityService.updateTask(task_id, updates);
-    if (!updated) {
-      return res.status(404).json({ error: 'Task not found or not updated.' });
-    }
-    await AuditService.createAuditLog({
-        user_id: req.session.user.user_id,
-        action_type: 'edit',
-        entity_type: 'task',
-        entity_id: task_id
-    });
-    res.status(200).json({ success: true });
+  await AuditService.createAuditLog({
+    user_id: user.user_id,
+    action_type: 'create',
+    entity_type: 'task',
+    entity_id: task_id
+  });
+  res.status(201).json({ success: true, task_id });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update task.', details: err });
   }
@@ -232,7 +210,10 @@ utilityRouter.get('/tasks/user/:user_id', checkAdmin, async (req: Request, res: 
 //USER MESAGES ROUTES
 // POST /api/utility/messages - Send a message
 utilityRouter.post('/messages', checkLogin, async (req: Request, res: Response) => {
-  const sender_id = req.session.user.user_id;
+  // Support both session shapes: top-level user_id or nested user object
+  const sessionUser = (req.session as any).user || null
+  const sender_id = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null
+  if (!sender_id) return res.status(401).json({ error: 'Not authenticated' })
   const { message_content } = req.body;
   const receiver_id = Number(req.body.receiver_id);
   if (!receiver_id || typeof receiver_id !== 'number' || !message_content || typeof message_content !== 'string') {
@@ -290,6 +271,23 @@ utilityRouter.delete('/messages/:message_id', checkLogin, async (req: Request, r
     res.status(500).json({ error: 'Failed to delete message.', details: err });
   }
 });
+// GET /api/utility/messages/partners - Return a list of user_id's with whom the logged-in user has message history
+utilityRouter.get('/messages/partners', checkLogin, async (req: Request, res: Response) => {
+  try {
+    const sessionUser = (req.session as any).user || null;
+    const userId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+    // Add debug to help trace session resolution
+    console.debug('[utility.routes] /messages/partners sessionUser=', sessionUser, 'session_user_id=', (req.session as any).user_id, 'resolved userId=', userId);
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const partners = await UtilityService.getMessagePartners(Number(userId));
+    // partners is an array of numbers (user_id)
+    res.status(200).json(partners);
+  } catch (err) {
+    console.error('Failed to fetch message partners:', err);
+    res.status(500).json({ error: 'Failed to fetch message partners!', details: String(err) });
+  }
+});
 
 
 // GET /api/utility/messages/:user_id - Get all messages between logged-in user and specified user
@@ -310,22 +308,6 @@ utilityRouter.get('/messages/:user_id', checkLogin, async (req: Request, res: Re
   } catch (err) {
     console.error('Failed to fetch messages between users:', err);
     res.status(500).json({ error: 'Failed to fetch messages', details: String(err) });
-  }
-});
-
-// GET /api/utility/messages/partners - Return a list of user_id's with whom the logged-in user has message history
-utilityRouter.get('/messages/partners', checkLogin, async (req: Request, res: Response) => {
-  try {
-    const sessionUser = (req.session as any).user || null;
-    const userId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
-    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
-
-    const partners = await UtilityService.getMessagePartners(Number(userId));
-    // partners is an array of numbers (user_id)
-    res.status(200).json(partners);
-  } catch (err) {
-    console.error('Failed to fetch message partners:', err);
-    res.status(500).json({ error: 'Failed to fetch message partners!', details: String(err) });
   }
 });
 
