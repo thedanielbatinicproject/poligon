@@ -8,6 +8,8 @@
   --muted: #5b766a; /* muted text */
   /* legacy/alternate muted text token used by some components */
   --text-muted: var(--muted);
+  /* divider color used for subtle separators (light theme) */
+  --divider: rgba(0,0,0,0.06);
   --primary: #009875; /* vivid aurora green */
   --accent: #8ff7cf; /* soft accent glow */
   --accent-rgb: 143,247,207;
@@ -82,6 +84,8 @@
 
   /* Misc */
   --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  /* divider color used for subtle separators (dark theme) */
+  --divider: rgba(255,255,255,0.2);
 }
 
 /* basic page */
@@ -657,7 +661,7 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   right: 10px;
   top: -10px; /* position in the gap above this row */
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--divider) 20%, var(--divider) 80%, transparent 100%);
   pointer-events: none;
 }
 .partner-name { font-weight: 600 }
