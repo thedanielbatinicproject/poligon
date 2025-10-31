@@ -186,8 +186,23 @@ export default function ChatWidget() {
     wasDragged.current = true
     startRef.current.x = e.clientX
     startRef.current.y = e.clientY
-    posRef.current.x = Math.max(8, posRef.current.x + dx)
-    posRef.current.y = Math.max(8, posRef.current.y + dy)
+    // compute tentative positions
+    let nx = posRef.current.x + dx
+    let ny = posRef.current.y + dy
+    // clamp to viewport so widget cannot be dragged off-screen
+    if (el) {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const w = el.offsetWidth || 320
+      const h = el.offsetHeight || 200
+      nx = Math.max(8, Math.min(nx, vw - w - 8))
+      ny = Math.max(8, Math.min(ny, vh - h - 8))
+    } else {
+      nx = Math.max(8, nx)
+      ny = Math.max(8, ny)
+    }
+    posRef.current.x = nx
+    posRef.current.y = ny
     if (el) {
       el.style.right = 'auto'
       el.style.bottom = 'auto'
@@ -225,8 +240,13 @@ export default function ChatWidget() {
     if (el && !movedOnce.current) {
       try {
         const r = el.getBoundingClientRect()
-        posRef.current.x = Math.max(8, Math.round(r.left))
-        posRef.current.y = Math.max(8, Math.round(r.top))
+        // clamp initial position to viewport
+        const vw = window.innerWidth
+        const vh = window.innerHeight
+        const w = el.offsetWidth || 320
+        const h = el.offsetHeight || 200
+        posRef.current.x = Math.max(8, Math.min(Math.round(r.left), vw - w - 8))
+        posRef.current.y = Math.max(8, Math.min(Math.round(r.top), vh - h - 8))
         el.style.left = posRef.current.x + 'px'
         el.style.top = posRef.current.y + 'px'
         el.style.right = 'auto'
@@ -243,12 +263,38 @@ export default function ChatWidget() {
   }
 
   // Don't render the chatbox at all for unauthenticated users
+  // (render decision is applied after all hooks to avoid changing hook order)
+
+  // Ensure widget position remains onscreen on viewport resize
+  useEffect(() => {
+    function onResize() {
+      const el = widgetRef.current
+      if (!el) return
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const w = el.offsetWidth || 320
+      const h = el.offsetHeight || 200
+      let nx = posRef.current.x
+      let ny = posRef.current.y
+      // if still anchored bottom/right (not movedOnce), nothing to do
+      if (!movedOnce.current) return
+      nx = Math.max(8, Math.min(nx, vw - w - 8))
+      ny = Math.max(8, Math.min(ny, vh - h - 8))
+      posRef.current.x = nx
+      posRef.current.y = ny
+      el.style.left = posRef.current.x + 'px'
+      el.style.top = posRef.current.y + 'px'
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   if (!user) return null
 
   return (
     <div
       ref={widgetRef}
-      className="chat-widget"
+      className={`chat-widget ${open ? 'open' : ''}`}
       style={ movedOnce.current ? { left: posRef.current.x + 'px', top: posRef.current.y + 'px', position: 'fixed', zIndex: 9999 } : { right: '20px', bottom: '80px', position: 'fixed', zIndex: 9999 } }
     >
       <div
@@ -261,12 +307,10 @@ export default function ChatWidget() {
           <span className="chat-badge">{partners.length}</span>
         </div>
         <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontSize: 12, color: 'var(--muted)' }}>{open ? '▾' : '▸'}</div>
-          {/* production header: no debug UI */}
+          <div className={`chat-chevron ${open ? 'open' : ''}`} style={{ fontSize: 12, color: 'var(--muted)', transition: 'transform .3s ease' }}>{open ? '▾' : '▸'}</div>
         </div>
       </div>
-      {open ? (
-        <div className="chat-widget-body">
+      <div className={`chat-widget-body ${open ? 'open' : 'closed'}`}>
           <div className="chat-partners">
             {partners.length === 0 && <div className="muted">No conversations yet</div>}
             {partners.map(p => (
@@ -279,8 +323,7 @@ export default function ChatWidget() {
           {activePartner && (
             <ChatWindowInline partnerId={activePartner} onClose={() => setActivePartner(null)} />
           )}
-        </div>
-      ) : null}
+      </div>
     </div>
   )
 }

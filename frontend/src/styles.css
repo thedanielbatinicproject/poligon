@@ -581,7 +581,7 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   background: rgba(255,255,255,0.06);
   color: var(--text, #111);
   border-radius: 14px;
-  border: 1px solid rgba(var(--accent-rgb),0.12);
+  border: 1px solid var(--accent);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
   box-shadow: 0 10px 30px rgba(2,6,23,0.18);
@@ -602,7 +602,9 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 /* ensure the header doesn't trigger browser gestures and allows pointer capture */
 .chat-widget-header { touch-action: none }
 /* Debug info in header */
-.chat-widget-body { display: flex; gap: 8px; padding: 8px; overflow: auto; flex: 1 1 auto }
+.chat-widget-body { display: flex; gap: 8px; padding: 8px; overflow: auto; flex: 1 1 auto; max-height: calc(40vh - 56px); transition: max-height .3s ease, opacity .3s ease, padding .3s ease }
+.chat-widget-body.closed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; overflow: hidden }
+.chat-widget-body.open { max-height: calc(40vh - 56px); opacity: 1 }
 .chat-partners { width: 140px; max-height: calc(40vh - 90px); overflow: auto; border-right: 1px solid rgba(0,0,0,0.06); padding-right:8px }
 .partner-row { padding: 8px; border-radius: 8px; cursor: pointer; display:flex; justify-content:space-between }
 .partner-row:hover { background: rgba(0,0,0,0.03) }
@@ -624,6 +626,10 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .chat-window-compose { display:flex; gap:8px; padding:8px; border-top:1px solid rgba(0,0,0,0.04) }
 .chat-window-compose textarea { flex:1; min-height:40px; max-height:120px; resize:vertical; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.06) }
 .btn.primary { background: var(--accent, #0b84ff); color:white; border:none; padding:8px 12px; border-radius:8px }
+
+/* chevron rotation for open/close */
+.chat-chevron{display:inline-flex;align-items:center;justify-content:center;transition:transform .3s ease}
+.chat-chevron.open{transform:rotate(90deg)}
 
 
 
