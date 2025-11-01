@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Calendar, dateFnsLocalizer, Event } from 'react-big-calendar';
 import { parseISO, format, parse, startOfWeek, getDay, endOfDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
@@ -39,6 +39,51 @@ export default function Tasks() {
 
   // users map for labels
   const [usersMap, setUsersMap] = useState<Record<number,string>>({});
+  const pendingUserFetch = useRef<Set<number>>(new Set());
+
+  // Helper: fetch a single user by id (prefer /api/users/check/:id which enforces permissions)
+  const fetchUserById = async (userId: number) => {
+    if (!userId) return;
+    if (pendingUserFetch.current.has(userId)) return;
+    pendingUserFetch.current.add(userId);
+    try {
+      // Try to fetch single user details (may be restricted)
+      const res = await fetch(`/api/users/check/${userId}`, { credentials: 'include' });
+      if (res.ok) {
+        const u = await res.json();
+        const name = `${u.first_name ?? u.firstName ?? ''} ${u.last_name ?? u.lastName ?? ''}`.trim() || u.email || String(u.user_id || userId);
+        setUsersMap(prev => ({ ...prev, [Number(userId)]: name }));
+        return;
+      }
+      // If single-user endpoint is not allowed, fallback to reduced list
+      const r2 = await fetch('/api/users/reduced', { credentials: 'include' });
+      if (r2.ok) {
+        const list = await r2.json();
+        if (Array.isArray(list)) {
+          const map: Record<number,string> = {};
+          for (const uu of list) {
+            const id = Number(uu.user_id ?? uu.id ?? uu.userId ?? 0);
+            if (!id) continue;
+            const nm = `${uu.first_name ?? uu.firstName ?? ''} ${uu.last_name ?? uu.lastName ?? ''}`.trim() || uu.email || String(id);
+            map[id] = nm;
+          }
+          setUsersMap(prev => ({ ...prev, ...map }));
+          // if reduced list didn't include our id, set a placeholder
+          if (!map[Number(userId)]) {
+            setUsersMap(prev => ({ ...prev, [Number(userId)]: String(userId) }));
+          }
+        }
+      } else {
+        // ultimate fallback
+        setUsersMap(prev => ({ ...prev, [Number(userId)]: String(userId) }));
+      }
+    } catch (e) {
+      // network or parse error -> fallback
+      setUsersMap(prev => ({ ...prev, [Number(userId)]: String(userId) }));
+    } finally {
+      pendingUserFetch.current.delete(userId);
+    }
+  };
 
   useEffect(() => {
     // load user documents for selector
@@ -131,6 +176,7 @@ export default function Tasks() {
           if (t.created_by && !usersMap[Number(t.created_by)]) needed.push(Number(t.created_by));
         }
         if (needed.length > 0) {
+          // Try to fetch reduced list once to bulk-populate
           const res = await fetch('/api/users/reduced', { credentials: 'include' });
           if (res.ok) {
             const list = await res.json();
@@ -144,6 +190,10 @@ export default function Tasks() {
               }
               setUsersMap(map);
             }
+          }
+          // For any still-missing ids, queue individual fetches
+          for (const id of needed) {
+            if (!usersMap[Number(id)]) fetchUserById(Number(id)).catch(() => {});
           }
         }
       } catch (e) {
@@ -193,16 +243,21 @@ export default function Tasks() {
       .catch(() => {});
   }, []);
 
-  // helper to resolve a user label by id (calls reduced list)
+  // helper to resolve a user label by id (calls reduced list or single-user endpoint)
   const loadUserLabel = async (userId: number | null) => {
     if (!userId) return setAssignedToLabel('');
+    // preferred: use existing map
+    const cached = usersMap[Number(userId)];
+    if (cached) { setAssignedToLabel(cached); return; }
+    // otherwise try fetching single user
     try {
-      const res = await fetch('/api/users/reduced', { credentials: 'include' });
-      if (!res.ok) return;
-      const list = await res.json();
-      const found = Array.isArray(list) ? list.find((x: any) => Number(x.user_id) === Number(userId)) : null;
-      if (found) setAssignedToLabel(`${found.first_name || ''} ${found.last_name || ''}`.trim() || found.email || String(found.user_id));
-    } catch (e) {}
+      await fetchUserById(Number(userId));
+      const v = usersMap[Number(userId)];
+      if (v) setAssignedToLabel(v);
+      else setAssignedToLabel(String(userId));
+    } catch (e) {
+      setAssignedToLabel(String(userId));
+    }
   };
 
   // Auto-select document from session.last_document_id when first arriving on the page
@@ -290,13 +345,13 @@ export default function Tasks() {
     }
     return {
       id: t.task_id,
-      title: t.task_title + (t.assigned_to ? ` (${t.assigned_to})` : ''),
+      title: t.task_title + (t.assigned_to ? ` (${usersMap[Number(t.assigned_to)] || t.assigned_to})` : ''),
       start,
       end,
       allDay,
       extendedProps: t
     } as Event;
-  }), [tasks]);
+  }), [tasks, usersMap]);
 
   return (
     <div style={{ padding: 12 }}>
@@ -331,13 +386,14 @@ export default function Tasks() {
             // Friendly date formatting
             const from = t.task_from ? new Date(t.task_from).toLocaleString() : '-';
             const due = t.task_due ? new Date(t.task_due).toLocaleString() : '-';
+            const assignedLabelLocal = t.assigned_to ? (usersMap[Number(t.assigned_to)] || String(t.assigned_to)) : '—';
             try {
               if ((window as any).__pushNotification) {
-                ;(window as any).__pushNotification(`Task: ${t.task_title} — Assigned to: ${t.assigned_to || '—'} — From: ${from} — Due: ${due}`)
+                ;(window as any).__pushNotification(`Task: ${t.task_title} — Assigned to: ${assignedLabelLocal} — From: ${from} — Due: ${due}`)
                 return
               }
             } catch (e) {}
-            alert(`Task: ${t.task_title}\nAssigned to: ${t.assigned_to || '—'}\nFrom: ${from}\nDue: ${due}`);
+            alert(`Task: ${t.task_title}\nAssigned to: ${assignedLabelLocal}\nFrom: ${from}\nDue: ${due}`);
           }}
         />
       </div>
