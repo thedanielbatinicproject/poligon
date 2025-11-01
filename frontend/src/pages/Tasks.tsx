@@ -323,27 +323,34 @@ export default function Tasks() {
     notify('Task saved', false);
   };
 
-  const events = useMemo(() => tasks.map((t: TaskItem) => {
-    const start = t.task_from ? new Date(t.task_from) : new Date(t.created_at);
-    let end: Date;
-    let allDay = true;
-    if (t.task_due) {
-      end = new Date(t.task_due);
-      // For full-day rendering, set end to endOfDay
-      end = endOfDay(end);
-      allDay = true;
-    } else {
-      end = endOfDay(start);
-    }
-    return {
-      id: t.task_id,
-      title: t.task_title + (t.assigned_to ? ` (${usersMap[Number(t.assigned_to)] || t.assigned_to})` : ''),
-      start,
-      end,
-      allDay,
-      extendedProps: t
-    } as Event;
-  }), [tasks, usersMap]);
+  // Build calendar events, excluding tasks that are closed so they don't appear on the calendar
+  const events = useMemo(() =>
+    tasks
+      .filter(t => String(t.task_status ?? '').toLowerCase() !== 'closed')
+      .map((t: TaskItem) => {
+        const start = t.task_from ? new Date(t.task_from) : new Date(t.created_at);
+        let end: Date;
+        let allDay = true;
+        if (t.task_due) {
+          end = new Date(t.task_due);
+          // For full-day rendering, set end to endOfDay
+          end = endOfDay(end);
+          allDay = true;
+        } else {
+          end = endOfDay(start);
+        }
+        return {
+          id: t.task_id,
+          title: t.task_title + (t.assigned_to ? ` (${usersMap[Number(t.assigned_to)] || t.assigned_to})` : ''),
+          start,
+          end,
+          allDay,
+          extendedProps: t
+        } as Event;
+      }),
+    [tasks, usersMap]
+  );
+  
 
   // choose singular/plural for the tasks count label
   const tasksCountLabel = tasks.length === 1 ? 'task' : 'tasks';
@@ -476,12 +483,23 @@ export default function Tasks() {
           {tasks.length === 0 && <p>No tasks to show.</p>}
           {tasks.map((t: TaskItem) => {
             const role = session?.user?.role;
-            const uid = session?.user?.user_id;
-            const assignedLabel = t.assigned_to ? (usersMap[Number(t.assigned_to)] || String(t.assigned_to)) : '—';
-            const creatorLabel = t.created_by ? (usersMap[Number(t.created_by)] || String(t.created_by)) : '—';
-            const canEdit = (role === 'admin' || role === 'mentor' || Number(uid) === Number(t.created_by));
-            const canToggle = (role === 'admin' || role === 'mentor' || Number(uid) === Number(t.created_by) || Number(uid) === Number(t.assigned_to));
-            const canDelete = (role === 'admin' || role === 'mentor' || Number(uid) === Number(t.created_by));
+            // normalize different possible id shapes to numbers for robust comparison
+            const normalizeId = (v: any): number | null => {
+              if (v === null || v === undefined) return null;
+              if (typeof v === 'number') return Number(v);
+              if (typeof v === 'string' && v.trim() !== '') return Number(v);
+              if (typeof v === 'object') return Number(v.user_id ?? v.id ?? v.userId ?? v.id_user ?? NaN);
+              return null;
+            };
+            const uid = normalizeId(session?.user?.user_id ?? session?.user?.id ?? session?.user?.userId);
+            const assignedToId = normalizeId(t.assigned_to);
+            const createdById = normalizeId(t.created_by);
+            const assignedLabel = assignedToId ? (usersMap[Number(assignedToId)] || String(assignedToId)) : '—';
+            const creatorLabel = createdById ? (usersMap[Number(createdById)] || String(createdById)) : '—';
+            const isAdminOrMentor = role === 'admin' || role === 'mentor';
+            const canEdit = (isAdminOrMentor || (uid !== null && createdById !== null && Number(uid) === Number(createdById)));
+            const canToggle = (isAdminOrMentor || (uid !== null && ((createdById !== null && Number(uid) === Number(createdById)) || (assignedToId !== null && Number(uid) === Number(assignedToId)))));
+            const canDelete = (isAdminOrMentor || (uid !== null && createdById !== null && Number(uid) === Number(createdById)));
             return (
               <div key={t.task_id} className={`task-row ${t.task_status === 'closed' ? 'closed' : ''}`}>
                 <div className="task-main">

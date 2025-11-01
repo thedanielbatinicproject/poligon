@@ -71,6 +71,37 @@ export default function Profile(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // helper to copy text to clipboard with a fallback for older browsers
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text)
+        notifier.push('Copied to clipboard', 2)
+        return true
+      }
+    } catch (e) {
+      // fallthrough to legacy method
+    }
+    try {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      if (ok) {
+        notifier.push('Copied to clipboard', 2)
+        return true
+      }
+    } catch (e) {
+      // ignore
+    }
+    notifier.push('Copy failed (clipboard unavailable)', undefined, true)
+    return false
+  }
+
   useEffect(() => {
     if (user) {
       setEditable({
@@ -317,6 +348,7 @@ export default function Profile(): JSX.Element {
                 <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Role: <strong>{user.role}</strong> (read-only)</div>
                 <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Affiliation: <strong>{user.affiliation || '—'}</strong></div>
                 <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>Email: <strong>{user.email}</strong></div>
+                <div style={{ color: 'var(--muted)', fontSize: '1rem' }}>UserID: <strong>{user.user_id ?? user.id ?? '—'}</strong></div>
               </div>
             </div>
           )}
@@ -346,11 +378,19 @@ export default function Profile(): JSX.Element {
                   const isCurrent = normalizeSessionId(rowSessionIdRaw) === currentSessionId
                   return (
                     <tr key={sid} className={isCurrent ? 'session-current' : ''}>
-                      <td className="session-id" style={{ maxWidth: '28vw' }}>
-                        <button className="btn btn-ghost" onClick={() => { navigator.clipboard?.writeText(sid); notifier.push('Copied session id', 2) }}>
-                          {sid.slice(0, 12)}…
-                        </button>
-                      </td>
+                          <td className="session-id" style={{ maxWidth: '28vw' }}>
+                            <button
+                              className="btn btn-ghost"
+                              onClick={async () => {
+                                // prefer the canonical session id value stored in row if available
+                                const rowSessionIdRaw = row?.session?.session_id ?? row?.session_id ?? sid
+                                const normalized = normalizeSessionId(rowSessionIdRaw)
+                                await copyToClipboard(String(normalized || rowSessionIdRaw || sid))
+                              }}
+                            >
+                              {String((row?.session?.session_id ?? row?.session_id ?? sid) || '').slice(0, 12)}…
+                            </button>
+                          </td>
                       <td>{row ? row.last_route || '—' : '—'}</td>
                       <td className="user-agent" style={{ maxWidth: '36vw' }} title={row ? row.user_agent : ''}>{row ? (row.user_agent || '—') : '—'}</td>
                       <td>{row ? (row.ip_address || '') : ''}</td>

@@ -131,23 +131,36 @@ utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Respo
     const existing = await UtilityService.getTaskById(task_id);
     if (!existing) return res.status(404).json({ error: 'Task not found' });
 
-    // Permission: admin/mentor can edit any task; others only their own created tasks
+    // Permission rules:
+    // - admin/mentor can edit any task
+    // - task creator can edit
+    // - assigned user may only change the task_status (mark closed/reopen)
     const role = (req.session as any).role || (req.session as any).user?.role || null;
-    let canEdit = false;
-  if (role === 'admin' || role === 'mentor') canEdit = true;
-  if (existing.created_by === Number(userId)) canEdit = true;
+    let canEditAny = false;
+    if (role === 'admin' || role === 'mentor') canEditAny = true;
+    if (existing.created_by === Number(userId)) canEditAny = true;
 
-    if (!canEdit) return res.status(403).json({ error: 'Not authorized to edit this task' });
+    // Determine if requester is the assigned user
+    const assignedTo = existing.assigned_to != null ? Number(existing.assigned_to) : null;
+    const isAssignedUser = assignedTo !== null && Number(userId) === Number(assignedTo);
+
+    // Inspect requested updates to decide if a limited edit by assigned user is allowed
+    const allowed = ['task_title','task_description','assigned_to','document_id','task_status','from','due','task_from','task_due'];
+    const requestedKeys = Object.keys(req.body).filter(k => allowed.includes(k));
+
+    // If not allowed to edit any field, allow only assigned user to change task_status
+    if (!canEditAny) {
+      if (!(isAssignedUser && requestedKeys.length === 1 && (requestedKeys[0] === 'task_status' || requestedKeys[0] === 'task_status' ))) {
+        return res.status(403).json({ error: 'Not authorized to edit this task' });
+      }
+    }
 
     const updates: any = {};
-    const allowed = ['task_title','task_description','assigned_to','document_id','task_status','from','due','task_from','task_due'];
     // Accept both body keys 'from'/'due' and 'task_from'/'task_due'
-    for (const k of Object.keys(req.body)) {
-      if (allowed.includes(k)) {
-        if (k === 'from' || k === 'task_from') updates.task_from = req.body[k];
-        else if (k === 'due' || k === 'task_due') updates.task_due = req.body[k];
-        else updates[k] = req.body[k];
-      }
+    for (const k of requestedKeys) {
+      if (k === 'from' || k === 'task_from') updates.task_from = req.body[k];
+      else if (k === 'due' || k === 'task_due') updates.task_due = req.body[k];
+      else updates[k] = req.body[k];
     }
 
     const ok = await UtilityService.updateTask(task_id, updates);
