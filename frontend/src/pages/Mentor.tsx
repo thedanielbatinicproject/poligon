@@ -26,22 +26,38 @@ export default function Mentor() {
   const [userFinderOpen, setUserFinderOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<(() => Promise<any>) | null>(null);
+  const [confirmTitle, setConfirmTitle] = useState<string>('Confirm action');
+  const [confirmQuestion, setConfirmQuestion] = useState<string>('Are you sure?');
 
   // tasks for document
   const [docTasks, setDocTasks] = useState<any[]>([]);
   const [docVersions, setDocVersions] = useState<any[]>([]);
   const [docFiles, setDocFiles] = useState<any[]>([]);
   const [savingType, setSavingType] = useState(false);
+  const [uploadFileName, setUploadFileName] = useState<string>('');
+  const [uploading, setUploading] = useState<boolean>(false);
 
-  // helper: format timestamp to DD.MM.YYYY.@HH:MM:SS
-  const formatDate = (ts: any) => {
+  // helper: format timestamp to DD.MM.YYYY.@HH:MM(:SS)
+  // includeSeconds: when false, omit the trailing :SS
+  const formatDate = (ts: any, includeSeconds: boolean = true) => {
     if (!ts) return '—';
     try {
-      const d = new Date(ts);
-      if (isNaN(d.getTime())) return String(ts);
+      // normalize common SQL zero-timestamp and empty variants
+      const s = String(ts).trim();
+      if (!s || s.startsWith('0000-00-00')) return '—';
+
+      // Try direct parse first
+      let d = new Date(s);
+      if (isNaN(d.getTime())) {
+        // try to normalize 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SS' (ISO-ish)
+        const iso = s.replace(' ', 'T');
+        d = new Date(iso);
+      }
+      if (isNaN(d.getTime())) return '—';
       const pad = (n: number) => (n < 10 ? '0' + n : String(n));
-      return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} @ ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    } catch (e) { return String(ts); }
+      const hhmm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      return includeSeconds ? `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} @ ${hhmm}:${pad(d.getSeconds())}` : `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} @ ${hhmm}`;
+    } catch (e) { return '—'; }
   };
 
   useEffect(() => {
@@ -142,6 +158,104 @@ export default function Mentor() {
     DocumentsApi.getFiles(Number(selectedDocId)).then((r) => setDocFiles(Array.isArray(r) ? r : [])).catch(() => {});
   // we depend on selectedDocId and usersMap may change but that's okay
   }, [selectedDocId]);
+
+  // Ensure we have uploader display names for files
+  useEffect(() => {
+    const missing: number[] = [];
+    for (const f of docFiles) {
+      const id = Number(f.uploaded_by || 0);
+      if (id && !usersMap[id]) missing.push(id);
+    }
+    if (missing.length === 0) return;
+    // fetch reduced users (this returns all reduced users and merges into usersMap)
+    TasksApi.getReducedUsers().then((list: any[]) => {
+      if (!Array.isArray(list)) return;
+      const map: Record<number,string> = {};
+      for (const u of list) {
+        const id = Number(u.user_id ?? u.id ?? u.userId ?? 0);
+        if (!id) continue;
+        const name = (u.display_name && String(u.display_name).trim()) || `${(u.first_name ?? u.firstName ?? '').trim()} ${(u.last_name ?? u.lastName ?? '').trim()}`.trim() || (u.email ?? '') || String(id);
+        map[id] = name;
+      }
+      setUsersMap(prev => ({ ...prev, ...map }));
+    }).catch(() => {});
+  }, [docFiles]);
+
+  // Ensure we have labels for any assigned_to or created_by referenced in tasks
+  useEffect(() => {
+    const needed: number[] = [];
+    for (const t of docTasks) {
+      if (t.assigned_to && !usersMap[Number(t.assigned_to)]) needed.push(Number(t.assigned_to));
+      if (t.created_by && !usersMap[Number(t.created_by)]) needed.push(Number(t.created_by));
+    }
+    if (needed.length === 0) return;
+    TasksApi.getReducedUsers().then((list: any[]) => {
+      if (!Array.isArray(list)) return;
+      const map: Record<number,string> = {};
+      for (const u of list) {
+        const id = Number(u.user_id ?? u.id ?? u.userId ?? 0);
+        if (!id) continue;
+        const name = (u.display_name && String(u.display_name).trim()) || `${(u.first_name ?? u.firstName ?? '').trim()} ${(u.last_name ?? u.lastName ?? '').trim()}`.trim() || (u.email ?? '') || String(id);
+        map[id] = name;
+      }
+      setUsersMap(prev => ({ ...prev, ...map }));
+    }).catch(() => {});
+  }, [docTasks]);
+
+  // Ensure we have display names for version editors
+  useEffect(() => {
+    const missing: number[] = [];
+    for (const v of docVersions) {
+      const id = Number(v.edited_by || v.edited_by_id || v.edited_by_user_id || 0);
+      if (id && !usersMap[id]) missing.push(id);
+    }
+    if (missing.length === 0) return;
+    TasksApi.getReducedUsers().then((list: any[]) => {
+      if (!Array.isArray(list)) return;
+      const map: Record<number,string> = {};
+      for (const u of list) {
+        const id = Number(u.user_id ?? u.id ?? u.userId ?? 0);
+        if (!id) continue;
+        const name = (u.display_name && String(u.display_name).trim()) || `${(u.first_name ?? u.firstName ?? '').trim()} ${(u.last_name ?? u.lastName ?? '').trim()}`.trim() || (u.email ?? '') || String(id);
+        map[id] = name;
+      }
+      setUsersMap(prev => ({ ...prev, ...map }));
+    }).catch(() => {});
+  }, [docVersions]);
+
+  // helper to download a file via fetch so we can intercept JSON errors and show notifications
+  const fetchAndDownload = async (url: string, suggestedName?: string) => {
+    try {
+      const res = await fetch(url, { method: 'GET', credentials: 'include' });
+      if (!res.ok) {
+        // try parse json error
+        let json: any = {};
+        try { json = await res.json().catch(() => ({})); } catch (e) { json = {}; }
+        const msg = (json && (json.error || json.message)) || `Download failed (status ${res.status})`;
+        notify.push(String(msg), undefined, true);
+        return;
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('content-disposition') || '';
+      let filename = suggestedName || '';
+      // Try extract filename from content-disposition header
+      const m = /filename\*=UTF-8''([^;\n]+)/i.exec(disposition) || /filename="?([^";\n]+)"?/i.exec(disposition);
+      if (m && m[1]) filename = decodeURIComponent(m[1]);
+      if (!filename) filename = suggestedName || 'download';
+      const urlObject = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlObject;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(urlObject);
+    } catch (err: any) {
+      console.error('[Mentor] download error', err);
+      notify.push(String(err?.message || err), undefined, true);
+    }
+  }
+
 
   // filtered list for selector
   const filtered = useMemo(() => {
@@ -294,42 +408,48 @@ export default function Mentor() {
       {creating && (
         <div className="edit-modal-backdrop">
           <div className="edit-modal">
-            <h3>Create document</h3>
-            <div className="form-row">
-              <label className="auth-label">Title</label>
-              <input className="auth-input" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
-            </div>
-            <div className="form-row">
-                <label className="auth-label">Language</label>
-              <select className="auth-input" value={newLang} onChange={e => setNewLang(e.target.value as any)}>
-                <option value="hr">hr</option>
-                <option value="en">en</option>
-              </select>
-            </div>
-              <div className="form-row">
-                <label className="auth-label">Type</label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <select className="auth-input" value={newTypeId ?? ''} onChange={e => setNewTypeId(e.target.value ? Number(e.target.value) : null)}>
-                    <option value="">-- select type --</option>
-                    {documentTypes.map(dt => (
-                      <option key={dt.type_id} value={dt.type_id}>{dt.type_name}</option>
-                    ))}
+            <h3 style={{ textAlign: 'center', marginTop: 0, marginBottom: 8 }}>Create document</h3>
+            <div className="create-form-grid auth-form">
+              <div className="col">
+                <label className="auth-label">Title</label>
+                <input className="auth-input" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
+              </div>
+
+              <div className="create-compact-row">
+                <div className="col" style={{ flex: '1 1 220px' }}>
+                  <label className="auth-label">Language</label>
+                  <select className="auth-input compact-select" value={newLang} onChange={e => setNewLang(e.target.value as any)}>
+                    <option value="hr">hr</option>
+                    <option value="en">en</option>
                   </select>
-                  <button className="btn btn-ghost" type="button" onClick={() => {
-                    const sel = documentTypes.find(d => d.type_id === newTypeId);
-                    if (!sel) return notify.push('Select a document type first', undefined, true);
-                    // push notification with description
-                    notify.push(sel.description || 'No description available', 8);
-                  }}>ⓘ</button>
+                </div>
+                <div className="col" style={{ flex: '2 1 320px' }}>
+                  <label className="auth-label">Type</label>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <select className="auth-input compact-select" value={newTypeId ?? ''} onChange={e => setNewTypeId(e.target.value ? Number(e.target.value) : null)}>
+                      <option value="">-- select type --</option>
+                      {documentTypes.map(dt => (
+                        <option key={dt.type_id} value={dt.type_id}>{dt.type_name}</option>
+                      ))}
+                    </select>
+                    <button className="btn btn-ghost" type="button" onClick={() => {
+                      const sel = documentTypes.find(d => d.type_id === newTypeId);
+                      if (!sel) return notify.push('Select a document type first', undefined, true);
+                      notify.push(sel.description || 'No description available', 8);
+                    }}>ⓘ</button>
+                  </div>
                 </div>
               </div>
-            <div className="form-row">
-              <label className="auth-label">Abstract</label>
-              <textarea className="auth-input" value={newAbstract} onChange={e => setNewAbstract(e.target.value)} />
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-              <button className="btn" onClick={closeCreate}>Cancel</button>
-              <button className="btn btn-primary" onClick={doCreate}>Create</button>
+
+              <div className="col">
+                <label className="auth-label">Abstract</label>
+                <textarea className="auth-input" value={newAbstract} onChange={e => setNewAbstract(e.target.value)} />
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
+                <button className="btn btn-ghost" onClick={closeCreate}>Cancel</button>
+                <button className="btn btn-primary" onClick={doCreate}>Create</button>
+              </div>
             </div>
           </div>
         </div>
@@ -428,7 +548,7 @@ export default function Mentor() {
                 </div>
                 <div className="mentor-action-row" style={{ display: 'flex', gap: 8 }}>
                   <button className="btn btn-action" onClick={() => { DocumentsApi.renderDocument(Number(selectedDocId)).then(() => notify.push('Render started', 3)).catch((e) => notify.push(String(e), undefined, true)); }}>Render</button>
-                  <button className="btn btn-danger" onClick={() => { setConfirmAction(() => handleDelete); setConfirmOpen(true); }}>Delete</button>
+                  <button className="btn btn-danger" onClick={() => { setConfirmTitle('Confirm DELETE action'); setConfirmQuestion('Are you sure you want to delete this document?'); setConfirmAction(() => handleDelete); setConfirmOpen(true); }}>Delete</button>
                 </div>
               </div>
             </div>
@@ -436,10 +556,43 @@ export default function Mentor() {
                 {/* Tasks panel */}
             <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
               <h3>Document tasks</h3>
-              {docTasks.length === 0 ? <div>No tasks for this document.</div> : (
-                <ul>
-                  {docTasks.map(t => <li key={t.task_id}>{t.task_title} — {t.task_status}</li>)}
-                </ul>
+              {docTasks.length === 0 ? <div style={{ color: 'var(--muted)' }}>No tasks for this document.</div> : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {docTasks.map((t: any, idx: number) => {
+                    const creatorId = Number(t.created_by || t.creator_id || 0);
+                    const assigneeId = Number(t.assigned_to || t.assignee_id || 0);
+                    const creatorName = usersMap[creatorId] || (t.created_by_name || t.creator_name) || (creatorId ? String(creatorId) : 'N/A');
+                    const assigneeName = usersMap[assigneeId] || (t.assigned_to_name || t.assignee_name) || (assigneeId ? String(assigneeId) : 'Unassigned');
+                    // support multiple possible field names returned by backend / DB schema
+                    const from = t.from || t.start || t.start_at || t.start_at_iso || t.from_at || t.from_at_iso || t.task_from || t.task_from_iso;
+                    const due = t.due || t.due_at || t.end || t.due_at_iso || t.task_due || t.task_due_iso || t.due_at || t.due_at_iso;
+                    // Show task timestamps without seconds (hours and minutes are sufficient)
+                    const prettyFrom = formatDate(from, false);
+                    const prettyDue = formatDate(due, false);
+                    const status = String(t.task_status || t.status || 'open');
+                    const statusBg = status === 'closed' ? 'linear-gradient(90deg,var(--danger),rgba(var(--danger-rgb,214,69,69),0.9))' : 'linear-gradient(90deg,var(--primary),var(--accent))';
+                    const statusColor = 'var(--panel)';
+                    // less prominent than files: smaller left accent and fainter bg
+                    const bg = `rgba(var(--accent-rgb), ${Math.max(0.02, 0.04 - (idx % 5) * 0.005)})`;
+                    return (
+                      <div key={t.task_id} style={{ padding: 10, borderRadius: 8, background: bg, borderBottom: '1px solid var(--divider)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid var(--accent)' }}>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{t.task_title}</div>
+                          <div style={{ color: 'var(--muted)', fontSize: 13 }}>
+                            {`Created by ${creatorName} — Assigned to ${assigneeName}`}
+                          </div>
+                          <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 6 }}>
+                            {`From: ${prettyFrom} — Due: ${prettyDue}`}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                          <div style={{ background: statusBg, color: statusColor, padding: '6px 10px', borderRadius: 14, fontWeight: 800, fontSize: 12, minWidth: 84, textAlign: 'center' }}>{status.toUpperCase()}</div>
+                          <div style={{ color: 'var(--muted)', fontSize: 12 }}>{t.task_id ? `TaskID: ${t.task_id}` : ''}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
@@ -448,14 +601,28 @@ export default function Mentor() {
                   <h3>Document versions</h3>
                   {docVersions.length === 0 ? <div>No versions available.</div> : (
                     <ul>
-                      {docVersions.map(v => (
+                      {docVersions.map(v => {
+                        const editorId = Number(v.edited_by || v.edited_by_id || v.edited_by_user_id || 0);
+                        let editorName = usersMap[editorId];
+                        if (!editorName) {
+                          const disp = v.edited_by_display_name || v.edited_by_name;
+                          if (disp) editorName = String(disp);
+                          else {
+                            const first = v.edited_by_first || v.first_name || v.firstName || '';
+                            const last = v.edited_by_last || v.last_name || v.lastName || '';
+                            const combined = `${first} ${last}`.trim();
+                            editorName = combined || (editorId ? String(editorId) : 'N/A');
+                          }
+                        }
+                        return (
                         <li key={v.version_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>{`v${v.version_number} — edited by ${v.edited_by || 'N/A'} @ ${new Date(v.edited_at).toLocaleString()}`}</div>
+                          <div>{`v${v.version_number} — rendered by ${editorName} @ ${new Date(v.edited_at).toLocaleString()}`}</div>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <a className="btn btn-action" href={`/api/documents/${selectedDocId}/versions/${v.version_id}/download`} target="_blank" rel="noreferrer">Download</a>
+                            <button className="btn btn-action" type="button" onClick={() => fetchAndDownload(`/api/documents/${selectedDocId}/versions/${v.version_id}/download`, `v${v.version_number}.pdf`)}>Download</button>
                           </div>
                         </li>
-                      ))}
+                      );
+                      })}
                     </ul>
                   )}
                 </div>
@@ -463,45 +630,114 @@ export default function Mentor() {
                 {/* Files panel */}
                 <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
                   <h3>Files</h3>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                    <label className="auth-label" style={{ margin: 0 }}>Upload document file (pdf/tex/bib):</label>
-                    <input type="file" id="file-upload-input" />
-                    <button className="btn" onClick={async () => {
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                    <label className="auth-label" style={{ margin: 0 }}>Upload document file (allowed types are pdf and images):</label>
+
+                    {/* Hidden native file input - controlled via styled button */}
+                    <input style={{ display: 'none' }} type="file" id="file-upload-input" onChange={(e) => {
+                      const f = (e.target as HTMLInputElement).files?.[0] ?? null;
+                      setUploadFileName(f ? f.name : '');
+                    }} />
+
+                    {/* Choose file button */}
+                    <label htmlFor="file-upload-input" className="accent-btn" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 10px' }}>
+                      <span>{uploadFileName ? 'Change file' : 'Choose file'}</span>
+                    </label>
+
+                    {/* filename preview */}
+                    <div style={{ minWidth: 220, maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--muted)' }} title={uploadFileName}>{uploadFileName || 'No file selected'}</div>
+
+                    {/* Upload button */}
+                    <button className={`btn ${uploading ? 'btn-disabled' : 'btn-primary'}`} disabled={uploading} onClick={async () => {
                       const el = document.getElementById('file-upload-input') as HTMLInputElement | null;
                       if (!el || !el.files || el.files.length === 0) return notify.push('Select a file first', undefined, true);
                       const file = el.files[0];
                       const fd = new FormData();
-                      fd.append('file', file);
+                      // append document_id first to ensure server-side middleware sees it
                       fd.append('document_id', String(selectedDocId));
+                      fd.append('file', file);
+                      let res: Response | null = null;
                       try {
-                        const res = await fetch('/api/files/upload/document', { method: 'POST', body: fd, credentials: 'include' });
-                        const body = await res.json().catch(() => ({}));
-                        if (!res.ok) return notify.push(String(body && body.error ? body.error : 'Upload failed'), undefined, true);
-                        notify.push('File uploaded', 3);
+                        setUploading(true);
+                        res = await fetch('/api/files/upload/document', { method: 'POST', body: fd, credentials: 'include' });
+                      } catch (netErr: any) {
+                        console.error('[Mentor] file upload network error', netErr);
+                        notify.push(`Upload failed: ${String(netErr?.message || netErr)}`, undefined, true);
+                        setUploading(false);
+                        return;
+                      }
+
+                      let parsed: any = {};
+                      try {
+                        parsed = await res.clone().json().catch(() => ({}));
+                      } catch (e) {
+                        parsed = {};
+                      }
+
+                      if (!res.ok) {
+                        // Try to get plain text fallback for non-JSON errors
+                        let text = '';
+                        try { text = await res.text().catch(() => ''); } catch (e) { text = ''; }
+                        const msg = (parsed && (parsed.error || parsed.message)) || text || `Upload failed (status ${res.status})`;
+                        console.error('[Mentor] file upload failed', { status: res.status, json: parsed, text });
+                        notify.push(String(msg), undefined, true);
+                        setUploading(false);
+                        return;
+                      }
+
+                      notify.push('File uploaded', 3);
+                      setUploadFileName('');
+                      try {
                         const files = await DocumentsApi.getFiles(Number(selectedDocId));
                         setDocFiles(Array.isArray(files) ? files : []);
-                      } catch (e: any) { notify.push(String(e?.message || e), undefined, true); }
-                    }}>Upload</button>
+                      } catch (e: any) {
+                        console.error('[Mentor] failed to refresh file list after upload', e);
+                      }
+                      setUploading(false);
+                      // clear native input so selecting same file again triggers change
+                      try { if (el) el.value = ''; } catch {}
+                    }}>{uploading ? 'Uploading…' : 'Upload'}</button>
                   </div>
                   {docFiles.length === 0 ? <div style={{ color: 'var(--muted)' }}>No uploaded files</div> : (
-                    <ul>
-                      {docFiles.map(f => (
-                        <li key={f.file_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>{`${f.file_type || ''} — ${String(f.file_path || f.file_id).split('/').pop() || f.file_id} — by ${f.uploaded_by || 'N/A'}`}</div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <a className="btn btn-action" href={`/api/files/download/${f.file_id}`} target="_blank" rel="noreferrer">Download</a>
-                            <button className="btn btn-ghost" onClick={async () => {
-                              try {
-                                await DocumentsApi.deleteFile(Number(f.file_id));
-                                notify.push('File deleted', 2);
-                                const files = await DocumentsApi.getFiles(Number(selectedDocId));
-                                setDocFiles(Array.isArray(files) ? files : []);
-                              } catch (e: any) { notify.push(String(e?.message || e), undefined, true); }
-                            }}>Delete</button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {docFiles.map((f, idx) => {
+                        const uploaderId = Number(f.uploaded_by || 0);
+                        const uploaderName = usersMap[uploaderId] || String(uploaderId || 'N/A');
+                        const prettySize = (typeof f.file_size === 'number') ? `${(f.file_size / (1024*1024)).toFixed(2)} MB` : (f.file_size ? `${(Number(f.file_size) / (1024*1024)).toFixed(2)} MB` : '—');
+                        const alpha = (0.04 + (idx % 6) * 0.02).toFixed(3);
+                        const bg = `rgba(var(--accent-rgb), ${alpha})`;
+                        return (
+                          <div key={f.file_id} style={{ padding: 10, borderRadius: 6, background: bg, borderBottom: '1px solid var(--divider)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '6px solid var(--accent)' }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <div style={{ fontWeight: 600 }}>{f.file_name || `file_${f.file_id}`}</div>
+                              <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>
+                                {`${f.file_path || ''} — Uploaded by ${uploaderName} @ ${formatDate(f.uploaded_at)} — with file size: ${prettySize} — FileID: ${f.file_id} — for document with id ${f.document_id ?? selectedDocId}`}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, marginLeft: 12 }}>
+                              <button className="btn btn-action" type="button" onClick={() => fetchAndDownload(`/api/files/download/${f.file_id}`, f.file_name || `file_${f.file_id}`)}>Download</button>
+                              <button className="btn btn-danger" onClick={() => {
+                                // use confirmation box
+                                setConfirmTitle('Confirm file deletion');
+                                setConfirmQuestion(`Delete file ${f.file_name || f.file_id}? This will remove the record and the file from server.`);
+                                setConfirmAction(() => async () => {
+                                  try {
+                                    const res = await DocumentsApi.deleteFile(Number(f.file_id));
+                                    notify.push('File deleted', 2);
+                                  } catch (e: any) {
+                                    notify.push(String(e?.message || e), undefined, true);
+                                  } finally {
+                                    const files = await DocumentsApi.getFiles(Number(selectedDocId));
+                                    setDocFiles(Array.isArray(files) ? files : []);
+                                  }
+                                });
+                                setConfirmOpen(true);
+                              }}>Delete</button>
+                            </div>
                           </div>
-                        </li>
-                      ))}
-                    </ul>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
           </div>
@@ -545,8 +781,8 @@ export default function Mentor() {
       )}
 
       <ConfirmationBox
-        title="Confirm action"
-        question="Are you sure?"
+        title={confirmTitle}
+        question={confirmQuestion}
         isOpen={confirmOpen}
         onConfirm={() => {
           setConfirmOpen(false);

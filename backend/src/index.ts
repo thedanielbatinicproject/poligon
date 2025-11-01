@@ -124,6 +124,10 @@ const io = new SocketIOServer(server, {
   }
 });
 
+// Simple in-memory presence tracking (per-process). For multi-node deployments
+// consider a shared store like Redis so presence is global.
+const presenceMap: Map<string, Set<string>> = new Map(); // userId -> set of socket ids
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -131,10 +135,29 @@ io.on('connection', (socket) => {
   socket.on('register_user', (userId) => {
     try {
       // support both primitive id or object { user_id }
-      const id = (typeof userId === 'object' && userId && (userId as any).user_id) ? (userId as any).user_id : userId;
-      if (typeof id !== 'undefined' && id !== null) {
-        socket.join(String(id));
-        console.log('socket joined room for user:', String(id));
+      const idRaw = (typeof userId === 'object' && userId && (userId as any).user_id) ? (userId as any).user_id : userId;
+      if (typeof idRaw === 'undefined' || idRaw === null) return;
+      const id = String(idRaw);
+      // store mapping on socket so we can clean up on disconnect
+      (socket as any).registeredUserId = id;
+      socket.join(id);
+      console.log('socket joined room for user:', id);
+
+      // update presence map
+      const set = presenceMap.get(id) || new Set<string>();
+      set.add(socket.id);
+      presenceMap.set(id, set);
+
+      // notify other clients that this user is online
+      io.emit('user:presence:update', { user_id: id, online: true });
+
+      // send initial presence snapshot to the newly registered socket
+      try {
+        const onlineUsers: string[] = []
+        for (const [uid, sockets] of presenceMap.entries()) if (sockets && sockets.size > 0) onlineUsers.push(uid)
+        socket.emit('presence_init', { online: onlineUsers })
+      } catch (err) {
+        // ignore
       }
     } catch (err) {
       console.warn('register_user handler error', err);
@@ -149,6 +172,24 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    try {
+      const id = (socket as any).registeredUserId as string | undefined
+      if (id) {
+        const set = presenceMap.get(id)
+        if (set) {
+          set.delete(socket.id)
+          if (set.size === 0) {
+            presenceMap.delete(id)
+            // notify all clients that this user is now offline
+            io.emit('user:presence:update', { user_id: id, online: false, lastSeen: new Date().toISOString() })
+          } else {
+            presenceMap.set(id, set)
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('error cleaning up presence on disconnect', err)
+    }
   });
 });
 

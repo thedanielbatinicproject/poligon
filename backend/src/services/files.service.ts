@@ -12,7 +12,8 @@ export interface FileUpload {
   file_id: number;
   document_id: number;
   uploaded_by: number;
-  file_path: string;
+  file_path: string; // folder path, e.g. /uploads/1
+  file_name: string; // original filename
   file_type: FileType;
   file_size: number;
   uploaded_at: Date;
@@ -23,13 +24,14 @@ export  async function insertFileUpload({
   document_id,
   uploaded_by,
   file_path,
+  file_name,
   file_type,
   file_size,
-}: Omit<FileUpload, 'file_id' | 'uploaded_at'>): Promise<FileUpload> {
+}: Omit<FileUpload, 'file_id' | 'uploaded_at'> & { file_name: string }): Promise<FileUpload> {
   const [result] = await db.execute(
-    `INSERT INTO file_uploads (document_id, uploaded_by, file_path, file_type, file_size, uploaded_at)
-     VALUES (?, ?, ?, ?, ?, NOW())`,
-    [document_id, uploaded_by, file_path, file_type, file_size]
+    `INSERT INTO file_uploads (document_id, uploaded_by, file_path, file_name, file_type, file_size, uploaded_at)
+     VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+    [document_id, uploaded_by, file_path, file_name, file_type, file_size]
   );
   const file_id = (result as any).insertId;
   const [rows] = await db.execute('SELECT * FROM file_uploads WHERE file_id = ?', [file_id]);

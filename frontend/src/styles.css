@@ -939,6 +939,61 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   .mentor-details-card .profile-card{ padding: 18px !important }
 }
 
+/* Create document modal specific layout - keep form compact and centered */
+.create-form-grid {
+  max-width: 760px;
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+.create-form-grid .col { width: 100%; box-sizing: border-box }
+
+@media (min-width: 720px) {
+  .create-form-grid { grid-template-columns: 1fr; }
+}
+
+/* Slightly reduce textarea height inside create modal so it doesn't dominate */
+.create-form-grid textarea.auth-input, .create-form-grid .auth-input textarea {
+  min-height: 120px;
+  max-height: 320px;
+}
+
+/* Keep modal actions visually consistent with other panels */
+.edit-modal .btn-ghost { border: 1px solid var(--border); color: var(--text); background: transparent }
+
+/* Ensure consistent input/select sizing inside edit modal */
+.edit-modal .auth-input input,
+.edit-modal .auth-input select,
+.edit-modal .auth-input textarea,
+.edit-modal input.auth-input,
+.edit-modal select.auth-input,
+.edit-modal textarea.auth-input {
+  height: 44px;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+
+/* larger textarea for abstract */
+.edit-modal textarea.auth-input, .create-form-grid textarea.auth-input { min-height: 160px; height: auto }
+
+/* compact select sizing used for language/type */
+.compact-select { width: 120px; min-width: 100px; max-width: 220px; }
+
+/* center and align the language+type row in the create modal */
+.create-compact-row { display: flex; gap: 10px; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+.create-compact-row .col { margin: 0; }
+
+/* Ensure selects visually match inputs on most browsers */
+.edit-modal select.auth-input { appearance: none; -webkit-appearance: none; -moz-appearance: none; padding-right: 28px; }
+
+/* keep rounded corners consistent */
+.edit-modal .auth-input, .edit-modal input.auth-input, .edit-modal select.auth-input, .edit-modal textarea.auth-input { border-radius: 10px }
+
+
 
 
 

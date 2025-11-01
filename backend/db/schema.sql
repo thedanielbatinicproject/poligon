@@ -138,6 +138,7 @@ CREATE TABLE file_uploads (
   document_id INT UNSIGNED NOT NULL,
   uploaded_by INT UNSIGNED NOT NULL,
   file_path VARCHAR(255) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
   file_type ENUM('image', 'pdf', 'bib', 'tex') NOT NULL,
   file_size INT UNSIGNED NOT NULL,
   uploaded_at DATETIME NOT NULL,

@@ -5,6 +5,7 @@ import filesService from '../services/files.service';
 import { DocumentsService } from '../services/documents.service';
 import { deleteFileFromDisk } from '../services/fileDisk.service';
 import path from 'path';
+import fs from 'fs/promises';
 import { AuditService } from '../services/audit.service';
 
 const filesRouter = Router();
@@ -18,13 +19,36 @@ filesRouter.post('/upload/image', checkLogin, imageUpload.single('file'), async 
     if (typeof uploaded_by !== 'number') {
       return res.status(401).json({ error: 'File does not have \'uploaded_by\' property or it has it incorrectly defined! Session is probably ill-defined.' });
     }
+    if (!document_id) return res.status(400).json({ error: 'document_id missing' });
+    const docId = Number(document_id);
+    if (isNaN(docId)) return res.status(400).json({ error: 'Invalid document_id' });
+
+    // move file from tmp to per-document folder without renaming
+    const uploadsBase = path.join(__dirname, '../../uploads');
+    const targetDir = path.join(uploadsBase, String(docId));
+    try { await fs.mkdir(targetDir, { recursive: true }); } catch (e) {}
+
+    const originalName = path.basename(req.file.originalname || req.file.filename || 'upload');
+    const destPath = path.join(targetDir, originalName);
+    // if target exists, do not overwrite
+    try {
+      await fs.access(destPath);
+      return res.status(409).json({ error: 'File with same name already exists for this document' });
+    } catch (e) {
+      // does not exist, continue
+    }
+    // move
+    await fs.rename(req.file.path, destPath);
+
     const file_type = 'image';
-    const file_path = req.file.path;
+    const file_path_db = `/uploads/${docId}`; // store only folder path in DB
     const file_size = req.file.size;
+    const file_name = originalName;
     const fileUpload = await filesService.insertFileUpload({
-      document_id: Number(document_id),
+      document_id: docId,
       uploaded_by,
-      file_path,
+      file_path: file_path_db,
+      file_name,
       file_type,
       file_size,
     });
@@ -45,24 +69,47 @@ filesRouter.post('/upload/image', checkLogin, imageUpload.single('file'), async 
 // POST /files/upload/document
 filesRouter.post('/upload/document', checkLogin, documentUpload.single('file'), async (req: Request, res: Response) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'File does not have \'uploaded_by\' property or it has it incorrectly defined! Session is probably ill-defined.' });
+    if (!req.file) return res.status(400).json({ error: 'File missing from request' });
     const { document_id } = req.body;
     const uploaded_by = req.session.user_id;
     if (typeof uploaded_by !== 'number') {
       return res.status(401).json({ error: 'User not authenticated!' });
     }
-    // file_type: pdf, bib, tex (determine from mimetype/ext)
+    if (!document_id) return res.status(400).json({ error: 'document_id missing' });
+    const docId = Number(document_id);
+    if (isNaN(docId)) return res.status(400).json({ error: 'Invalid document_id' });
+
+    // determine file type by extension
     let file_type: 'pdf' | 'bib' | 'tex' = 'pdf';
     const ext = path.extname(req.file.originalname).toLowerCase();
     if (ext === '.bib') file_type = 'bib';
     else if (ext === '.tex') file_type = 'tex';
     else file_type = 'pdf';
-    const file_path = req.file.path;
+
+    // move file from tmp to per-document folder without renaming
+    const uploadsBase = path.join(__dirname, '../../uploads');
+    const targetDir = path.join(uploadsBase, String(docId));
+    try { await fs.mkdir(targetDir, { recursive: true }); } catch (e) {}
+
+    const originalName = path.basename(req.file.originalname || req.file.filename || 'upload');
+    const destPath = path.join(targetDir, originalName);
+    // if target exists, do not overwrite
+    try {
+      await fs.access(destPath);
+      return res.status(409).json({ error: 'File with same name already exists for this document' });
+    } catch (e) {
+      // not exists
+    }
+    await fs.rename(req.file.path, destPath);
+
+    const file_path_db = `/uploads/${docId}`; // store only folder path
     const file_size = req.file.size;
+    const file_name = originalName;
     const fileUpload = await filesService.insertFileUpload({
-      document_id: Number(document_id),
+      document_id: docId,
       uploaded_by,
-      file_path,
+      file_path: file_path_db,
+      file_name,
       file_type,
       file_size,
     });
@@ -119,16 +166,41 @@ filesRouter.delete('/:file_id', checkLogin, async (req: Request, res: Response) 
     if (user_role !== 'admin' && file.uploaded_by !== user_id) {
       return res.status(403).json({ error: 'Not authorized to delete this file' });
     }
-    await deleteFileFromDisk(file.file_path);
-    await filesService.deleteFileUpload(file_id);
-    
-    await AuditService.createAuditLog({
-      user_id: Number(req.session.user_id),
-      action_type: 'delete',
-      entity_type: 'file',
-      entity_id: file_id
-    });
-    res.json({ success: true });
+    // construct full disk path from stored folder path + filename
+    const folder = (file.file_path || '').replace(/^\/+/, '');
+    const fullPath = path.join(__dirname, '../../', folder, file.file_name);
+    // If the file does not exist on disk, remove DB record to avoid stale entry
+    try {
+      await fs.access(fullPath);
+      // file exists -> remove from disk
+      await deleteFileFromDisk(fullPath);
+      await filesService.deleteFileUpload(file_id);
+      await AuditService.createAuditLog({
+        user_id: Number(req.session.user_id),
+        action_type: 'delete',
+        entity_type: 'file',
+        entity_id: file_id
+      });
+      return res.json({ success: true });
+    } catch (e: any) {
+      // If missing (ENOENT) remove DB record and return 404 with message
+      if ((e as any).code === 'ENOENT') {
+        try {
+          await filesService.deleteFileUpload(file_id);
+          await AuditService.createAuditLog({
+            user_id: Number(req.session.user_id),
+            action_type: 'delete',
+            entity_type: 'file',
+            entity_id: file_id
+          });
+        } catch (innerErr) {
+          console.error('[files.routes] failed to delete stale DB record for missing file', innerErr);
+        }
+        return res.status(404).json({ error: 'File not on server disk; database record removed' });
+      }
+      // other errors
+      return res.status(500).json({ error: 'Failed to delete file with id ' + req.params.file_id + '!', details: e });
+    }
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete file with id ' + req.params.file_id + '!', details: err });
   }
@@ -139,13 +211,35 @@ filesRouter.get('/download/:file_id', checkLogin, async (req: Request, res: Resp
   try {
     const file_id = Number(req.params.file_id);
     const file = await filesService.getFileById(file_id);
-    if (!file) return res.status(404).json({ error: 'File not found' });
+    if (!file) return res.status(404).json({ error: 'File not found on server disk!' });
     const user_id = req.session.user_id;
     const user_role = req.session.role;
     if (user_role !== 'admin' && file.uploaded_by !== user_id) {
       return res.status(403).json({ error: 'Not authorized to download this file!' });
     }
-    res.download(file.file_path);
+    const folder = (file.file_path || '').replace(/^\/+/, '');
+    const fullPath = path.join(__dirname, '../../', folder, file.file_name);
+    // Check existence first and return JSON 404 if missing
+    try {
+      await fs.access(fullPath);
+    } catch (e: any) {
+      return res.status(404).json({ error: 'File not found on server disk!' });
+    }
+
+    // Use callback to catch streaming errors and respond with JSON
+    res.download(fullPath, file.file_name, (err) => {
+      if (err) {
+        // if headers already sent, just log
+        if (res.headersSent) {
+          console.error('[files.routes] download stream error after headers sent', err);
+          return;
+        }
+        if ((err as any).code === 'ENOENT') {
+          return res.status(404).json({ error: 'File not found on server disk!' });
+        }
+        return res.status(500).json({ error: 'Failed to download file', details: String(err) });
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to download even though user is authorized!', details: err });
   }

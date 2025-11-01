@@ -9,30 +9,36 @@ const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 // Allowed mimetypes for images and documents
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const DOC_MIME_TYPES = ['application/pdf', 'application/x-bibtex', 'application/x-tex', 'text/x-tex', 'text/plain'];
+const DOC_MIME_TYPES = ['application/pdf', 'application/x-bibtex', 'application/x-tex', 'text/x-tex', 'text/plain', 'application/octet-stream'];
 
-// Multer storage config (disk storage, unique filename)
+// Multer storage config: store incoming uploads temporarily in uploads/tmp
+// We'll move files into per-document folders in the route handler to ensure
+// we have the document_id from the form fields and to avoid renaming the file.
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Save images and docs in different folders
-    if (IMAGE_MIME_TYPES.includes(file.mimetype)) {
-      cb(null, path.join(__dirname, '../../uploads/images'));
-    } else {
-      cb(null, path.join(__dirname, '../../uploads/documents'));
+    const base = path.join(__dirname, '../../uploads/tmp');
+    try {
+      // ensure directory exists
+      require('fs').mkdirSync(base, { recursive: true });
+    } catch (e) {
+      // ignore
     }
+    cb(null, base);
   },
   filename: (req, file, cb) => {
-    // Format: [fieldname]-[dd_mm_yyyy_hh_mm_ss]-[userId].ext
-    const now = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const timestamp = `${pad(now.getDate())}_${pad(now.getMonth() + 1)}_${now.getFullYear()}_${pad(now.getHours())}_${pad(now.getMinutes())}_${pad(now.getSeconds())}`;
-    // Try to get userId from session (if available)
-    let userId = 'unknown';
-    if (req.session && req.session.user_id) {
-      userId = String(req.session.user_id);
+    // Keep original filename where possible, but sanitize basename to avoid path tricks.
+    const original = path.basename(file.originalname || 'upload');
+    // If a file with the same name exists in tmp, append a short uniq suffix to avoid collisions in tmp.
+    const fs = require('fs');
+    const target = path.join(path.join(__dirname, '../../uploads/tmp'), original);
+    if (!fs.existsSync(target)) {
+      cb(null, original);
+      return;
     }
-    const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${timestamp}-${userId}${ext}`);
+    const uniq = `${Date.now()}-${Math.random().toString(16).slice(2,8)}`;
+    const ext = path.extname(original);
+    const baseName = original.slice(0, original.length - ext.length);
+    cb(null, `${baseName}-${uniq}${ext}`);
   }
 });
 
@@ -54,7 +60,12 @@ export const documentUpload = multer({
   storage,
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (req, file, cb) => {
-    if (DOC_MIME_TYPES.includes(file.mimetype)) {
+    const ext = path.extname(file.originalname).toLowerCase();
+  // Extend allowed extensions to include common image formats that LaTeX can import
+  // (jpg/jpeg, png, tiff/tif, gif, eps, svg) in addition to document types
+  const allowedExt = ['.pdf', '.bib', '.tex', '.jpg', '.jpeg', '.png', '.tif', '.tiff', '.gif', '.eps', '.svg'];
+    // Accept if mimetype is known allowed or file extension matches allowed extensions
+    if (DOC_MIME_TYPES.includes(file.mimetype) || allowedExt.includes(ext)) {
       cb(null, true);
     } else {
       cb(new Error('Only document files (pdf, bib, tex) are allowed!'));

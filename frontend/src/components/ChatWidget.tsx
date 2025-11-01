@@ -15,7 +15,7 @@ type Partner = {
 
 // Inline ChatWindow to avoid module resolution issues with project TS config
 function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { partnerId: number, onClose: () => void, partnerName?: string, onMessageSent?: (id: number, sent_at: string) => void }) {
-  const { socket } = useSocket()
+  const { socket, presence } = useSocket()
   const { user, session } = useSession()
   type Msg = {
     message_id?: number | string
@@ -155,7 +155,14 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
     <div className="chat-window">
       <div className="chat-window-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="chat-window-title">Conversation with {partnerName ? partnerName : `admin (userid: ${partnerId})`}</div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="chat-window-title">Conversation with {partnerName ? partnerName : `admin (userid: ${partnerId})`}</div>
+              {presence && presence[Number(partnerId)] && (
+                <div style={{ color: 'var(--success)', fontWeight: 700, fontSize: '0.78rem' }}> (ONLINE)</div>
+              )}
+            </div>
+          </div>
           <div style={{ marginLeft: 12 }} className="muted">{initialLoadedCount === null ? 'loading…' : (initialLoadedCount === 1 ? '1 message loaded' : `${initialLoadedCount} messages loaded`)}</div>
         </div>
         <div>
@@ -243,7 +250,7 @@ function ChatWindowInline({ partnerId, onClose, partnerName, onMessageSent }: { 
 }
 
 export default function ChatWidget() {
-  const { socket } = useSocket()
+  const { socket, presence } = useSocket()
   const { user, session } = useSession()
   // open by default if a user is already logged in; otherwise closed.
   const [open, setOpen] = useState<boolean>(() => Boolean(user))
@@ -655,11 +662,16 @@ export default function ChatWidget() {
                     <div key={p.other_id} className="partner-row" onClick={() => { setActivePartner(p.other_id); setOpen(true); setAnimating(true); setTimeout(() => setAnimating(false), 320); setUnreadMap(prev=>{ const c = {...prev}; delete c[p.other_id]; return c }) }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {unreadMap[p.other_id] && <span className="partner-unread-dot" aria-hidden />}
-                        <div className="partner-name">
-                          {userMap[p.other_id]
-                            ? `${userMap[p.other_id].first_name} ${userMap[p.other_id].last_name}${(userMap[p.other_id].role === 'admin' ? ' (admin)' : '')}`
-                            : `User with id ${p.other_id} (admin)`
-                          }
+                        <div>
+                          <div className="partner-name">
+                            {userMap[p.other_id]
+                              ? `${userMap[p.other_id].first_name} ${userMap[p.other_id].last_name}${(userMap[p.other_id].role === 'admin' ? ' (admin)' : '')}`
+                              : `User with id ${p.other_id} (admin)`
+                            }
+                          </div>
+                          {presence && presence[Number(p.other_id)] && (
+                            <div style={{ color: 'var(--success)', fontSize: '0.72rem', marginTop: 2, fontWeight: 700 }}>ONLINE</div>
+                          )}
                         </div>
                       </div>
                       <div className="partner-last muted">{p.last_at ? formatZagreb(p.last_at) : (p._loaded_last_at ? 'No messages' : 'Loading...')}</div>
