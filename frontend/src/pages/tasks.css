@@ -39,3 +39,57 @@
   border-radius: 4px;
 }
 .task-row { background: transparent; }
+
+/* Centered create form styles */
+.task-create-card { padding: 1rem; }
+.task-create-form-centered { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.task-create-form-centered .form-row { width: 100%; max-width: 820px; display: flex; flex-direction: column; }
+.task-create-form-centered .form-row .auth-input, .task-create-form-centered .form-row textarea { width: 100%; box-sizing: border-box; max-width: 820px; }
+.task-create-form-centered .two-cols { display: flex; gap: 12px; width: 100%; max-width: 820px; }
+.task-create-form-centered .two-cols .form-row { flex: 1; }
+.task-create-form-centered .actions { display: flex; gap: 12px; justify-content: center; width: 100%; max-width: 820px; }
+.task-create-form-centered .actions .btn { min-width: 160px; width: 45%; max-width: 300px; }
+.task-create-form-centered .auth-label { margin-bottom: 6px; color: var(--muted); font-weight: 600; text-align: center; }
+
+/* Center labels and inputs */
+.task-create-form-centered .form-row { align-items: center; text-align: center; }
+.task-create-form-centered .form-row .auth-input { margin: 0 auto; }
+
+/* Assigned-to picker styles */
+.assigned-picker { display: inline-block; text-align: center; cursor: default; border-radius: 10px; padding: 10px 14px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); min-height: 44px; box-sizing: border-box; }
+.assigned-picker:hover { box-shadow: 0 6px 18px rgba(var(--accent-rgb),0.06); }
+.assigned-picker[role="button"], .assigned-picker[aria-haspopup="dialog"] { cursor: pointer; }
+.assigned-picker:disabled, .assigned-picker[aria-disabled="true"] { opacity: 0.75; cursor: default; }
+
+.assigned-picker::after { content: ''; }
+
+/* Task list layout */
+.tasks-list-header { text-align: center; margin-top: 8px; margin-bottom: 8px; }
+.task-row { display: flex; gap: 12px; padding: 12px; align-items: center; border-bottom: 1px solid var(--border); }
+.task-row .task-main { flex: 1; display: flex; gap: 12px; align-items: flex-start; }
+.task-row .task-desc { width: 50%; max-width: 50%; white-space: normal; word-break: break-word; overflow-wrap: break-word; }
+.task-row .task-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.task-row .task-actions { display: flex; gap: 8px; align-items: center; }
+.task-row .task-actions .btn { min-width: 90px; }
+
+/* Tags for status */
+.task-tag { display: inline-block; padding: 4px 8px; border-radius: 999px; font-weight: 700; font-size: 12px; color: var(--text); border: 1px solid var(--border); }
+.task-tag-open { background: var(--accent); color: var(--on-accent, #fff); border-color: transparent; }
+.task-tag-closed { background: var(--panel); color: var(--muted); border-color: var(--border); }
+
+/* Closed task visual treatment */
+.task-row.closed { opacity: 0.6; filter: grayscale(10%); }
+.task-row.closed .task-title { text-decoration: line-through; }
+
+/* Edit modal styles */
+.edit-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 2000; }
+.edit-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 2000; }
+.edit-modal { width: 90%; max-width: 900px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.2); }
+.edit-modal { background-color: var(--panel); }
+.edit-modal .auth-label { color: var(--muted); }
+.edit-modal .auth-input, .edit-modal textarea { width: 100%; box-sizing: border-box; }
+.edit-modal .auth-input[disabled] { opacity: 0.9 }
+.edit-modal .uf-close { background: transparent; border: none; font-size: 20px; color: var(--muted); }
+.edit-modal h3 { margin-top: 0; }
+.edit-modal .form-row { text-align: left; }
+.edit-modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }

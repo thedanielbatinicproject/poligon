@@ -36,6 +36,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const visibleRef = useRef<Notification[]>([])
   const timers = useRef<Record<string, number>>({})
   const animTimers = useRef<Record<string, number>>({})
+  // track recently shown messages to avoid duplicate notifications flooding
+  const recentMessages = useRef<Record<string, number>>({})
   const MAX_VISIBLE = 3
   const ANIM_MS = 260
 
@@ -167,6 +169,20 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const push = useCallback((message: string, durationSec?: number, isError?: boolean) => {
     const msg = (message || '').trim() || (isError ? 'An error occurred' : 'Notification')
     if (!msg) return ''
+    // dedupe: prevent the same message from being pushed repeatedly within 2s
+    try {
+      const last = recentMessages.current[msg]
+      const now = Date.now()
+      if (last && now - last < 2000) {
+        // ignore duplicate
+        return ''
+      }
+      recentMessages.current[msg] = now
+      // prune old entries occasionally
+      Object.keys(recentMessages.current).forEach(k => {
+        if (now - (recentMessages.current[k] || 0) > 10000) delete recentMessages.current[k]
+      })
+    } catch (e) {}
     const id = `n_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`
   // Enforce a minimum duration of 2 seconds for all notifications. If caller
   // provided durationSec, clamp it to at least 2000ms; otherwise compute from words.

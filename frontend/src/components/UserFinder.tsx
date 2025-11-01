@@ -26,12 +26,15 @@ export default function UserFinder({ open, onClose, onSelect }: { open: boolean,
     fetch('/api/users/reduced', { credentials: 'include' })
       .then(r => { setLoading(false); if (!r.ok) throw new Error('fetch failed'); return r.json() })
       .then((json: User[]) => {
-        // exclude the currently logged-in user from results
-        if (user && user.user_id) {
-          setAllUsers(json.filter(u => Number(u.user_id) !== Number(user.user_id)))
-        } else {
-          setAllUsers(json)
+        const list = Array.isArray(json) ? json : []
+        // always exclude the currently logged-in user
+        let users = list.filter(u => !(user && user.user_id && Number(u.user_id) === Number(user.user_id)))
+        // if current user is NOT admin/mentor, filter out admin/mentor users
+        const role = user && (user as any).role
+        if (!(role === 'admin' || role === 'mentor')) {
+          users = users.filter(u => !(u.role === 'admin' || u.role === 'mentor'))
         }
+        setAllUsers(users)
       })
       .catch(() => setAllUsers([]))
   }, [open, user])

@@ -101,7 +101,10 @@ usersRouter.get('/check/:user_id', checkLogin, async (req: Request, res: Respons
 // GET /api/users/reduced - Get reduced user list for messaging, accessible to all logged-in users
 usersRouter.get('/reduced', checkLogin, async (req: Request, res: Response) => {
   try {
-    const users = await getAllUsersReduced();
+    // Allow admins and mentors to see admin users as well (so they can be selected/seen)
+    const sessionRole = req.session?.role;
+    const includeAdmins = sessionRole === 'admin' || sessionRole === 'mentor';
+    const users = await getAllUsersReduced(includeAdmins);
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch users for messaging!', details: err });

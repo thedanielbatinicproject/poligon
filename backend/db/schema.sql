@@ -111,6 +111,8 @@ CREATE TABLE tasks (
   task_status ENUM('open', 'closed') NOT NULL DEFAULT 'open',
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
+  task_from DATETIME NOT NULL,
+  task_due DATETIME DEFAULT NULL,
   FOREIGN KEY (created_by) REFERENCES users(user_id),
   FOREIGN KEY (assigned_to) REFERENCES users(user_id),
   FOREIGN KEY (document_id) REFERENCES documents(document_id)

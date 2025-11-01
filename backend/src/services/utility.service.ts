@@ -24,6 +24,20 @@ export class UtilityService {
     if (!data.task_from) {
       throw new Error('task_from (start datetime) is required');
     }
+    // Normalize incoming datetimes (frontend may send ISO strings with Z) to
+    // MySQL DATETIME format: 'YYYY-MM-DD HH:MM:SS' (no timezone designator).
+    const fmt = (v: any): string | null => {
+      if (v === null || typeof v === 'undefined') return null;
+      // If already a Date, use it; if string, try to parse
+      const d = v instanceof Date ? v : new Date(String(v));
+      if (isNaN(d.getTime())) throw new Error('Invalid datetime value for task_from/task_due');
+      const pad = (n: number) => (n < 10 ? '0' + n : String(n));
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+
+    const taskFrom = fmt(data.task_from);
+    const taskDue = data.task_due ? fmt(data.task_due) : null;
+
     const [result] = await pool.query(
       `INSERT INTO tasks (created_by, assigned_to, document_id, task_title, task_description, task_status, task_from, task_due, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
@@ -34,8 +48,8 @@ export class UtilityService {
         data.task_title,
         data.task_description ?? '',
         data.task_status,
-        data.task_from,
-        data.task_due ?? null
+        taskFrom,
+        taskDue
       ]
     );
     return (result as any).insertId;
@@ -60,7 +74,16 @@ export class UtilityService {
     const fields = Object.keys(updates).filter(key => allowedFields.includes(key));
     if (fields.length === 0) return false;
     const setClause = fields.map(key => `${key} = ?`).join(', ');
-    const values = fields.map(key => (updates as any)[key]);
+    const values = fields.map(key => {
+      const v = (updates as any)[key];
+      if ((key === 'task_from' || key === 'task_due') && v != null) {
+        const d = v instanceof Date ? v : new Date(String(v));
+        if (isNaN(d.getTime())) throw new Error('Invalid datetime value for update');
+        const pad = (n: number) => (n < 10 ? '0' + n : String(n));
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      }
+      return v;
+    });
     values.push(task_id);
     const [result] = await pool.query(
       `UPDATE tasks SET ${setClause}, updated_at = NOW() WHERE task_id = ?`,
@@ -104,6 +127,47 @@ export class UtilityService {
   }
 
   /**
+   * Retrieves all tasks for a given document but filters them to only include
+   * tasks created by or assigned to the specified user. This is intended for
+   * non-admin users who should only see tasks they created or are assigned to.
+   */
+  static async getTasksByDocumentFiltered(document_id: number, user_id: number): Promise<any[]> {
+    const [rows] = await pool.query(
+      `SELECT * FROM tasks
+       WHERE document_id = ? AND (created_by = ? OR assigned_to = ?)
+       ORDER BY created_at DESC`,
+      [document_id, user_id, user_id]
+    );
+    return rows as any[];
+  }
+
+  /**
+   * Retrieves tasks for a document but optionally restricts results to tasks
+   * created by or assigned to a specific user. When includeAll is true the
+   * full document task list is returned (same as getTasksByDocument).
+   *
+   * @param document_id - document id to filter by
+   * @param user_id - user id to restrict to (used when includeAll is false)
+   * @param includeAll - if true return all tasks for document
+   */
+  static async getTasksByDocumentForUser(document_id: number, user_id: number | null, includeAll = false): Promise<any[]> {
+    if (includeAll) {
+      return await UtilityService.getTasksByDocument(document_id);
+    }
+    if (!user_id || isNaN(Number(user_id))) {
+      // return empty array when user isn't provided
+      return [];
+    }
+    const [rows] = await pool.query(
+      `SELECT * FROM tasks
+       WHERE document_id = ? AND (created_by = ? OR assigned_to = ?)
+       ORDER BY created_at DESC`,
+      [document_id, user_id, user_id]
+    );
+    return rows as any[];
+  }
+
+  /**
    * Retrieves all tasks either created by or assigned to a specific user.
    * Each returned object represents a task and includes:
    * - task_id: Unique identifier for the task
@@ -124,6 +188,33 @@ export class UtilityService {
       `SELECT * FROM tasks
       WHERE created_by = ? OR assigned_to = ?
       ORDER BY created_at DESC`,
+      [user_id, user_id]
+    );
+    return rows as any[];
+  }
+
+  /**
+   * Retrieves all global tasks (tasks not tied to any document).
+   * Admins/mentors may use this to view all global tasks.
+   */
+  static async getGlobalTasks(): Promise<any[]> {
+    const [rows] = await pool.query(
+      `SELECT * FROM tasks
+       WHERE document_id IS NULL
+       ORDER BY created_at DESC`
+    );
+    return rows as any[];
+  }
+
+  /**
+   * Retrieves global tasks filtered for a particular user (created_by or assigned_to).
+   * Used for non-admin users to see only their relevant global tasks.
+   */
+  static async getGlobalTasksFiltered(user_id: number): Promise<any[]> {
+    const [rows] = await pool.query(
+      `SELECT * FROM tasks
+       WHERE document_id IS NULL AND (created_by = ? OR assigned_to = ?)
+       ORDER BY created_at DESC`,
       [user_id, user_id]
     );
     return rows as any[];

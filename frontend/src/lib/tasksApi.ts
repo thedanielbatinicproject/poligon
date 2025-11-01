@@ -5,7 +5,9 @@ const base = '/api/utility/tasks';
 async function handleRes(res: Response) {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    const err = body && body.error ? body.error : res.statusText;
+    const err = body && body.error ? body.error : res.statusText || 'Request failed';
+    // Do not auto-notify here to avoid duplicate notifications in callers.
+    // Callers should surface errors via the app notification provider as needed.
     throw new Error(String(err));
   }
   return res.json().catch(() => ({}));
@@ -41,7 +43,8 @@ export async function addTask(payload: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
-  return handleRes(res);
+  const data = await handleRes(res);
+  return data;
 }
 
 export async function updateTask(task_id: number, updates: any) {
@@ -52,12 +55,14 @@ export async function updateTask(task_id: number, updates: any) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates)
   });
-  return handleRes(res);
+  const data = await handleRes(res);
+  return data;
 }
 
 export async function deleteTask(task_id: number) {
   const res = await fetch(`${base}/${task_id}`, { method: 'DELETE', credentials: 'include' });
-  return handleRes(res);
+  const data = await handleRes(res);
+  return data;
 }
 
 export default { getTasksForUser, getTasksForDocument, addTask, updateTask, deleteTask };

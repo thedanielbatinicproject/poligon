@@ -186,16 +186,18 @@ export async function updateScrollPosition(userId: number, scroll_position: any)
  *                        Defaults to false to maintain backward compatibility.
  * @returns Array of reduced user objects.
  */
-export async function getAllUsersReduced(): Promise<Array<{
+export async function getAllUsersReduced(includeAdmins: boolean = false): Promise<Array<{
   user_id: number,
   first_name: string,
   last_name: string,
   email: string,
   role: string
 }>> {
-  const [rows] = await pool.query(
-    "SELECT user_id, first_name, last_name, email, role FROM users WHERE role != 'admin'"
-  );
+  // If includeAdmins is true, include all users; otherwise exclude admins
+  const sql = includeAdmins
+    ? "SELECT user_id, first_name, last_name, email, role FROM users"
+    : "SELECT user_id, first_name, last_name, email, role FROM users WHERE role != 'admin'";
+  const [rows] = await pool.query(sql);
   return rows as Array<{
     user_id: number,
     first_name: string,

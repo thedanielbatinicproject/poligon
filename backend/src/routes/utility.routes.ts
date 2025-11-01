@@ -112,15 +112,19 @@ utilityRouter.post('/tasks', checkLogin, async (req: Request, res: Response) => 
   });
   res.status(201).json({ success: true, task_id });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update task.', details: err });
+    console.error('[utility.routes] Failed creating task:', err);
+    res.status(500).json({ error: 'Failed to create task.', details: String(err) });
   }
 });
 
 // PUT /api/tasks/:task_id - Update a task (with permission checks)
 utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Response) => {
   const task_id = Number(req.params.task_id);
-  const user = req.session.user;
-  if (!user) return res.status(401).json({ error: 'User not logged in!' });
+  // support both session shapes
+  const sessionUser = (req.session as any).user || null;
+  const userId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+  const role = (req.session as any).role || (sessionUser && sessionUser.role) || null;
+  if (!userId) return res.status(401).json({ error: 'User not logged in!' });
   if (isNaN(task_id)) return res.status(400).json({ error: 'Invalid task_id' });
 
   try {
@@ -130,8 +134,8 @@ utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Respo
     // Permission: admin/mentor can edit any task; others only their own created tasks
     const role = (req.session as any).role || (req.session as any).user?.role || null;
     let canEdit = false;
-    if (role === 'admin' || role === 'mentor') canEdit = true;
-    if (existing.created_by === user.user_id) canEdit = true;
+  if (role === 'admin' || role === 'mentor') canEdit = true;
+  if (existing.created_by === Number(userId)) canEdit = true;
 
     if (!canEdit) return res.status(403).json({ error: 'Not authorized to edit this task' });
 
@@ -147,8 +151,8 @@ utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Respo
     }
 
     const ok = await UtilityService.updateTask(task_id, updates);
-    if (!ok) return res.status(400).json({ error: 'No valid fields provided or update failed' });
-    await AuditService.createAuditLog({ user_id: user.user_id, action_type: 'edit', entity_type: 'task', entity_id: task_id });
+  if (!ok) return res.status(400).json({ error: 'No valid fields provided or update failed' });
+  await AuditService.createAuditLog({ user_id: Number(userId), action_type: 'edit', entity_type: 'task', entity_id: task_id });
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update task.', details: String(err) });
@@ -158,8 +162,11 @@ utilityRouter.put('/tasks/:task_id', checkLogin, async (req: Request, res: Respo
 // DELETE /api/tasks/:task_id - Delete a task with permission checks
 utilityRouter.delete('/tasks/:task_id', checkLogin, async (req: Request, res: Response) => {
   const task_id = Number(req.params.task_id);
-  const user = req.session.user;
-  if (!user) return res.status(401).json({ error: 'User not logged in!' });
+  // support both session shapes: nested user object or top-level user_id/role
+  const sessionUser = (req.session as any).user || null;
+  const userId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+  const userRole = (sessionUser && sessionUser.role) || (req.session as any).role || null;
+  if (!userId) return res.status(401).json({ error: 'User not logged in!' });
 
   try {
     // Get the task object from UtilityService
@@ -168,24 +175,24 @@ utilityRouter.delete('/tasks/:task_id', checkLogin, async (req: Request, res: Re
       return res.status(404).json({ error: 'Task not found.' });
     }
 
-    // Admins can always delete
+    // Admins can always delete. Students may delete their own tasks. Others may delete if they are document creator or task creator.
     let canDelete = false;
-    if (user.role === 'admin') {
+    const uid = Number(userId);
+    const role = userRole;
+    if (role === 'admin') {
       canDelete = true;
-    } else if (user.role === 'student') {
-      // Student can only delete their own tasks
-      if (taskObj.created_by === user.user_id) canDelete = true;
+    } else if (role === 'student') {
+      if (taskObj.created_by === uid) canDelete = true;
     } else {
-      // For other roles, check if user is document creator
       if (taskObj.document_id) {
         const doc = await DocumentsService.getDocumentById(taskObj.document_id);
-        if (doc && doc.created_by === user.user_id) {
+        if (doc && doc.created_by === uid) {
           canDelete = true;
-        } else if (taskObj.created_by === user.user_id) {
+        } else if (taskObj.created_by === uid) {
           canDelete = true;
         }
       } else {
-        if (taskObj.created_by === user.user_id) canDelete = true;
+        if (taskObj.created_by === uid) canDelete = true;
       }
     }
 
@@ -198,7 +205,7 @@ utilityRouter.delete('/tasks/:task_id', checkLogin, async (req: Request, res: Re
       return res.status(404).json({ error: 'Task not found or not deleted.' });
     }
     await AuditService.createAuditLog({
-      user_id: user.user_id,
+      user_id: Number(userId),
       action_type: 'delete',
       entity_type: 'task',
       entity_id: task_id
@@ -216,8 +223,20 @@ utilityRouter.get('/tasks/document/:document_id', checkLogin, async (req: Reques
     return res.status(400).json({ error: 'Invalid document_id.' });
   }
   try {
-    const tasks = await UtilityService.getTasksByDocument(document_id);
-    res.status(200).json(tasks);
+    // Resolve requester id & role (support both session shapes)
+    const sessionUser = (req.session as any).user || null;
+    const requesterId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+    const requesterRole = (sessionUser && sessionUser.role) || (req.session as any).role || null;
+
+    // If admin/mentor return full list, otherwise restrict to tasks the user created or is assigned to
+    if (requesterRole === 'admin' || requesterRole === 'mentor') {
+      const tasks = await UtilityService.getTasksByDocument(document_id);
+      return res.status(200).json(tasks);
+    }
+
+  if (!requesterId) return res.status(401).json({ error: 'Not authenticated' });
+  const tasks = await UtilityService.getTasksByDocumentFiltered(document_id, Number(requesterId));
+  return res.status(200).json(tasks);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch tasks for document.', details: err });
   }
@@ -232,7 +251,16 @@ utilityRouter.get('/tasks/user/', checkLogin, async (req: Request, res: Response
     return res.status(400).json({ error: 'Invalid user_id.' });
   }
   try {
-    const tasks = await UtilityService.getTasksByUser(Number(userId));
+    // Determine role so admins/mentors can see ALL global tasks, others only their own
+    const role = (sessionUser && sessionUser.role) || (req.session as any).role || null;
+    let tasks: any[] = [];
+    if (role === 'admin' || role === 'mentor') {
+      // Admins/mentors see all global tasks
+      tasks = await UtilityService.getGlobalTasks();
+    } else {
+      // Regular users see only tasks they created or are assigned to (global scope)
+      tasks = await UtilityService.getGlobalTasksFiltered(Number(userId));
+    }
     res.status(200).json(tasks);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch tasks for user.', details: err });
