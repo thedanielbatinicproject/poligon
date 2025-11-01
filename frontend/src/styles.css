@@ -885,7 +885,7 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   and remains right-aligned inside that half. This avoids the select being centered
   in the row when inline JS styles attempt to center the container. */
 .mentor-details-card .type-select-wrap { min-width: 0; display:flex; justify-content:flex-end }
-.mentor-details-card .type-select-wrap .type-select { width: 50% !important; max-width: none !important; box-sizing: border-box !important; right: 0 !important; }
+.mentor-details-card .type-select-wrap .type-select { width: 50% !important; max-width: none !important; box-sizing: border-box !important; position: relative !important; right: -20% !important; }
 /* Slight visual nudge for the info button half to keep it aligned without forcing
   the select to fill the whole row. */
 .mentor-details-card .type-info-wrap .btn.btn-ghost{ width: auto !important; max-width: 140px !important }
