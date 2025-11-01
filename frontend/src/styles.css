@@ -530,9 +530,118 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   border-radius: 10px;
   height: auto;
   box-sizing: border-box;
-  max-width: 40ch; /* limit overly wide inputs */
+  max-width: 72ch; /* slightly wider inputs for better readability */
   width: 100%;
 }
+
+/* Mentor-specific document details card: responsive widths and wider controls */
+.mentor-details-card{
+  /* allow the card to expand on large screens while staying responsive */
+  max-width: min(1100px, 96%);
+  margin: 0 auto;
+}
+
+/* Override and expand input widths specifically for the Mentor details card so fields
+   look proportionate inside a wide panel. Inputs are centered and capped with large
+   max-width values for FullHD / ultra-wide screens. */
+.mentor-details-card .profile-card .auth-input, .mentor-details-card .profile-card input.auth-input, .mentor-details-card .profile-card textarea.auth-input, .mentor-details-card .profile-card select.auth-input, .mentor-details-card .profile-card .auth-input input, .mentor-details-card .profile-card .auth-input textarea, .mentor-details-card .profile-card .auth-input select {
+  width: 72%;
+  max-width: 1100px;
+  margin: 0 auto; /* center inputs inside the card */
+}
+
+.mentor-details-card .profile-card textarea.auth-input, .mentor-details-card .profile-card .auth-input textarea {
+  min-height: 100px; /* give abstract more space */
+}
+
+@media (min-width: 1400px) {
+  .mentor-details-card{ max-width: 1400px; }
+  .mentor-details-card .profile-card .auth-input, .mentor-details-card .profile-card input.auth-input, .mentor-details-card .profile-card select.auth-input { width: 100%; max-width: 1400px; }
+}
+
+@media (min-width: 1900px) {
+  .mentor-details-card{ max-width: 1600px; }
+  .mentor-details-card .profile-card .auth-input, .mentor-details-card .profile-card input.auth-input, .mentor-details-card .profile-card select.auth-input { width: 100%; max-width: 1600px; }
+}
+
+/* Stronger overrides: ensure all input variations inside the mentor details card expand
+   (handles both wrapper .auth-input and direct input.auth-input usages). Placed after
+   the earlier rules to ensure higher specificity and take precedence. */
+.mentor-details-card .auth-input,
+.mentor-details-card input.auth-input,
+.mentor-details-card textarea.auth-input,
+.mentor-details-card select.auth-input,
+.mentor-details-card .auth-input input,
+.mentor-details-card .auth-input select,
+.mentor-details-card .auth-input textarea {
+  /* Use a middle-ground width: never smaller than 360px, prefer ~60% of the card,
+     and never larger than 900px by default. This avoids being too narrow or too wide. */
+  width: clamp(360px, 60%, 900px) !important;
+  max-width: 920px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Make textareas more generous inside the details card */
+.mentor-details-card textarea.auth-input,
+.mentor-details-card .auth-input textarea {
+  min-height: 140px !important;
+}
+
+/* Widen primary action buttons (Render / Delete) inside the mentor details card so they
+   visually match the wider inputs. Use min-width + padding for consistent sizing. */
+.mentor-details-card .btn {
+  min-width: 120px;
+  padding: 10px 16px;
+}
+.mentor-details-card .btn.btn-action { min-width: 120px; }
+.mentor-details-card .btn.btn-danger { min-width: 120px; }
+
+/* Center the action button row inside the card reliably by targeting the explicit class */
+.mentor-action-row{ display:flex !important; justify-content:center !important; gap:8px !important; margin-top:6px }
+
+/* Status display (read-only) styled to look like inputs inside profile cards */
+.status-display{
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  min-width: 140px;
+  width: 150px !important;
+  text-align: center;
+}
+
+/* Narrow the Language dropdown only inside the mentor details card */
+.mentor-details-card select.lang-select, .mentor-details-card .lang-select {
+  width: 140px !important;
+  max-width: 180px !important;
+  min-width: 110px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Type select: slightly wider than language but not too wide */
+.mentor-details-card select.type-select, .mentor-details-card .type-select {
+  width: 180px !important;
+  max-width: 220px !important;
+  min-width: 150px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Type row halves: left for info button, right for select. Each half is 50% of the row. */
+.mentor-details-card .type-row{ display:flex; width:100%; gap:8px; align-items:center }
+.mentor-details-card .type-half{ width:50%; display:flex; align-items:center }
+.mentor-details-card .type-info-wrap{ justify-content:flex-start }
+.mentor-details-card .type-select-wrap{ justify-content:flex-end }
+/* Make the select occupy the full half (50% of the row) so overall it's 50% width */
+.mentor-details-card .type-select-wrap .type-select{ width: 50% !important; max-width: none !important; }
+/* Make the info button occupy most of its half but slightly narrower */
+.mentor-details-card .type-info-wrap .btn.btn-ghost{ width: 70% !important; max-width: 140px; }
+
 
 /* Ensure field containers shrink before overflowing */
 .profile-card .field-row > div, .name-row > div { min-width: 0; max-width: 100% }
@@ -755,6 +864,31 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   .chat-widget-body.open { max-height: calc(40vh - 56px) }
   .chat-window { height: calc(40vh - 56px) }
 }
+
+/* ------- Mentor field-specific overrides (final, high-specificity rules) ------- */
+/* Make the read-only status display more compact than the default wide inputs */
+.mentor-details-card .status-display,
+.status-display.auth-input {
+  display: inline-block;
+  width: auto !important;        /* don't force full-width */
+  min-width: 96px !important;    /* ensure readable */
+  max-width: 140px !important;   /* cap the width so it no longer stretches */
+  padding: 8px 12px !important;
+  text-align: center !important;
+}
+
+/* Force the Type dropdown to occupy approx. 50% of its parent block (mentor card)
+   This overrides broader .mentor-details-card input width rules which were forcing
+   selects to become very wide. Use !important and a specific selector to ensure
+   this takes precedence. */
+/* Ensure the select fills its designated half (the .type-select-wrap is 50% of the row)
+  and remains right-aligned inside that half. This avoids the select being centered
+  in the row when inline JS styles attempt to center the container. */
+.mentor-details-card .type-select-wrap { min-width: 0; display:flex; justify-content:flex-end }
+.mentor-details-card .type-select-wrap .type-select { width: 50% !important; max-width: none !important; box-sizing: border-box !important; right: 0 !important; }
+/* Slight visual nudge for the info button half to keep it aligned without forcing
+  the select to fill the whole row. */
+.mentor-details-card .type-info-wrap .btn.btn-ghost{ width: auto !important; max-width: 140px !important }
 
 
 

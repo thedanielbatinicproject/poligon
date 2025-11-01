@@ -43,9 +43,21 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
   if (role !== 'admin' && role !== 'mentor') {
     return res.status(403).json({ error: 'Only admin or mentor can create documents!' });
   }
+  // Validate type_id exists and is valid
+  const rawTypeId = req.body?.type_id;
+  const typeId = typeof rawTypeId === 'number' ? rawTypeId : (rawTypeId ? Number(rawTypeId) : null);
+  if (!typeId || isNaN(typeId)) {
+    return res.status(400).json({ error: 'Invalid or missing type_id for document. Choose a valid document type.' });
+  }
+  const type = await DocumentsService.getDocumentTypeById(typeId);
+  if (!type) {
+    return res.status(400).json({ error: `Document type not found for type_id=${typeId}` });
+  }
+
   try {
     const doc = await DocumentsService.createDocument({
       ...req.body,
+      type_id: typeId,
       created_by: user_id
     });
     if (!doc) {
@@ -58,8 +70,9 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
       entity_id: doc.document_id
     });
     res.status(201).json(doc);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create document!', details: err });
+  } catch (err: any) {
+    console.error('[ERROR] Failed to create document:', err && err.stack ? err.stack : err);
+    res.status(500).json({ error: 'Failed to create document!', details: String(err?.message || err) });
   }
 });
 
@@ -109,8 +122,9 @@ documentsRouter.delete('/:document_id', checkLogin, async (req: Request, res: Re
       entity_id: document_id
     });
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete document even though user is authorized.', details: err });
+  } catch (err: any) {
+    console.error('[ERROR] delete /api/documents/:id failed', err && err.stack ? err.stack : err);
+    res.status(500).json({ error: 'Failed to delete document even though user is authorized.', details: String(err?.message || err) });
   }
 });
 

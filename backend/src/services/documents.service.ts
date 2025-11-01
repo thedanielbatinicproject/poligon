@@ -39,8 +39,9 @@ export class DocumentsService {
     );
     const insertId = (result as any).insertId;
     // Add creator as owner/editor in document_editors
+    // added_at has DEFAULT CURRENT_TIMESTAMP in schema, no need to explicitly insert NOW()
     await pool.query(
-      `INSERT INTO document_editors (document_id, user_id, role, added_by) VALUES (?, ?, 'owner', ?, NOW())`,
+      `INSERT INTO document_editors (document_id, user_id, role, added_by) VALUES (?, ?, 'owner', ?)`,
       [insertId, data.created_by, data.created_by]
     );
     return this.getDocumentById(insertId);
@@ -60,7 +61,15 @@ export class DocumentsService {
     const doc = await this.getDocumentById(document_id);
     if (!doc) return null;
     const allowed: any = {};
-    // type_id cannot be changed
+    // type_id can be changed by a mentor (was previously immutable)
+    if ('type_id' in updates && role === MENTOR_ROLE) {
+      const tid = Number(updates.type_id);
+      if (!isNaN(tid)) {
+        // validate that the type exists
+        const typeExists = await this.getDocumentTypeById(tid);
+        if (typeExists) allowed.type_id = tid;
+      }
+    }
     // title: only mentor
     if ('title' in updates && role === MENTOR_ROLE) allowed.title = updates.title;
     // abstract: mentor or student/editor
@@ -207,8 +216,9 @@ export class DocumentsService {
     const isAdmin = (userRows as any[])[0]?.role === 'admin';
     if (added_by !== created_by && !isAdmin) return false;
     // Dodaj editor entry
+    // added_at defaults to CURRENT_TIMESTAMP
     await pool.query(
-      'INSERT INTO document_editors (document_id, user_id, role, added_by) VALUES (?, ?, ?, ?, NOW())',
+      'INSERT INTO document_editors (document_id, user_id, role, added_by) VALUES (?, ?, ?, ?)',
       [document_id, user_id_to_add, role, added_by]
     );
     return true;
@@ -229,6 +239,10 @@ export class DocumentsService {
     const created_by = (docRows as any[])[0].created_by;
     const [userRows] = await pool.query('SELECT role FROM users WHERE user_id = ?', [requester_id]);
     const isAdmin = (userRows as any[])[0]?.role === 'admin';
+    // Prevent the document owner from removing themselves as an editor.
+    // Owners may remove other editors, and admins may remove owners, but an owner
+    // cannot remove their own owner/editor entry (this avoids accidental lockout).
+    if (user_id_to_remove === created_by && requester_id === created_by) return false;
     if (requester_id !== created_by && !isAdmin) return false;
     // Izbriši editor entry
     await pool.query('DELETE FROM document_editors WHERE document_id = ? AND user_id = ?', [document_id, user_id_to_remove]);

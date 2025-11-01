@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { getRoleById } from '../services/user.service';
 
 // Provjera je li korisnik prijavljen
 export function checkLogin(req: Request, res: Response, next: NextFunction) {
@@ -7,6 +8,23 @@ export function checkLogin(req: Request, res: Response, next: NextFunction) {
   const sessionUserId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null
   if (!req.session || !sessionUserId) {
     return res.status(401).json({ error: 'Resource you tried to access is restricted to users that are logged in!' });
+  }
+  // If role is missing on an existing session (older sessions), try to load it from DB
+  if (!(req.session as any).role && sessionUserId) {
+    // non-blocking: attempt to set role synchronously with await-like behavior
+    // since middleware can't be async here, we'll fetch role and then call next when ready
+    (async () => {
+      try {
+        const role = await getRoleById(Number(sessionUserId));
+        if (role) {
+          (req.session as any).role = role;
+        }
+      } catch (e) {
+        console.error('Failed to hydrate session.role for user', sessionUserId, e);
+      }
+      next();
+    })();
+    return;
   }
   next();
 }

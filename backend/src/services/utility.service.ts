@@ -410,7 +410,8 @@ static async updateSessionAttributes(userId: number, attrs: Partial<{
 
   if ('last_document_id' in attrs) {
     const v = attrs.last_document_id;
-    if (typeof v !== 'number' || !Number.isInteger(v)) throw new Error('Invalid last_document_id');
+    // allow clearing the value by passing null; otherwise require integer
+    if (v !== null && (typeof v !== 'number' || !Number.isInteger(v))) throw new Error('Invalid last_document_id');
     setters.push('last_document_id = ?');
     values.push(v);
   }
