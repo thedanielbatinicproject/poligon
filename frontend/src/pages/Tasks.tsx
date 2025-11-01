@@ -48,30 +48,26 @@ export default function Tasks() {
     pendingUserFetch.current.add(userId);
     try {
       // Try to fetch single user details (may be restricted)
-      const res = await fetch(`/api/users/check/${userId}`, { credentials: 'include' });
-      if (res.ok) {
-        const u = await res.json();
+      const u = await TasksApi.getUserById(Number(userId)).catch(() => null);
+      if (u) {
         const name = `${u.first_name ?? u.firstName ?? ''} ${u.last_name ?? u.lastName ?? ''}`.trim() || u.email || String(u.user_id || userId);
         setUsersMap(prev => ({ ...prev, [Number(userId)]: name }));
         return;
       }
-      // If single-user endpoint is not allowed, fallback to reduced list
-      const r2 = await fetch('/api/users/reduced', { credentials: 'include' });
-      if (r2.ok) {
-        const list = await r2.json();
-        if (Array.isArray(list)) {
-          const map: Record<number,string> = {};
-          for (const uu of list) {
-            const id = Number(uu.user_id ?? uu.id ?? uu.userId ?? 0);
-            if (!id) continue;
-            const nm = `${uu.first_name ?? uu.firstName ?? ''} ${uu.last_name ?? uu.lastName ?? ''}`.trim() || uu.email || String(id);
-            map[id] = nm;
-          }
-          setUsersMap(prev => ({ ...prev, ...map }));
-          // if reduced list didn't include our id, set a placeholder
-          if (!map[Number(userId)]) {
-            setUsersMap(prev => ({ ...prev, [Number(userId)]: String(userId) }));
-          }
+      // If single-user endpoint is not allowed or returned nothing, fallback to reduced list
+      const list = await TasksApi.getReducedUsers().catch(() => null);
+      if (Array.isArray(list)) {
+        const map: Record<number,string> = {};
+        for (const uu of list) {
+          const id = Number(uu.user_id ?? uu.id ?? uu.userId ?? 0);
+          if (!id) continue;
+          const nm = `${uu.first_name ?? uu.firstName ?? ''} ${uu.last_name ?? uu.lastName ?? ''}`.trim() || uu.email || String(id);
+          map[id] = nm;
+        }
+        setUsersMap(prev => ({ ...prev, ...map }));
+        // if reduced list didn't include our id, set a placeholder
+        if (!map[Number(userId)]) {
+          setUsersMap(prev => ({ ...prev, [Number(userId)]: String(userId) }));
         }
       } else {
         // ultimate fallback
@@ -176,20 +172,17 @@ export default function Tasks() {
           if (t.created_by && !usersMap[Number(t.created_by)]) needed.push(Number(t.created_by));
         }
         if (needed.length > 0) {
-          // Try to fetch reduced list once to bulk-populate
-          const res = await fetch('/api/users/reduced', { credentials: 'include' });
-          if (res.ok) {
-            const list = await res.json();
+          // Try to fetch reduced list once to bulk-populate (centralized in tasksApi)
+          const list = await TasksApi.getReducedUsers().catch(() => null);
+          if (Array.isArray(list)) {
             const map: Record<number,string> = { ...usersMap };
-            if (Array.isArray(list)) {
-              const extractId = (u: any) => (u && (u.user_id ?? u.id ?? u.userId ?? u.id_user)) || null;
-              const extractName = (u: any) => `${(u.first_name ?? u.firstName ?? u.given_name ?? '')} ${(u.last_name ?? u.lastName ?? u.family_name ?? '')}`.trim() || (u.email ?? u.email_address ?? '') || String(extractId(u) || '');
-              for (const u of list) {
-                const id = Number(extractId(u) || 0);
-                if (id) map[id] = extractName(u);
-              }
-              setUsersMap(map);
+            const extractId = (u: any) => (u && (u.user_id ?? u.id ?? u.userId ?? u.id_user)) || null;
+            const extractName = (u: any) => `${(u.first_name ?? u.firstName ?? u.given_name ?? '')} ${(u.last_name ?? u.lastName ?? u.family_name ?? '')}`.trim() || (u.email ?? u.email_address ?? '') || String(extractId(u) || '');
+            for (const u of list) {
+              const id = Number(extractId(u) || 0);
+              if (id) map[id] = extractName(u);
             }
+            setUsersMap(map);
           }
           // For any still-missing ids, queue individual fetches
           for (const id of needed) {
@@ -228,8 +221,7 @@ export default function Tasks() {
       if (!u) return '';
       return `${(u.first_name ?? u.firstName ?? u.given_name ?? '')} ${(u.last_name ?? u.lastName ?? u.family_name ?? '')}`.trim() || (u.email ?? u.email_address ?? '') || String(extractId(u) || '');
     };
-    fetch('/api/users/reduced', { credentials: 'include' })
-      .then(r => r.json())
+    TasksApi.getReducedUsers()
       .then((list: any[]) => {
         const map: Record<number,string> = {};
         if (Array.isArray(list)) {
@@ -353,12 +345,19 @@ export default function Tasks() {
     } as Event;
   }), [tasks, usersMap]);
 
+  // choose singular/plural for the tasks count label
+  const tasksCountLabel = tasks.length === 1 ? 'task' : 'tasks';
+
   return (
     <div style={{ padding: 12 }}>
       <h2>Tasks</h2>
-      <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <label>Document:</label>
-        <select value={docId ?? ''} onChange={e => {
+      { /* compute proper singular/plural label for tasks count */ }
+      {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
+      {null}
+      
+      <div className="task-top-controls" style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <label>Select document:</label>
+        <select className="auth-input doc-select" value={docId ?? ''} onChange={e => {
           const v = e.target.value ? Number(e.target.value) : null
           setDocId(v)
           try {
@@ -435,12 +434,12 @@ export default function Tasks() {
           </div>
 
           <div className="form-row">
-            <label className="auth-label">Document</label>
+            <label className="auth-label">Select document:</label>
             <select value={docId ?? ''} onChange={e => {
               const v = e.target.value ? Number(e.target.value) : null
               setDocId(v)
               try { if (session && typeof session.patchSession === 'function') session.patchSession({ last_document_id: v }).catch(() => {}) } catch (e) {}
-            }} className="auth-input">
+            }} className="auth-input doc-select">
               <option value="">(All / Global)</option>
               {documents.map(d => <option key={d.document_id} value={d.document_id}>{d.title}</option>)}
             </select>
@@ -470,8 +469,8 @@ export default function Tasks() {
       </div>
 
   <hr />
-  <h3>{(docId !== null) ? `All tasks for document with id "${docId ?? 'Global'}"` : 'Global tasks'}</h3>
-  <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>Showing {tasks.length} tasks</div>
+  <h3 style={{ textAlign: 'center' }}>{(docId !== null) ? `All tasks for document with id "${docId ?? 'Global'}"` : 'Global tasks'}</h3>
+  <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8, textAlign: 'center' }}>Showing {tasks.length} {tasksCountLabel}</div>
       {loading ? <p>Loading...</p> : (
         <div>
           {tasks.length === 0 && <p>No tasks to show.</p>}

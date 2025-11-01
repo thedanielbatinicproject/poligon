@@ -1,6 +1,8 @@
 .rbc-calendar {
   --rbc-bg: var(--bg);
 }
+.rbc-toolbar, .rbc-toolbar button, .rbc-toolbar .rbc-btn-group button { --rbc-toolbar-bg: var(--panel); }
+.rbc-toolbar { background: transparent; }
 .rbc-toolbar {
   display: flex;
   justify-content: space-between;
@@ -15,16 +17,142 @@
   padding: 6px 8px;
   border-radius: 4px;
 }
+.rbc-toolbar .rbc-btn-group button:hover { box-shadow: 0 6px 18px rgba(var(--accent-rgb, 59,130,246),0.08); }
+.rbc-toolbar .rbc-toolbar-label { color: var(--heading-2); font-weight: 700; }
 .rbc-event {
+  /* Use site variables for event appearance */
   background-color: var(--accent, #3b82f6) !important;
-  color: white !important;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.85em;
+  color: var(--on-accent, #fff) !important;
+  padding: 4px 6px !important;
+  border-radius: 6px !important;
+  font-size: 0.9em !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
 }
+.rbc-event, .rbc-event a { color: inherit !important; }
+
+/* Stronger dark theme integration for react-big-calendar */
+/* Ensure calendar background and grid match site variables */
+.rbc-calendar {
+  background: transparent;
+  color: var(--text);
+}
+
+/* Toolbar */
+.rbc-toolbar {
+  background: transparent;
+  color: var(--text);
+}
+.rbc-toolbar .rbc-btn-group button, .rbc-toolbar button {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+.rbc-toolbar .rbc-toolbar-label { color: var(--heading-2) !important; }
+
+/* Month view grid and day cells */
+.rbc-month-view .rbc-row-bg, .rbc-month-view .rbc-row-segment, .rbc-day-bg {
+  background: transparent !important;
+}
+.rbc-month-view .rbc-month-row {
+  border-bottom: 1px solid var(--border) !important;
+}
+.rbc-month-view .rbc-date-cell, .rbc-header {
+  color: var(--muted) !important;
+  background: transparent !important;
+}
+
+/* Keep month row content neutral (no panel background or extra padding) - separators remain on segments */
+.rbc-month-view .rbc-row-content {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Off-range days (prev/next month) should be toned down */
+.rbc-off-range { opacity: 0.45; }
+
+/* Highlight today with accent outline */
+.rbc-today { background: linear-gradient(90deg, rgba(var(--accent-rgb,59,130,246),0.03), transparent) !important; }
+
+/* Event styling using CSS variables. Use --event-bg and --event-foreground optionally set per-event */
+.rbc-event {
+  background-color: var(--event-bg, var(--accent, #8b5cf6)) !important;
+  color: var(--event-foreground, var(--on-accent, #fff)) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb,59,130,246),0.08) !important;
+}
+.rbc-day-slot .rbc-event, .rbc-time-view .rbc-event {
+  background-color: var(--event-bg, var(--accent, #8b5cf6)) !important;
+}
+
+/* Event segments in month view should be full-width and rounded */
+.rbc-month-view .rbc-event {
+  border-radius: 6px !important;
+  padding: 6px 8px !important;
+  font-size: 0.95em !important;
+}
+
+/* "+n more" link style */
+.rbc-show-more {
+  color: var(--accent) !important;
+  background: transparent !important;
+}
+
+/* Headers and cell dividers */
+.rbc-header {
+  background: transparent !important;
+  color: var(--muted) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+/* Time column (week/day views) */
+.rbc-time-column, .rbc-time-view .rbc-time-gutter {
+  background: var(--panel) !important;
+  color: var(--muted) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+/* Make the small date numbers stand out in dark mode */
+.rbc-date-cell {
+  color: var(--muted) !important;
+  font-weight: 600;
+}
+
+/* Selected event and focus states */
+.rbc-event:focus, .rbc-event.rbc-selected {
+  box-shadow: 0 8px 28px rgba(var(--accent-rgb,59,130,246),0.18) !important;
+  transform: translateY(-1px);
+}
+
+/* Ensure popovers/internals inherit site vars */
+.rbc-overlay, .rbc-overlay .rbc-event { background: var(--panel); color: var(--text); }
+
+/* Reduce default RCB paddings that clashed with site layout */
+.rbc-month-view .rbc-row-segment {
+  border-right: 1px solid var(--border) !important;
+}
+.rbc-month-view .rbc-row-content > .rbc-row-segment { padding: 0 !important; }
+
+
+/* Different view-specific adjustments to use variables */
+.rbc-month-view .rbc-event, .rbc-month-view .rbc-event a { padding: 2px 4px !important; border-radius: 4px !important; }
+.rbc-time-view .rbc-event { border-left: 4px solid var(--accent); }
+
+/* Today and selected day */
+.rbc-today { background: linear-gradient(90deg, rgba(0,0,0,0.02), transparent); }
+.rbc-selected { box-shadow: 0 6px 18px rgba(var(--accent-rgb,59,130,246),0.12); }
 .rbc-month-row .rbc-date-cell {
   font-weight: 600;
 }
+.rbc-header { color: var(--muted); font-weight: 700; }
+.rbc-week-number { color: var(--muted); }
+
+/* Day cells */
+.rbc-day-bg { background: var(--bg); }
+.rbc-day-slot .rbc-time-slot { border-top: 1px solid var(--border); }
+
+/* Make event titles inherit site font color when rendered in popover */
+.rbc-event-label { color: var(--text); }
 .task-create-form {
   display: flex;
   gap: 8px;
@@ -63,6 +191,34 @@
 
 .assigned-picker::after { content: ''; }
 
+/* Document selector styling for the Tasks page (top selector and create form) */
+.doc-select {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  padding: 8px 10px !important;
+  border-radius: 6px !important;
+  box-sizing: border-box;
+  min-width: 20rem; /* make it substantially wider */
+  max-width: 48rem;
+  font-size: 0.95rem;
+}
+.doc-select option {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+
+/* Top controls container: ensure refresh button matches site button styles */
+.task-top-controls .btn {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+.task-top-controls .btn:hover { box-shadow: 0 8px 24px rgba(var(--accent-rgb,59,130,246),0.08) !important; }
+
 /* Task list layout */
 .tasks-list-header { text-align: center; margin-top: 8px; margin-bottom: 8px; }
 .task-row { display: flex; gap: 12px; padding: 12px; align-items: center; border-bottom: 1px solid var(--border); }
@@ -93,3 +249,52 @@
 .edit-modal h3 { margin-top: 0; }
 .edit-modal .form-row { text-align: left; }
 .edit-modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+
+/* Accent circular background for react-big-calendar button links (glass morph) */
+.rbc-date-cell > .rbc-button-link {
+  position: relative;
+  z-index: 99999 !important; /* keep on top of everything */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* make the clickable area match the visual circle */
+  box-sizing: border-box;
+  min-width: 1.6rem;
+  min-height: 1.6rem;
+  padding: 0.28rem; /* gives some breathing room so the whole circle is clickable */
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: 700; /* bold inner text */
+}
+.rbc-date-cell > .rbc-button-link::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /* diameter in rem units for consistent scaling with typography */
+  /* slightly reduced from previous size (was 3vh) */
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  /* semi-transparent accent using rgb variable for consistent opacity control */
+  /* less transparent: stronger visible accent */
+  background: rgba(var(--accent-rgb, 59,130,246), 0.28);
+  /* glass morph effect */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 6px 20px rgba(var(--accent-rgb,59,130,246),0.14);
+  border: 1px solid rgba(var(--accent-rgb,59,130,246),0.16);
+  pointer-events: none;
+  z-index: -1;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.rbc-date-cell > .rbc-button-link:hover::before,
+.rbc-date-cell > .rbc-button-link:focus::before {
+  transform: translate(-50%, -50%) scale(1.14);
+  box-shadow: 0 10px 28px rgba(var(--accent-rgb,59,130,246),0.20);
+  background: rgba(var(--accent-rgb,59,130,246),0.38);
+}
+
+/* Make sure the inner content stays above the pseudo-element */
+.rbc-date-cell > .rbc-button-link > * { position: relative; z-index: 0; }

@@ -65,4 +65,21 @@ export async function deleteTask(task_id: number) {
   return data;
 }
 
+// --- User helper APIs (centralize user-related fetches used by tasks UI)
+/**
+ * Fetch reduced user list (id, first_name, last_name, email, role)
+ */
+export async function getReducedUsers() {
+  const res = await fetch('/api/users/reduced', { credentials: 'include' });
+  return handleRes(res);
+}
+
+/**
+ * Fetch a single user by id using the check endpoint (enforces permissions)
+ */
+export async function getUserById(userId: number) {
+  const res = await fetch(`/api/users/check/${userId}`, { credentials: 'include' });
+  return handleRes(res);
+}
+
 export default { getTasksForUser, getTasksForDocument, addTask, updateTask, deleteTask };

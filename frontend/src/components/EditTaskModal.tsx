@@ -49,6 +49,16 @@ export default function EditTaskModal({ open, task, onClose, onSave }: { open: b
     })()
   }, [task])
 
+  // Lock body scrolling while modal is open, and restore on close/unmount.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow || '';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   if (!open) return null
 
   const notify = (msg: string, isErr = false) => {
