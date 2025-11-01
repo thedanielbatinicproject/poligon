@@ -462,7 +462,7 @@ export default function Tasks() {
           </div>
 
           <div className="form-row actions">
-            <button type="button" className="btn" onClick={() => { setNewTitle(''); setNewDescription(''); setNewFromDate(''); setNewFromTime(''); setNewDueDate(''); setNewDueTime(''); }}>Reset</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setNewTitle(''); setNewDescription(''); setNewFromDate(''); setNewFromTime(''); setNewDueDate(''); setNewDueTime(''); }}>Reset</button>
             <button type="submit" className="btn btn-primary">Create</button>
           </div>
         </form>
@@ -497,13 +497,13 @@ export default function Tasks() {
                 </div>
                 <div className="task-actions">
                   {canToggle && (
-                    <button className="btn" onClick={() => openStatusToggle(t)}>{t.task_status === 'open' ? 'Mark closed' : 'Reopen'}</button>
+                    <button className="btn btn-action" onClick={() => openStatusToggle(t)}>{t.task_status === 'open' ? 'Mark closed' : 'Reopen'}</button>
                   )}
                   {canEdit && (
-                    <button className="btn" onClick={() => openEditModal(t)}>Edit</button>
+                    <button className="btn btn-action" onClick={() => openEditModal(t)}>Edit</button>
                   )}
                   {canDelete && (
-                    <button className="btn btn-ghost" onClick={() => { setConfirmTaskId(t.task_id); setConfirmOpen(true); }}>Delete</button>
+                    <button className="btn btn-danger" onClick={() => { setConfirmTaskId(t.task_id); setConfirmOpen(true); }}>Delete</button>
                   )}
                 </div>
               </div>
