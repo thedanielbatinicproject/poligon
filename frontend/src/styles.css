@@ -632,15 +632,40 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   margin-right: auto !important;
 }
 
-/* Type row halves: left for info button, right for select. Each half is 50% of the row. */
-.mentor-details-card .type-row{ display:flex; width:100%; gap:8px; align-items:center }
-.mentor-details-card .type-half{ width:50%; display:flex; align-items:center }
-.mentor-details-card .type-info-wrap{ justify-content:flex-start }
-.mentor-details-card .type-select-wrap{ justify-content:flex-end }
-/* Make the select occupy the full half (50% of the row) so overall it's 50% width */
-.mentor-details-card .type-select-wrap .type-select{ width: 50% !important; max-width: none !important; }
-/* Make the info button occupy most of its half but slightly narrower */
-.mentor-details-card .type-info-wrap .btn.btn-ghost{ width: 70% !important; max-width: 140px; }
+/* Type row: center the select + info button as a single compact unit inside Document details.
+   Replace the earlier half-width layout with a centered pair where the dropdown and info
+   button sit next to each other and remain responsive. */
+.mentor-details-card .type-row{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center; /* center the whole pair */
+  width: 100%;
+}
+.mentor-details-card .type-half{ width: auto; display:flex; align-items:center; flex: 0 0 auto }
+.mentor-details-card .type-select-wrap{ justify-content:flex-end; display:flex; align-items:center }
+.mentor-details-card .type-info-wrap{ justify-content:flex-start; display:flex; align-items:center }
+
+/* Dropdown sizing: responsive, sits adjacent to the info button */
+.mentor-details-card .type-select{
+  width: clamp(220px, 38%, 520px) !important;
+  max-width: 520px !important;
+  box-sizing: border-box !important;
+}
+
+/* Compact info button attached to the dropdown */
+.mentor-details-card .type-info-wrap .btn.btn-ghost{
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  margin-left: 6px !important; /* small gap so it feels attached */
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
 
 
 /* Ensure field containers shrink before overflowing */
@@ -885,10 +910,34 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   and remains right-aligned inside that half. This avoids the select being centered
   in the row when inline JS styles attempt to center the container. */
 .mentor-details-card .type-select-wrap { min-width: 0; display:flex; justify-content:flex-end }
-.mentor-details-card .type-select-wrap .type-select { width: 50% !important; max-width: none !important; box-sizing: border-box !important; position: relative !important; right: -20% !important; }
+.mentor-details-card .type-select-wrap .type-select { width: 75% !important; max-width: none !important; box-sizing: border-box !important; position: relative !important; right: -7% !important; }
 /* Slight visual nudge for the info button half to keep it aligned without forcing
   the select to fill the whole row. */
 .mentor-details-card .type-info-wrap .btn.btn-ghost{ width: auto !important; max-width: 140px !important }
+
+
+
+
+/* Mentor grid and responsive tweaks */
+.mentor-grid{ display:grid; grid-template-columns: 1.6fr 360px; gap:12px }
+.mentor-details-card .profile-card{ padding: 12px !important }
+
+@media (max-width: 1400px) {
+  .mentor-grid{ grid-template-columns: 1fr; }
+  .mentor-details-card .profile-card{ padding: 10px !important }
+  .mentor-details-card .auth-input, .mentor-details-card input.auth-input, .mentor-details-card select.auth-input { width: 88% !important }
+  .mentor-details-card .type-select-wrap .type-select { width: 85% !important }
+}
+
+@media (max-width: 1000px) {
+  .mentor-details-card .profile-card{ padding: 8px !important }
+  .mentor-details-card .auth-input, .mentor-details-card input.auth-input, .mentor-details-card select.auth-input { width: 96% !important }
+  .mentor-details-card .type-select-wrap .type-select { width: 90% !important }
+}
+
+@media (min-width: 1600px) {
+  .mentor-details-card .profile-card{ padding: 18px !important }
+}
 
 
 

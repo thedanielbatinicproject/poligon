@@ -29,6 +29,9 @@ export default function Mentor() {
 
   // tasks for document
   const [docTasks, setDocTasks] = useState<any[]>([]);
+  const [docVersions, setDocVersions] = useState<any[]>([]);
+  const [docFiles, setDocFiles] = useState<any[]>([]);
+  const [savingType, setSavingType] = useState(false);
 
   // helper: format timestamp to DD.MM.YYYY.@HH:MM:SS
   const formatDate = (ts: any) => {
@@ -86,9 +89,29 @@ export default function Mentor() {
       setDocTasks([]);
       return;
     }
-    const d = documents.find((x) => Number(x.document_id) === Number(selectedDocId)) || null;
-    setSelectedDoc(d);
-    // load editors and ensure user labels are available
+    // Only run this effect when the selectedDocId changes. Previously this
+    // depended on `documents` as well which caused it to re-run whenever we
+    // replaced the documents array (for example after a successful save),
+    // producing multiple GET requests (editors, tasks) after a single PUT.
+    // We intentionally do not include `documents` in deps here because we
+    // update `selectedDoc` explicitly elsewhere when needed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDocId]);
+
+  // Keep a separate effect to synchronize `selectedDoc` when documents change
+  // only if the selected document is missing (e.g., fresh load). This avoids
+  // triggering editors/tasks reload after local saves that replaced documents.
+  useEffect(() => {
+    if (!selectedDocId) return;
+    const existing = documents.find((x) => Number(x.document_id) === Number(selectedDocId)) || null;
+    if (existing && (!selectedDoc || Number(selectedDoc.document_id) !== Number(existing.document_id))) {
+      setSelectedDoc(existing);
+    }
+  }, [documents, selectedDocId]);
+
+  // Effect to load editors and tasks when selectedDoc changes
+  useEffect(() => {
+    if (!selectedDocId) return;
     DocumentsApi.getEditors(Number(selectedDocId)).then((res) => {
       const arr = Array.isArray(res) ? res : [];
       setEditors(arr);
@@ -113,7 +136,12 @@ export default function Mentor() {
     }).catch(() => {});
     // load tasks for doc (small list)
     TasksApi.getTasksForDocument(Number(selectedDocId)).then((r) => setDocTasks(Array.isArray(r) ? r : (r.tasks || []))).catch(() => {});
-  }, [selectedDocId, documents]);
+    // load document versions
+    DocumentsApi.getVersions(Number(selectedDocId)).then((r) => setDocVersions(Array.isArray(r) ? r : [])).catch(() => {});
+    // load files for document
+    DocumentsApi.getFiles(Number(selectedDocId)).then((r) => setDocFiles(Array.isArray(r) ? r : [])).catch(() => {});
+  // we depend on selectedDocId and usersMap may change but that's okay
+  }, [selectedDocId]);
 
   // filtered list for selector
   const filtered = useMemo(() => {
@@ -166,12 +194,53 @@ export default function Mentor() {
     try {
       const payload: any = {};
       payload[field] = value;
-      await DocumentsApi.updateDocument(Number(selectedDocId), payload);
+  const updated = await DocumentsApi.updateDocument(Number(selectedDocId), payload);
+      // If backend returned the updated document, use it to update local UI immediately
+      if (updated && typeof updated === 'object') {
+        // If backend returned updated document, verify that the requested field was applied
+        const backendValue = (updated as any)[field];
+        const requested = payload[field];
+        // comparison of requested vs backend value (no debug logs)
+        const equal = (backendValue === requested) || (backendValue == null && requested == null);
+        if (!equal) {
+          // Backend did not apply requested change. Notify and do not accept as success.
+          notify.push(`Failed to apply ${field} change on server`, undefined, true);
+          // still update documents list entry with server version so UI reflects truth
+          setDocuments(prev => {
+            try {
+              if (!Array.isArray(prev)) return prev;
+              const copy = prev.slice();
+              const idx = copy.findIndex(d => Number(d.document_id) === Number(selectedDocId));
+              if (idx >= 0) copy[idx] = updated;
+              return copy;
+            } catch (e) { return prev; }
+          });
+          return false;
+        }
+        setSelectedDoc(updated as any);
+        // also update documents list (replace entry)
+        setDocuments(prev => {
+          try {
+            if (!Array.isArray(prev)) return prev;
+            const copy = prev.slice();
+            const idx = copy.findIndex(d => Number(d.document_id) === Number(selectedDocId));
+            if (idx >= 0) copy[idx] = updated;
+            return copy;
+          } catch (e) { return prev; }
+        });
+      } else {
+        // fallback: refresh list
+        const list = await DocumentsApi.getAllDocuments();
+        setDocuments(Array.isArray(list) ? list : []);
+        notify.push('Saved', 2);
+      }
       notify.push('Saved', 2);
-      const list = await DocumentsApi.getAllDocuments();
-      setDocuments(Array.isArray(list) ? list : []);
-    } catch (err: any) {
+      return true;
+      } catch (err: any) {
+      // Debug: log error details to browser console
+      console.error('[Mentor] saveField -> error', { document_id: selectedDocId, field, error: err });
       notify.push(String(err?.message || err), undefined, true);
+      return false;
     }
   };
 
@@ -274,7 +343,7 @@ export default function Mentor() {
       )}
 
       {selectedDoc && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 360px', gap: 12 }}>
+  <div className="mentor-grid">
           <div>
             <div className="glass-panel profile-card mentor-details-card" style={{ padding: 12, margin: '0 auto' }}>
               <h3 style={{ marginTop: 0 }}>Document details</h3>
@@ -291,7 +360,22 @@ export default function Mentor() {
                   <label className="auth-label">Type</label>
                   <div className="type-row" style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
                     <div className="type-half type-select-wrap">
-                      <select className="auth-input type-select" value={selectedDoc.type_id ?? ''} onChange={e => { saveField('type_id', e.target.value ? Number(e.target.value) : null); }}>
+                      <select className="auth-input type-select" value={selectedDoc.type_id ?? ''} disabled={savingType} onChange={async e => {
+                        const newVal = e.target.value ? Number(e.target.value) : null;
+                        // optimistic UI update so the select shows the new value immediately
+                        const prevVal = selectedDoc?.type_id ?? null;
+                        setSelectedDoc((prev: any) => prev ? ({ ...prev, type_id: newVal }) : prev);
+                        try {
+                          setSavingType(true);
+                          const ok = await saveField('type_id', newVal);
+                          if (!ok) {
+                            // rollback optimistic change
+                            setSelectedDoc((prev: any) => prev ? ({ ...prev, type_id: prevVal }) : prev);
+                          }
+                        } finally {
+                          setSavingType(false);
+                        }
+                      }}>
                         <option value="">-- select type --</option>
                         {documentTypes.map(dt => (
                           <option key={dt.type_id} value={dt.type_id}>{dt.type_name}</option>
@@ -349,7 +433,7 @@ export default function Mentor() {
               </div>
             </div>
 
-            {/* Tasks panel */}
+                {/* Tasks panel */}
             <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
               <h3>Document tasks</h3>
               {docTasks.length === 0 ? <div>No tasks for this document.</div> : (
@@ -358,6 +442,68 @@ export default function Mentor() {
                 </ul>
               )}
             </div>
+
+                {/* Versions panel */}
+                <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
+                  <h3>Document versions</h3>
+                  {docVersions.length === 0 ? <div>No versions available.</div> : (
+                    <ul>
+                      {docVersions.map(v => (
+                        <li key={v.version_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>{`v${v.version_number} — edited by ${v.edited_by || 'N/A'} @ ${new Date(v.edited_at).toLocaleString()}`}</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <a className="btn btn-action" href={`/api/documents/${selectedDocId}/versions/${v.version_id}/download`} target="_blank" rel="noreferrer">Download</a>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Files panel */}
+                <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
+                  <h3>Files</h3>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <label className="auth-label" style={{ margin: 0 }}>Upload document file (pdf/tex/bib):</label>
+                    <input type="file" id="file-upload-input" />
+                    <button className="btn" onClick={async () => {
+                      const el = document.getElementById('file-upload-input') as HTMLInputElement | null;
+                      if (!el || !el.files || el.files.length === 0) return notify.push('Select a file first', undefined, true);
+                      const file = el.files[0];
+                      const fd = new FormData();
+                      fd.append('file', file);
+                      fd.append('document_id', String(selectedDocId));
+                      try {
+                        const res = await fetch('/api/files/upload/document', { method: 'POST', body: fd, credentials: 'include' });
+                        const body = await res.json().catch(() => ({}));
+                        if (!res.ok) return notify.push(String(body && body.error ? body.error : 'Upload failed'), undefined, true);
+                        notify.push('File uploaded', 3);
+                        const files = await DocumentsApi.getFiles(Number(selectedDocId));
+                        setDocFiles(Array.isArray(files) ? files : []);
+                      } catch (e: any) { notify.push(String(e?.message || e), undefined, true); }
+                    }}>Upload</button>
+                  </div>
+                  {docFiles.length === 0 ? <div style={{ color: 'var(--muted)' }}>No uploaded files</div> : (
+                    <ul>
+                      {docFiles.map(f => (
+                        <li key={f.file_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>{`${f.file_type || ''} — ${String(f.file_path || f.file_id).split('/').pop() || f.file_id} — by ${f.uploaded_by || 'N/A'}`}</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <a className="btn btn-action" href={`/api/files/download/${f.file_id}`} target="_blank" rel="noreferrer">Download</a>
+                            <button className="btn btn-ghost" onClick={async () => {
+                              try {
+                                await DocumentsApi.deleteFile(Number(f.file_id));
+                                notify.push('File deleted', 2);
+                                const files = await DocumentsApi.getFiles(Number(selectedDocId));
+                                setDocFiles(Array.isArray(files) ? files : []);
+                              } catch (e: any) { notify.push(String(e?.message || e), undefined, true); }
+                            }}>Delete</button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
           </div>
 
           <div>

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction, Router} from 'express';
 import { checkLogin, checkAdmin } from '../middleware/auth.middleware';
 import { imageUpload, documentUpload } from '../middleware/fileUpload.middleware';
 import filesService from '../services/files.service';
+import { DocumentsService } from '../services/documents.service';
 import { deleteFileFromDisk } from '../services/fileDisk.service';
 import path from 'path';
 import { AuditService } from '../services/audit.service';
@@ -86,6 +87,24 @@ filesRouter.get('/:file_id', checkLogin, async (req: Request, res: Response) => 
     res.json(file);
   } catch (err) {
     res.status(500).json({ error: 'Failed to get file', details: err });
+  }
+});
+
+// GET /files/document/:document_id - list files attached to a document
+filesRouter.get('/document/:document_id', checkLogin, async (req: Request, res: Response) => {
+  try {
+    const document_id = Number(req.params.document_id);
+    if (isNaN(document_id)) return res.status(400).json({ error: 'Invalid document_id' });
+    const user_id = req.session.user_id;
+    const role = req.session.role;
+    if (!user_id || !role) return res.status(401).json({ error: 'Not authenticated' });
+    // Allow if admin or editor/owner/mentor on document
+    const isAllowed = role === 'admin' || await DocumentsService.isEditor(document_id, user_id, ['owner','editor','mentor']);
+    if (!isAllowed) return res.status(403).json({ error: 'Not authorized to view files for this document' });
+    const files = await filesService.getFilesByDocument(document_id);
+    res.status(200).json(files || []);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list files for document', details: err });
   }
 });
 

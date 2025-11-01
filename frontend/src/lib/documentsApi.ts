@@ -99,6 +99,16 @@ export async function getVersions(documentId: number) {
   return handleRes(res);
 }
 
+export async function getFiles(documentId: number) {
+  const res = await fetch(`/api/files/document/${documentId}`, { credentials: 'include' });
+  return handleRes(res);
+}
+
+export async function deleteFile(fileId: number) {
+  const res = await fetch(`/api/files/${fileId}`, { method: 'DELETE', credentials: 'include' });
+  return handleRes(res);
+}
+
 export default {
   getAllDocuments,
   createDocument,
@@ -111,5 +121,7 @@ export default {
   addEditor,
   removeEditor,
   getVersions
-  , getDocumentTypes
+  , getDocumentTypes,
+  getFiles,
+  deleteFile
 };

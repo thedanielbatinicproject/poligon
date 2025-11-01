@@ -58,7 +58,7 @@ export class DocumentsService {
    * @returns Updated Document or null if not allowed
    */
   static async editDocument(document_id: number, updates: Partial<Document>, role: string, user_id: number): Promise<Document | null> {
-    const doc = await this.getDocumentById(document_id);
+  const doc = await this.getDocumentById(document_id);
     if (!doc) return null;
     const allowed: any = {};
     // type_id can be changed by a mentor (was previously immutable)
@@ -90,7 +90,7 @@ export class DocumentsService {
     if ('grade' in updates && role === MENTOR_ROLE) allowed.grade = updates.grade;
     // compiled_pdf_path: backend only, not editable
     // created_by, created_at, updated_at: not editable
-    if (Object.keys(allowed).length === 0) return doc; // nothing to update
+  if (Object.keys(allowed).length === 0) return doc; // nothing to update
     // Build update query
     const fields = Object.keys(allowed).map(key => `${key} = ?`).join(', ');
     const values = Object.values(allowed);
