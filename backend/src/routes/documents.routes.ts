@@ -370,6 +370,29 @@ documentsRouter.get('/:document_id/versions/:version_id/download', checkLogin, a
   }
 });
 
+// GET /api/documents/:document_id/workflow - Get workflow history for a document
+documentsRouter.get('/:document_id/workflow', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  try {
+    // Allow access if user is admin or is an editor/owner/mentor/viewer on the document
+    const isAllowed =
+      role === 'admin' ||
+      await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor', 'viewer']);
+    if (!isAllowed) {
+      return res.status(403).json({ error: 'You are not authorized to view workflow history for this document.' });
+    }
+    const history = await DocumentWorkflowService.getWorkflowHistory(document_id);
+    res.status(200).json(history);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch workflow history.', details: err });
+  }
+});
+
 // PUT /api/documents/:document_id/status - Change document status (admin or mentor only)
 documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res: Response) => {
   const document_id = Number(req.params.document_id);

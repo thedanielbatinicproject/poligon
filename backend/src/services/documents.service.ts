@@ -261,9 +261,17 @@ export class DocumentsService {
             VALUES (?, ?, ?, ?, ?, NOW())`,
             [document_id, nextVersion, user_id, latex_snapshot, pdfPath]
         );
-        // 2. Logging into workflow_history (status: 'finished')
+        // 2. Update documents table with latest compiled PDF path so UI shows most recent compiled file
+        try {
+          await pool.query('UPDATE documents SET compiled_pdf_path = ?, updated_at = NOW() WHERE document_id = ?', [pdfPath, document_id]);
+        } catch (e) {
+          // non-fatal: if update fails, version record is still saved. Log to console for visibility.
+          try { console.warn('[DocumentsService] failed to update documents.compiled_pdf_path', e); } catch (_) {}
+        }
+
+        // 3. Logging into workflow_history (status: 'finished')
         // Handled in documents.routes
-        // 3. Logging in audit_log (action_type: 'compile')
+        // 4. Logging in audit_log (action_type: 'compile')
         // Already handled in documents.routes
   }
 

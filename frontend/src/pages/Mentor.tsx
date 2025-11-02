@@ -6,6 +6,7 @@ import * as TasksApi from '../lib/tasksApi';
 import UserFinder from '../components/UserFinder';
 import ConfirmationBox from '../components/ConfirmationBox';
 import { useSocket } from '../components/SocketProvider';
+import WorkflowHistoryModal from '../components/WorkflowHistoryModal';
 
 export default function Mentor() {
   const sessionCtx = useSession();
@@ -39,6 +40,8 @@ export default function Mentor() {
   const [uploadFileName, setUploadFileName] = useState<string>('');
   const [uploading, setUploading] = useState<boolean>(false);
   const [rendersToShow, setRendersToShow] = useState(3);
+  const [workflowHistoryOpen, setWorkflowHistoryOpen] = useState(false);
+  const [workflowHistory, setWorkflowHistory] = useState<any[]>([]);
 
   // helper: format timestamp to DD.MM.YYYY.@HH:MM(:SS)
   // includeSeconds: when false, omit the trailing :SS
@@ -160,6 +163,32 @@ export default function Mentor() {
     DocumentsApi.getVersions(Number(selectedDocId)).then((r) => setDocVersions(Array.isArray(r) ? r : [])).catch(() => {});
     // load files for document
     DocumentsApi.getFiles(Number(selectedDocId)).then((r) => setDocFiles(Array.isArray(r) ? r : [])).catch(() => {});
+    // load workflow history
+    fetch(`/api/documents/${selectedDocId}/workflow`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .then((wf: any[]) => {
+        setWorkflowHistory(Array.isArray(wf) ? wf : []);
+        // Ensure we have user names for changed_by IDs
+        const missing: number[] = [];
+        for (const event of (Array.isArray(wf) ? wf : [])) {
+          const id = Number(event.changed_by || 0);
+          if (id && !usersMap[id]) missing.push(id);
+        }
+        if (missing.length > 0) {
+          TasksApi.getReducedUsers().then((list: any[]) => {
+            if (!Array.isArray(list)) return;
+            const map: Record<number,string> = {};
+            for (const u of list) {
+              const id = Number(u.user_id ?? u.id ?? u.userId ?? 0);
+              if (!id) continue;
+              const name = (u.display_name && String(u.display_name).trim()) || `${(u.first_name ?? u.firstName ?? '').trim()} ${(u.last_name ?? u.lastName ?? '').trim()}`.trim() || (u.email ?? '') || String(id);
+              map[id] = name;
+            }
+            setUsersMap(prev => ({ ...prev, ...map }));
+          }).catch(() => {});
+        }
+      })
+      .catch(() => setWorkflowHistory([]));
   // we depend on selectedDocId and usersMap may change but that's okay
   }, [selectedDocId]);
 
@@ -574,8 +603,8 @@ export default function Mentor() {
                   <div className="status-display auth-input" title="Status is read-only in this panel">{selectedDoc.status || 'draft'}</div>
                 </div>
                 <div>
-                  <div style={{ color: 'var(--muted)' }}>Compiled PDF</div>
-                  <div>{selectedDoc.compiled_pdf_path ? <a href={selectedDoc.compiled_pdf_path} target="_blank" rel="noreferrer">Download</a> : '—'}</div>
+                  <div style={{ color: 'var(--muted)' }}>Compiled PDF path on server</div>
+                  <div style={{ fontSize: '0.9em', wordBreak: 'break-all' }}>{selectedDoc.compiled_pdf_path || '—'}</div>
                 </div>
                 <div>
                   <div style={{ color: 'var(--muted)' }}>Created by</div>
@@ -826,8 +855,24 @@ export default function Mentor() {
 
             <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
               <h3>Workflow</h3>
-              <button className="btn-action" onClick={() => notify.push('Open workflow history (not yet implemented)', 3)}>SEE WORKFLOW HISTORY</button>
-              <div style={{ marginTop: 8, color: 'var(--muted)' }}>Workflow history viewer will open here (modal) — timeline newest first.</div>
+              {(() => {
+                const latestEvent = workflowHistory.length > 0 ? workflowHistory[workflowHistory.length - 1] : null;
+                const currentStatus = selectedDoc?.status || 'draft';
+                const lastChangedBy = latestEvent ? usersMap[latestEvent.changed_by] || `User ${latestEvent.changed_by}` : '—';
+                const lastChangedAt = latestEvent ? formatDate(latestEvent.changed_at, false) : '—';
+                return (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ marginBottom: 6 }}>
+                      <strong style={{ color: 'var(--text)' }}>CURRENT DOCUMENT STATUS:</strong>{' '}
+                      <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{currentStatus}</span>
+                    </div>
+                    <div style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
+                      <strong>LAST CHANGED BY:</strong> {lastChangedBy} @ {lastChangedAt}
+                    </div>
+                  </div>
+                );
+              })()}
+              <button className="btn-action" onClick={() => setWorkflowHistoryOpen(true)}>SEE WORKFLOW HISTORY</button>
             </div>
           </div>
         </div>
@@ -859,6 +904,13 @@ export default function Mentor() {
         } catch (e: any) { notify.push(String(e?.message || e), undefined, true); }
         setUserFinderOpen(false);
       }} />
+
+      <WorkflowHistoryModal
+        open={workflowHistoryOpen}
+        onClose={() => setWorkflowHistoryOpen(false)}
+        documentId={selectedDocId}
+        usersMap={usersMap}
+      />
     </div>
   );
 }
