@@ -68,7 +68,7 @@ export default function UserFinder({ open, onClose, onSelect }: { open: boolean,
     <div className="userfinder-backdrop" role="dialog" aria-modal>
       <div className="userfinder-modal glass-panel">
         <div className="userfinder-header">
-          <h3>Start new chat</h3>
+          <h3>Find a user registered on Poligon.</h3>
           <button className="uf-close" onClick={onClose}>×</button>
         </div>
         <div className="userfinder-body">
@@ -85,7 +85,7 @@ export default function UserFinder({ open, onClose, onSelect }: { open: boolean,
           <div className="userfinder-results">
             {loading && <div className="muted">Loading users…</div>}
             {!loading && query.trim() === '' && (
-              <div className="muted">Type a name or email to search users.</div>
+              <div className="muted">Type a name or email to search users and then click on them to select them.</div>
             )}
             {!loading && results.length > 0 && (
               <table className="userfinder-table">

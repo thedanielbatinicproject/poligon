@@ -5,12 +5,14 @@ import DocumentsApi from '../lib/documentsApi';
 import * as TasksApi from '../lib/tasksApi';
 import UserFinder from '../components/UserFinder';
 import ConfirmationBox from '../components/ConfirmationBox';
+import { useSocket } from '../components/SocketProvider';
 
 export default function Mentor() {
   const sessionCtx = useSession();
   const user = sessionCtx.user;
   const session = sessionCtx.session;
   const notify = useNotifications();
+  const { socket } = useSocket();
 
   const [documents, setDocuments] = useState<any[]>([]);
   const [filter, setFilter] = useState('');
@@ -36,6 +38,7 @@ export default function Mentor() {
   const [savingType, setSavingType] = useState(false);
   const [uploadFileName, setUploadFileName] = useState<string>('');
   const [uploading, setUploading] = useState<boolean>(false);
+  const [rendersToShow, setRendersToShow] = useState(3);
 
   // helper: format timestamp to DD.MM.YYYY.@HH:MM(:SS)
   // includeSeconds: when false, omit the trailing :SS
@@ -103,6 +106,7 @@ export default function Mentor() {
       setSelectedDoc(null);
       setEditors([]);
       setDocTasks([]);
+      setRendersToShow(3);
       return;
     }
     // Only run this effect when the selectedDocId changes. Previously this
@@ -600,8 +604,8 @@ export default function Mentor() {
                 <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
                   <h3>Document renders</h3>
                   {docVersions.length === 0 ? <div>No versions available.</div> : (
-                    <ul>
-                      {docVersions.map(v => {
+                    <div>
+                      {docVersions.slice().reverse().slice(0, rendersToShow).map(v => {
                         const editorId = Number(v.edited_by || v.edited_by_id || v.edited_by_user_id || 0);
                         let editorName = usersMap[editorId];
                         if (!editorName) {
@@ -615,15 +619,21 @@ export default function Mentor() {
                           }
                         }
                         return (
-                        <li key={v.version_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>{`v${v.version_number} — rendered by ${editorName} @ ${new Date(v.edited_at).toLocaleString()}`}</div>
+                        <div key={v.version_id} className="task-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', marginBottom: 8, borderRadius: 6, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 500, marginBottom: 4 }}>{`Version ${v.version_number}`}</div>
+                            <div style={{ color: 'var(--muted)', fontSize: 12 }}>{`Rendered by ${editorName} @ ${new Date(v.edited_at).toLocaleString()}`}</div>
+                          </div>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="btn btn-action" type="button" onClick={() => fetchAndDownload(`/api/documents/${selectedDocId}/versions/${v.version_id}/download`, `v${v.version_number}.pdf`)}>Download</button>
                           </div>
-                        </li>
+                        </div>
                       );
                       })}
-                    </ul>
+                      {docVersions.length > rendersToShow && (
+                        <button className="btn btn-secondary" style={{ marginTop: 8, width: '100%' }} onClick={() => setRendersToShow(prev => prev + 3)}>Load more</button>
+                      )}
+                    </div>
                   )}
                 </div>
 
