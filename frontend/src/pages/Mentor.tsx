@@ -7,6 +7,7 @@ import UserFinder from '../components/UserFinder';
 import ConfirmationBox from '../components/ConfirmationBox';
 import { useSocket } from '../components/SocketProvider';
 import WorkflowHistoryModal from '../components/WorkflowHistoryModal';
+import AuditLogModal from '../components/AuditLogModal';
 
 export default function Mentor() {
   const sessionCtx = useSession();
@@ -42,6 +43,7 @@ export default function Mentor() {
   const [rendersToShow, setRendersToShow] = useState(3);
   const [workflowHistoryOpen, setWorkflowHistoryOpen] = useState(false);
   const [workflowHistory, setWorkflowHistory] = useState<any[]>([]);
+  const [auditLogOpen, setAuditLogOpen] = useState(false);
 
   // helper: format timestamp to DD.MM.YYYY.@HH:MM(:SS)
   // includeSeconds: when false, omit the trailing :SS
@@ -839,10 +841,18 @@ export default function Mentor() {
                       const display = usersMap[uid] || (ed.display_name || ed.name || '');
                       const nameLabel = display ? `${display} (${uid})` : String(uid || '');
                       const roleLabel = ed.role ? ` - ${ed.role}` : '';
+                      
+                      // Role hierarchy: mentor > owner > editor > viewer
+                      const roleHierarchy: Record<string, number> = { mentor: 4, owner: 3, editor: 2, viewer: 1 };
+                      const currentUserEditor = editors.find(e => Number(e.user_id || e.id) === user?.id);
+                      const currentUserRoleLevel = roleHierarchy[currentUserEditor?.role || 'viewer'] || 0;
+                      const editorRoleLevel = roleHierarchy[ed.role || 'viewer'] || 0;
+                      const canRemove = ed.role !== 'owner' && currentUserRoleLevel > editorRoleLevel;
+                      
                       return (
                         <li key={`${uid}`}>
                           {nameLabel}{roleLabel}
-                          {ed.role !== 'owner' && (
+                          {canRemove && (
                             <button className="btn btn-ghost" onClick={() => { setConfirmAction(() => async () => { await DocumentsApi.removeEditor(Number(selectedDocId), { user_id: uid }); const v = await DocumentsApi.getEditors(Number(selectedDocId)); setEditors(Array.isArray(v) ? v : []); notify.push('Editor removed', 2); }); setConfirmOpen(true); }}>Remove</button>
                           )}
                         </li>
@@ -873,6 +883,14 @@ export default function Mentor() {
                 );
               })()}
               <button className="btn-action" onClick={() => setWorkflowHistoryOpen(true)}>SEE WORKFLOW HISTORY</button>
+            </div>
+
+            <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
+              <h3>Audit Log History</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: 12 }}>
+                View all actions performed on this document by users.
+              </p>
+              <button className="btn-action" onClick={() => setAuditLogOpen(true)}>SEARCH AUDIT LOG FOR THIS DOCUMENT</button>
             </div>
           </div>
         </div>
@@ -908,6 +926,13 @@ export default function Mentor() {
       <WorkflowHistoryModal
         open={workflowHistoryOpen}
         onClose={() => setWorkflowHistoryOpen(false)}
+        documentId={selectedDocId}
+        usersMap={usersMap}
+      />
+
+      <AuditLogModal
+        open={auditLogOpen}
+        onClose={() => setAuditLogOpen(false)}
         documentId={selectedDocId}
         usersMap={usersMap}
       />

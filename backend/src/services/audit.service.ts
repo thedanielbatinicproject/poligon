@@ -36,5 +36,20 @@ export class AuditService {
     return result.affectedRows || 0;
   }
 
+  static async getAuditLogForDocument(documentId: number): Promise<any[]> {
+    const [rows] = await pool.query(
+      `SELECT * FROM audit_log WHERE entity_type = 'document' AND entity_id = ? ORDER BY action_timestamp DESC`,
+      [documentId]
+    );
+    return rows as any[];
+  }
+
+  static async getAllAuditLogs(): Promise<any[]> {
+    const [rows] = await pool.query(
+      `SELECT * FROM audit_log ORDER BY action_timestamp DESC`
+    );
+    return rows as any[];
+  }
+
   
 }

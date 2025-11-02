@@ -233,17 +233,44 @@ export class DocumentsService {
    * @returns true if removed, false otherwise
    */
   static async removeEditor(document_id: number, user_id_to_remove: number, requester_id: number): Promise<boolean> {
+    // Role hierarchy: mentor > owner > editor > viewer
+    const roleHierarchy: Record<string, number> = { mentor: 4, owner: 3, editor: 2, viewer: 1 };
+    
     // Provjeri je li osoba koja miče admin ili owner
     const [docRows] = await pool.query('SELECT created_by FROM documents WHERE document_id = ?', [document_id]);
     if ((docRows as any[]).length === 0) return false;
     const created_by = (docRows as any[])[0].created_by;
     const [userRows] = await pool.query('SELECT role FROM users WHERE user_id = ?', [requester_id]);
     const isAdmin = (userRows as any[])[0]?.role === 'admin';
+    
+    // Get the role of the requester and the target user on this document
+    const [requesterEditorRows] = await pool.query(
+      'SELECT role FROM document_editors WHERE document_id = ? AND user_id = ?',
+      [document_id, requester_id]
+    );
+    const [targetEditorRows] = await pool.query(
+      'SELECT role FROM document_editors WHERE document_id = ? AND user_id = ?',
+      [document_id, user_id_to_remove]
+    );
+    
+    const requesterRole = (requesterEditorRows as any[])[0]?.role || 'viewer';
+    const targetRole = (targetEditorRows as any[])[0]?.role || 'viewer';
+    const requesterRoleLevel = roleHierarchy[requesterRole] || 0;
+    const targetRoleLevel = roleHierarchy[targetRole] || 0;
+    
     // Prevent the document owner from removing themselves as an editor.
     // Owners may remove other editors, and admins may remove owners, but an owner
     // cannot remove their own owner/editor entry (this avoids accidental lockout).
     if (user_id_to_remove === created_by && requester_id === created_by) return false;
-    if (requester_id !== created_by && !isAdmin) return false;
+    
+    // Check role hierarchy: requester must have higher role level than target
+    // OR be admin OR be the document creator
+    if (!isAdmin && requester_id !== created_by && requesterRoleLevel <= targetRoleLevel) {
+      return false;
+    }
+    
+    if (requester_id !== created_by && !isAdmin && requesterRoleLevel <= targetRoleLevel) return false;
+    
     // Izbriši editor entry
     await pool.query('DELETE FROM document_editors WHERE document_id = ? AND user_id = ?', [document_id, user_id_to_remove]);
     return true;

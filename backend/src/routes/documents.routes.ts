@@ -393,6 +393,29 @@ documentsRouter.get('/:document_id/workflow', checkLogin, async (req: Request, r
   }
 });
 
+// GET /api/documents/:document_id/audit-log - Get audit log for a document
+documentsRouter.get('/:document_id/audit-log', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+  try {
+    // Allow access if user is admin or is an editor/owner/mentor on the document (viewers excluded)
+    const isAllowed =
+      role === 'admin' ||
+      await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor']);
+    if (!isAllowed) {
+      return res.status(403).json({ error: 'You are not authorized to view audit log for this document.' });
+    }
+    const auditLog = await AuditService.getAuditLogForDocument(document_id);
+    res.status(200).json(auditLog);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch audit log.', details: err });
+  }
+});
+
 // PUT /api/documents/:document_id/status - Change document status (admin or mentor only)
 documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res: Response) => {
   const document_id = Number(req.params.document_id);
@@ -462,6 +485,16 @@ documentsRouter.put('/:document_id/grade', checkMentor, async (req: Request, res
     res.status(200).json({ success: true, newGrade: grade });
   } catch (err) {
     res.status(500).json({ error: `Failed to change document grade for user: ${user_id} with role: ${role}.`, details: err });
+  }
+});
+
+// GET /api/documents/audit-log - Get all audit logs (admin only)
+documentsRouter.get('/audit-log', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const allLogs = await AuditService.getAllAuditLogs();
+    res.status(200).json(allLogs);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch audit logs.', details: err });
   }
 });
 
