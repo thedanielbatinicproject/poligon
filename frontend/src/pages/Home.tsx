@@ -16,11 +16,11 @@ export default function Home(): JSX.Element {
   return (
     <div>
       <h1>Home</h1>
-      <p>Dobrodošao na Poligon — početna stranica aplikacije.</p>
-      <p>Koristi navigaciju gore za pristup profilima, dokumentima i ostalim stranicama.</p>
+      <p>Welcome to Poligon — the home page of the application.</p>
+      <p>Use the navigation above to access profiles, documents, and other pages.</p>
       <div style={{marginTop:16, display:'flex', gap:8}}>
-        <button className="btn btn-primary" onClick={handleNormal}>Prikaži notifikaciju (normalna)</button>
-        <button className="btn btn-ghost" onClick={handleError}>Prikaži notifikaciju (error)</button>
+        <button className="btn btn-primary" onClick={handleNormal}>Show notification (normal)</button>
+        <button className="btn btn-ghost" onClick={handleError}>Show notification (error)</button>
       </div>
     </div>
   );

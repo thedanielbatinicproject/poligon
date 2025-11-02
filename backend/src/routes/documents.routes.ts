@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware/auth.middleware';
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
+import { createTempUrl, startOnlineRender, isRendering as isOnlineRendering } from '../render/onlineRenderer';
 import { DocumentWorkflowService } from '../services/documentWorkflow.service';
 
 const documentsRouter = Router();
@@ -29,27 +30,20 @@ documentsRouter.post('/:document_id/render', checkLogin, async (req: Request, re
       console.warn('[DEBUG] render authorization failed', { document_id, user_id, role, isMentor });
       return res.status(403).json({ error: 'Only mentors of this document or admins can trigger rendering.' });
     }
-    // create audit log entry for compile request
-    await AuditService.createAuditLog({
-      user_id: Number(req.session.user_id),
-      action_type: 'compile',
-      entity_type: 'document',
-      entity_id: document_id
-    });
-
-    // start async render worker (load lazily so worker code isn't required on every request)
-    const { startRender, isRendering } = await Promise.resolve().then(() => require('../workers/renderWorker'));
-    console.debug('[DEBUG] render worker state before start', { document_id, isRendering: !!isRendering(document_id) });
-    if (isRendering(document_id)) {
-      console.debug('[DEBUG] render aborted - already rendering', { document_id });
-      return res.status(409).json({ error: 'A render is already in progress for this document.' });
+    // create temporary public URL and start external renderer
+    const temp = createTempUrl(document_id, user_id);
+    if (temp.error) {
+      console.debug('[DEBUG] render aborted - already rendering or token error', { document_id, err: temp.error });
+      return res.status(409).json({ error: temp.error });
     }
-    const started = await startRender(document_id, user_id);
-    console.debug('[DEBUG] startRender result', { document_id, started });
+    const token = temp.token!;
+    // start async external render (spawns background job)
+    const started = await startOnlineRender(token);
+    console.debug('[DEBUG] startOnlineRender result', { document_id, started });
     if (!started || !started.started) {
       return res.status(500).json({ error: 'Failed to start render job.', details: started?.message });
     }
-    return res.status(202).json({ message: 'Render job started.' });
+    return res.status(200).json({ message: 'Render job started.' });
   } catch (err) {
     console.error('[ERROR] /api/documents/:id/render', (err as any)?.stack || err);
     res.status(500).json({ error: 'Failed to process render request.', details: String((err as any)?.message || err) });
@@ -63,7 +57,8 @@ documentsRouter.get('/:document_id/render/status', checkLogin, async (req: Reque
   if (!user_id) return res.status(401).json({ error: 'Not authenticated.' });
   try {
     const { isRendering } = await Promise.resolve().then(() => require('../workers/renderWorker'));
-    return res.status(200).json({ rendering: isRendering(document_id) });
+    const online = isOnlineRendering(document_id);
+    return res.status(200).json({ rendering: isRendering(document_id) || online });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch render status.', details: String((err as any)?.message || err) });
   }

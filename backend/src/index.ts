@@ -6,6 +6,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import apiRouter from './routes/api.routes';
+import latexContentRouter from './routes/latexContent.routes';
+import { setIo } from './render/onlineRenderer';
 import fs from 'fs';
 import passport from 'passport';
 import samlStrategy from './config/saml';
@@ -74,6 +76,8 @@ passport.deserializeUser((user, done) => {
 
 // Main routes
 app.use('/api', apiRouter);
+// Public route for external latex renderers to fetch document LaTeX content
+app.use('/latex-content', latexContentRouter);
 
 // Catch-all for undefined routes with 404 JSON responses
 app.use('/auth', (req, res) => {
@@ -123,6 +127,9 @@ const io = new SocketIOServer(server, {
     methods: ['GET', 'POST']
   }
 });
+
+// provide io instance to modules that need to emit events (avoid circular imports)
+setIo(io);
 
 // Simple in-memory presence tracking (per-process). For multi-node deployments
 // consider a shared store like Redis so presence is global.
