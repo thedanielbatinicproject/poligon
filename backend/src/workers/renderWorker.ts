@@ -9,6 +9,19 @@ import { io } from '../index';
 
 const renderLocks: Map<number, boolean> = new Map(); // document_id -> rendering
 
+// Helper: format timestamp for Zagreb timezone in DD_MM_YYYY-HH_MM_SS format
+function formatZagrebTimestamp(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+  const hh = pad(now.getHours());
+  const mm = pad(now.getMinutes());
+  const ss = pad(now.getSeconds());
+  return `${day}_${month}_${year}-${hh}_${mm}_${ss}`;
+}
+
 export function isRendering(documentId: number): boolean {
   const locked = !!renderLocks.get(documentId);
   try {
@@ -72,8 +85,8 @@ export async function startRender(documentId: number, userId: number): Promise<{
       }
       const display = safeDisplayName(userRow);
 
-      const iso = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `PoligonDocRender-${documentId}-AT-${iso}-BY-${display}.pdf`;
+      const timestamp = formatZagrebTimestamp();
+      const filename = `PoligonDocRender-DocID(${documentId})-@${timestamp}-BY-${display}.pdf`;
       const relPath = path.join('uploads', String(documentId), filename);
       const absPath = path.join(process.cwd(), relPath);
       console.debug('[renderWorker] writing pdf file', { absPath, relPath, filename });

@@ -13,70 +13,23 @@ export function setIo(server: any) {
 }
 import { AuditService } from '../services/audit.service';
 
-// Local logger for this module: append logs to logs/OnlineRenderer.log
-const ORIG_CONSOLE = console;
-const LOG_DIR = path.join(process.cwd(), 'logs');
-const LOG_FILE = path.join(LOG_DIR, 'OnlineRenderer.log');
-
-async function ensureLogDir(): Promise<void> {
-  try {
-    await fs.mkdir(LOG_DIR, { recursive: true });
-  } catch (e) {
-    // ignore
-  }
-}
-
-function formatArgs(args: any[]): string {
-  try {
-    return args
-      .map((a) => {
-        if (typeof a === 'string') return a;
-        try {
-          return JSON.stringify(a);
-        } catch (e) {
-          return String(a);
-        }
-      })
-      .join(' ');
-  } catch (e) {
-    return args.map((a) => String(a)).join(' ');
-  }
-}
-
-async function writeLog(level: string, ...args: any[]) {
-  try {
-    await ensureLogDir();
-    const line = `${new Date().toISOString()} [${level}] ${formatArgs(args)}\n`;
-    await fs.appendFile(LOG_FILE, line);
-  } catch (err) {
-    // fallback to original console if file write fails
-    ORIG_CONSOLE.error('[onlineRenderer] failed to write to log file', err);
-  }
-}
-
-const localConsole = {
-  debug: (...args: any[]) => {
-    ORIG_CONSOLE.debug(...args);
-    void writeLog('DEBUG', ...args);
-  },
-  warn: (...args: any[]) => {
-    ORIG_CONSOLE.warn(...args);
-    void writeLog('WARN', ...args);
-  },
-  error: (...args: any[]) => {
-    ORIG_CONSOLE.error(...args);
-    void writeLog('ERROR', ...args);
-  },
-  log: (...args: any[]) => {
-    ORIG_CONSOLE.log(...args);
-    void writeLog('LOG', ...args);
-  }
-};
-
 const tempUrls: Map<string, { documentId: number; createdBy: number; expiresAt: number }> = new Map();
 const renderLocks: Set<number> = new Set();
 
 const CLEANUP_INTERVAL_MS = 5000;
+
+// Helper: format timestamp for Zagreb timezone in DD_MM_YYYY-HH_MM_SS format
+function formatZagrebTimestamp(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+  const hh = pad(now.getHours());
+  const mm = pad(now.getMinutes());
+  const ss = pad(now.getSeconds());
+  return `${day}_${month}_${year}-${hh}_${mm}_${ss}`;
+}
 
 function getEnv(name: string, def?: string) {
   return process.env[name] || def;
@@ -99,7 +52,7 @@ export function createTempUrl(documentId: number, userId: number): { token?: str
   tempUrls.set(token, { documentId, createdBy: userId, expiresAt });
   // Log the public token URL for debugging (helps local testing)
   try {
-    localConsole.debug('[onlineRenderer] temp url created', { token, url: makePublicUrl(token), expiresAt });
+    console.debug('[onlineRenderer] temp url created', { token, url: makePublicUrl(token), expiresAt });
   } catch (e) {}
   // reserve lock so another render can't start while token is valid
   renderLocks.add(documentId);
@@ -166,12 +119,12 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
 
       const publicUrl = makePublicUrl(token);
       const compileUrl = `${EXTERNAL_RENDERER.replace(/\/$/, '')}/compile?url=${encodeURIComponent(publicUrl)}&format=pdf&force=true`;
-  localConsole.debug('[onlineRenderer] calling external renderer', { documentId, compileUrl });
+  console.debug('[onlineRenderer] calling external renderer', { documentId, compileUrl });
 
       const resp = await httpGetPdf(compileUrl, RENDER_TIMEOUT_MS);
   if (!resp.ok || !resp.buffer) {
     const errMsg = resp.text || `status=${resp.statusCode}`;
-  localConsole.warn('[onlineRenderer] external render failed', { documentId, err: errMsg });
+  console.warn('[onlineRenderer] external render failed', { documentId, err: errMsg });
   if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: String(errMsg), started_by: createdBy });
         return;
       }
@@ -179,7 +132,7 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
       // validate PDF header
       if (resp.buffer.slice(0, 4).toString() !== '%PDF') {
     const txt = resp.buffer.toString('utf8').slice(0, 1000);
-    localConsole.warn('[onlineRenderer] external renderer did not return PDF', { documentId, sample: txt.slice(0, 300) });
+    console.warn('[onlineRenderer] external renderer did not return PDF', { documentId, sample: txt.slice(0, 300) });
   if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: 'External service did not return PDF.', started_by: createdBy });
         return;
       }
@@ -197,8 +150,8 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
         // ignore
       }
       const display = (userRow && (userRow.display_name || `${userRow.first_name || ''}_${userRow.last_name || ''}`)) || `user_${createdBy}`;
-      const iso = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `PoligonDocRender-${documentId}-AT-${iso}-BY-${display}.pdf`;
+      const timestamp = formatZagrebTimestamp();
+      const filename = `PoligonDocRender-DocID(${documentId})-@${timestamp}-BY-${display}.pdf`;
       const relPath = path.join('uploads', String(documentId), filename);
       const absPath = path.join(process.cwd(), relPath);
 
@@ -214,10 +167,10 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
       try {
         await AuditService.createAuditLog({ user_id: createdBy, action_type: 'compile', entity_type: 'document', entity_id: documentId });
       } catch (e) {
-        localConsole.warn('[onlineRenderer] audit log failed', e);
+        console.warn('[onlineRenderer] audit log failed', e);
       }
     } catch (err) {
-  localConsole.error('[onlineRenderer] render failed', documentId, err && (err as any).stack ? (err as any).stack : err);
+  console.error('[onlineRenderer] render failed', documentId, err && (err as any).stack ? (err as any).stack : err);
   if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: String((err as any)?.message || err), started_by: createdBy });
     } finally {
       // cleanup token and lock
@@ -227,7 +180,7 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
         });
       } catch (e) {}
       renderLocks.delete(documentId);
-      localConsole.debug('[onlineRenderer] finished cleanup', { documentId });
+      console.debug('[onlineRenderer] finished cleanup', { documentId });
     }
   })();
 
@@ -243,7 +196,7 @@ setInterval(() => {
         tempUrls.delete(token);
         // free lock if present
         renderLocks.delete(meta.documentId);
-        localConsole.debug('[onlineRenderer] cleaned expired token', { token, documentId: meta.documentId });
+        console.debug('[onlineRenderer] cleaned expired token', { token, documentId: meta.documentId });
       }
     }
   } catch (err) {

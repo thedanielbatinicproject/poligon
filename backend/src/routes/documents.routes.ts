@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import path from 'path';
 import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware/auth.middleware';
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
@@ -359,6 +360,9 @@ documentsRouter.get('/:document_id/versions/:version_id/download', checkLogin, a
     if (!version || !version.compiled_pdf_path) {
       return res.status(404).json({ error: `PDF for version you requested - ${version_id} - not found in the database.` });
     }
+    // Extract filename from path and set Content-Disposition header for proper download name
+    const filename = path.basename(version.compiled_pdf_path);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
     // Send the PDF file
     return res.sendFile(version.compiled_pdf_path, { root: process.cwd() });
   } catch (err) {
