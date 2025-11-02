@@ -259,7 +259,7 @@ export default function Mentor() {
       } else {
         // Error notification
         const errorMsg = payload.error || 'Render failed with unknown error';
-        notify.push(`Render failed: ${errorMsg}`, 10, true);
+        notify.push(`Render failed: ${errorMsg}`, 40, true);
       }
     };
 

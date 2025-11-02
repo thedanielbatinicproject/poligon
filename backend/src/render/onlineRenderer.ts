@@ -172,7 +172,7 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
   if (!resp.ok || !resp.buffer) {
     const errMsg = resp.text || `status=${resp.statusCode}`;
   localConsole.warn('[onlineRenderer] external render failed', { documentId, err: errMsg });
-  if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: String(errMsg) });
+  if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: String(errMsg), started_by: createdBy });
         return;
       }
 
@@ -180,7 +180,7 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
       if (resp.buffer.slice(0, 4).toString() !== '%PDF') {
     const txt = resp.buffer.toString('utf8').slice(0, 1000);
     localConsole.warn('[onlineRenderer] external renderer did not return PDF', { documentId, sample: txt.slice(0, 300) });
-  if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: 'External service did not return PDF.' });
+  if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: 'External service did not return PDF.', started_by: createdBy });
         return;
       }
 
@@ -218,7 +218,7 @@ export async function startOnlineRender(token: string): Promise<{ started: boole
       }
     } catch (err) {
   localConsole.error('[onlineRenderer] render failed', documentId, err && (err as any).stack ? (err as any).stack : err);
-  if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: String((err as any)?.message || err) });
+  if (ioServer && typeof ioServer.emit === 'function') ioServer.emit('document:render:finished', { document_id: documentId, success: false, error: String((err as any)?.message || err), started_by: createdBy });
     } finally {
       // cleanup token and lock
       try {

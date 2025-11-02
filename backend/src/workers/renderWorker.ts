@@ -51,7 +51,7 @@ export async function startRender(documentId: number, userId: number): Promise<{
       if (!result.success || !result.pdf) {
         const errMsg = result.error || 'Unknown render failure';
         console.warn('[renderWorker] render failed', { documentId, err: errMsg });
-        io.emit('document:render:finished', { document_id: documentId, success: false, error: errMsg });
+        io.emit('document:render:finished', { document_id: documentId, success: false, error: errMsg, started_by: userId });
         return;
       }
 
@@ -90,7 +90,7 @@ export async function startRender(documentId: number, userId: number): Promise<{
       console.debug('[renderWorker] render finished success', { documentId, relPath });
     } catch (err: any) {
       console.error('[renderWorker] render failed for document', documentId, err && err.stack ? err.stack : err);
-      io.emit('document:render:finished', { document_id: documentId, success: false, error: String(err?.message || err) });
+      io.emit('document:render:finished', { document_id: documentId, success: false, error: String(err?.message || err), started_by: userId });
     } finally {
       renderLocks.delete(documentId);
       console.debug('[renderWorker] cleared render lock', { documentId });
