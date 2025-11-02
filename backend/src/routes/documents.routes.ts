@@ -15,24 +15,57 @@ documentsRouter.post('/:document_id/render', checkLogin, async (req: Request, re
     return res.status(401).json({ error: 'User not authenticated.' });
   }
   try {
-    // Provjera prava: samo mentor ili admin mogu pokrenuti render
+    // Load editors for diagnostics (keep errors non-fatal)
+    const editorsForDoc = await DocumentsService.getDocumentEditors(document_id).catch((e) => {
+      console.warn('[DEBUG] failed to load document editors', { document_id, err: e });
+      return [] as any[];
+    });
+    // Brief debug summary (removed noisy full request debug above)
+    console.debug('[DEBUG] render preflight', { document_id, user_id, role, editorsCount: editorsForDoc.length });
+
+    // Only admin, a global mentor user, or a mentor assigned on this document can trigger
     const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
-    if (role !== 'admin' && !isMentor) {
+    if (role !== 'admin' && role !== 'mentor' && !isMentor) {
+      console.warn('[DEBUG] render authorization failed', { document_id, user_id, role, isMentor });
       return res.status(403).json({ error: 'Only mentors of this document or admins can trigger rendering.' });
     }
-    // TODO: implement PDF rendering logic here
-    // Call example:
-    // await DocumentsService.renderDocument(document, user_id, pdfPath);
-    //Logging in audit_log
+    // create audit log entry for compile request
     await AuditService.createAuditLog({
-        user_id: Number(req.session.user_id),
-        action_type: 'compile',
-        entity_type: 'document',
-        entity_id: document_id
+      user_id: Number(req.session.user_id),
+      action_type: 'compile',
+      entity_type: 'document',
+      entity_id: document_id
     });
-    return res.status(202).json({ message: 'Render request accepted. PDF rendering logic to be implemented.' });
+
+    // start async render worker (load lazily so worker code isn't required on every request)
+    const { startRender, isRendering } = await Promise.resolve().then(() => require('../workers/renderWorker'));
+    console.debug('[DEBUG] render worker state before start', { document_id, isRendering: !!isRendering(document_id) });
+    if (isRendering(document_id)) {
+      console.debug('[DEBUG] render aborted - already rendering', { document_id });
+      return res.status(409).json({ error: 'A render is already in progress for this document.' });
+    }
+    const started = await startRender(document_id, user_id);
+    console.debug('[DEBUG] startRender result', { document_id, started });
+    if (!started || !started.started) {
+      return res.status(500).json({ error: 'Failed to start render job.', details: started?.message });
+    }
+    return res.status(202).json({ message: 'Render job started.' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to process render request.', details: err });
+    console.error('[ERROR] /api/documents/:id/render', (err as any)?.stack || err);
+    res.status(500).json({ error: 'Failed to process render request.', details: String((err as any)?.message || err) });
+  }
+});
+
+// GET /api/documents/:document_id/render/status - returns whether render is in progress
+documentsRouter.get('/:document_id/render/status', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  if (!user_id) return res.status(401).json({ error: 'Not authenticated.' });
+  try {
+    const { isRendering } = await Promise.resolve().then(() => require('../workers/renderWorker'));
+    return res.status(200).json({ rendering: isRendering(document_id) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch render status.', details: String((err as any)?.message || err) });
   }
 });
 
