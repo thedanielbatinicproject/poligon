@@ -227,6 +227,49 @@ export default function Mentor() {
     }).catch(() => {});
   }, [docVersions]);
 
+  // Socket listener for render completion
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleRenderFinished = (payload: any) => {
+      // Only show notification if this user triggered the render
+      const startedBy = Number(payload.started_by || 0);
+      if (startedBy !== user.user_id && startedBy !== user.id) return;
+
+      const TOTAL = 8;
+      let remaining = TOTAL;
+
+      if (payload.success) {
+        const makeMsg = (s: number) => `Render finished successfully. Refreshing page to list new render in ${s} second${s === 1 ? '' : 's'}.`;
+        let notifId = notify.push(makeMsg(remaining), TOTAL);
+
+        const iv = window.setInterval(() => {
+          remaining -= 1;
+          if (remaining <= 0) {
+            window.clearInterval(iv);
+            return;
+          }
+          try { notify.update(notifId, makeMsg(remaining), remaining); } catch (e) {}
+        }, 1000);
+
+        setTimeout(() => {
+          window.clearInterval(iv);
+          window.location.reload();
+        }, TOTAL * 1000);
+      } else {
+        // Error notification
+        const errorMsg = payload.error || 'Render failed with unknown error';
+        notify.push(`Render failed: ${errorMsg}`, 10, true);
+      }
+    };
+
+    socket.on('document:render:finished', handleRenderFinished);
+
+    return () => {
+      socket.off('document:render:finished', handleRenderFinished);
+    };
+  }, [socket, user, notify]);
+
   // helper to download a file via fetch so we can intercept JSON errors and show notifications
   const fetchAndDownload = async (url: string, suggestedName?: string) => {
     try {
