@@ -598,6 +598,19 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .mentor-details-card .btn.btn-action { min-width: 120px; }
 .mentor-details-card .btn.btn-danger { min-width: 120px; }
 
+/* Render button highlight for mentor panel */
+.btn-render {
+  border: 2px solid rgba(var(--accent-rgb), 1);
+  box-shadow: 0 10px 30px rgba(var(--accent-rgb),0.18), 0 0 18px rgba(var(--accent-rgb),0.12);
+  background: linear-gradient(90deg, var(--primary), rgba(var(--accent-rgb),0.95));
+  color: var(--panel);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.btn-render:hover{ box-shadow: 0 14px 40px rgba(var(--accent-rgb),0.24), 0 0 26px rgba(var(--accent-rgb),0.18) }
+
+
 /* Center the action button row inside the card reliably by targeting the explicit class */
 .mentor-action-row{ display:flex !important; justify-content:center !important; gap:8px !important; margin-top:6px }
 

@@ -15,10 +15,10 @@ documentsRouter.post('/:document_id/render', checkLogin, async (req: Request, re
     return res.status(401).json({ error: 'User not authenticated.' });
   }
   try {
-    // Provjera prava: kreator (mentor), admin ili editor na dokumentu
-    const isAllowed = await DocumentsService.isEditor(document_id, user_id, ['owner', 'mentor', 'admin', 'editor']);
-    if (!isAllowed) {
-      return res.status(403).json({ error: 'You are not authorized to render this document.' });
+    // Provjera prava: samo mentor ili admin mogu pokrenuti render
+    const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
+    if (role !== 'admin' && !isMentor) {
+      return res.status(403).json({ error: 'Only mentors of this document or admins can trigger rendering.' });
     }
     // TODO: implement PDF rendering logic here
     // Call example:

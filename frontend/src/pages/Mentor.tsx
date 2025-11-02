@@ -547,7 +547,7 @@ export default function Mentor() {
                   <div>{formatDate(selectedDoc.updated_at)}</div>
                 </div>
                 <div className="mentor-action-row" style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-action" onClick={() => { DocumentsApi.renderDocument(Number(selectedDocId)).then(() => notify.push('Render started', 3)).catch((e) => notify.push(String(e), undefined, true)); }}>Render</button>
+                  <button className="btn btn-action btn-render" onClick={() => { DocumentsApi.renderDocument(Number(selectedDocId)).then(() => notify.push('Render started', 3)).catch((e) => notify.push(String(e), undefined, true)); }}>Render</button>
                   <button className="btn btn-danger" onClick={() => { setConfirmTitle('Confirm DELETE action'); setConfirmQuestion('Are you sure you want to delete this document?'); setConfirmAction(() => handleDelete); setConfirmOpen(true); }}>Delete</button>
                 </div>
               </div>
@@ -598,7 +598,7 @@ export default function Mentor() {
 
                 {/* Versions panel */}
                 <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
-                  <h3>Document versions</h3>
+                  <h3>Document renders</h3>
                   {docVersions.length === 0 ? <div>No versions available.</div> : (
                     <ul>
                       {docVersions.map(v => {
