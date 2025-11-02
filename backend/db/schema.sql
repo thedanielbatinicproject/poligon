@@ -180,3 +180,25 @@ CREATE TABLE sessions (
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
   FOREIGN KEY (last_document_id) REFERENCES documents(document_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- YJS DOCUMENTS (Real-time collaboration state)
+-- Stores the compressed Yjs CRDT state for each document
+-- This enables real-time collaborative editing with automatic conflict resolution
+CREATE TABLE yjs_documents (
+  document_id INT UNSIGNED PRIMARY KEY,
+  yjs_state LONGBLOB NOT NULL COMMENT 'Binary Y.Doc state (compressed CRDT data)',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- YJS UPDATES (Optional: for full history replay and debugging)
+-- Stores individual update deltas for version history and recovery
+-- Allows replaying document history and debugging synchronization issues
+CREATE TABLE yjs_updates (
+  update_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  document_id INT UNSIGNED NOT NULL,
+  yjs_update BLOB NOT NULL COMMENT 'Delta update binary (incremental change)',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
+  INDEX idx_yjs_document_created (document_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

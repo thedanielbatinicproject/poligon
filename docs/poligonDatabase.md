@@ -249,3 +249,48 @@ Stores active user sessions and editor states.
 | expires_at            | DATETIME, NOT NULL                        | Expiration time. |
 
 ---
+
+## Table: `yjs_documents`
+
+Stores Yjs CRDT state for real-time collaborative editing.
+
+| Column       | Type                                      | Description |
+|--------------|-------------------------------------------|-------------|
+| document_id  | INT UNSIGNED, PRIMARY KEY, FK            | References `documents.document_id`. |
+| yjs_state    | LONGBLOB, NOT NULL                       | Binary Y.Doc state (compressed CRDT data structure). |
+| updated_at   | DATETIME, NOT NULL                       | Last update timestamp. |
+
+**Purpose:**
+- Enables real-time collaborative editing with Yjs (CRDT-based synchronization).
+- Stores compressed binary state of the entire document for fast loading.
+- Automatically deleted when parent document is deleted (CASCADE).
+
+**Relationships:**
+- One-to-one with `documents.document_id`.
+
+---
+
+## Table: `yjs_updates`
+
+Stores incremental Yjs update deltas for history replay and debugging.
+
+| Column       | Type                                      | Description |
+|--------------|-------------------------------------------|-------------|
+| update_id    | INT UNSIGNED, PRIMARY KEY, AUTO_INCREMENT | Unique update identifier. |
+| document_id  | INT UNSIGNED, FK                         | References `documents.document_id`. |
+| yjs_update   | BLOB, NOT NULL                           | Binary delta update (incremental change). |
+| created_at   | DATETIME, NOT NULL                       | Update creation timestamp. |
+
+**Purpose:**
+- Optional table for full version history replay.
+- Each row represents an incremental change (delta) to the document.
+- Useful for debugging synchronization issues and advanced version control.
+- Can be used to reconstruct document state at any point in time.
+
+**Relationships:**
+- Many-to-one with `documents.document_id`.
+
+**Indexes:**
+- `idx_yjs_document_created (document_id, created_at)` - speeds up history queries.
+
+---
