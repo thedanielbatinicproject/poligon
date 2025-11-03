@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import path from 'path';
+import pool from '../db';
 import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware/auth.middleware';
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
@@ -72,7 +73,8 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
   if (role !== 'admin' && role !== 'mentor') {
     return res.status(403).json({ error: 'Only admin or mentor can create documents!' });
   }
-  // Validate type_id exists and is valid
+    console.debug(`[documents:/all] Request by user_id=${user_id}`);
+
   const rawTypeId = req.body?.type_id;
   const typeId = typeof rawTypeId === 'number' ? rawTypeId : (rawTypeId ? Number(rawTypeId) : null);
   if (!typeId || isNaN(typeId)) {
@@ -105,28 +107,29 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/documents/all - Get all documents for current user (owner/editor/mentor)
+// GET /api/documents/all - Get all documents for current user (owner/editor/mentor/viewer or created_by)
 documentsRouter.get('/all', checkLogin, async (req: Request, res: Response) => {
   const user_id = req.session.user_id;
   if (!user_id) {
     return res.status(401).json({ error: 'User not logged in!' });
   }
   try {
-    const roles = ['owner', 'editor', 'mentor'];
-    let allDocs: any[] = [];
-    for (const role of roles) {
-      const docs = await DocumentsService.getUserDocumentsByRole(user_id, role);
-      allDocs = allDocs.concat(docs);
-    }
-    // Remove duplicates if any (in case user has multiple roles on same document)
-    const uniqueDocs = Object.values(
-      allDocs.reduce((acc, doc) => {
-        acc[doc.document_id] = doc;
-        return acc;
-      }, {} as Record<number, any>)
+    // Single query to get all documents where user is:
+    // 1. In document_editors table (any role: owner, editor, mentor, viewer)
+    // 2. OR is the creator (created_by)
+    const [rows] = await pool.query(
+      `SELECT DISTINCT d.* 
+       FROM documents d
+       LEFT JOIN document_editors de ON d.document_id = de.document_id
+       WHERE de.user_id = ? OR d.created_by = ?
+       ORDER BY d.updated_at DESC`,
+      [user_id, user_id]
     );
-    res.json(uniqueDocs);
+    
+    const documents = rows as any[];
+    res.json(documents);
   } catch (err) {
+    console.error('[/api/documents/all] Error:', err);
     res.status(500).json({ error: 'Failed to fetch documents from database.', details: err });
   }
 });

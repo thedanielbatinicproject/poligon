@@ -4,12 +4,14 @@ import { useNotifications } from '../lib/notifications';
 import DocumentsApi from '../lib/documentsApi';
 import * as TasksApi from '../lib/tasksApi';
 import ConfirmationBox from '../components/ConfirmationBox';
+import YjsEditor from '../components/YjsEditor';
 import { useSocket } from '../components/SocketProvider';
 
 export default function Documents() {
   const sessionCtx = useSession();
   const user = sessionCtx.user;
   const session = sessionCtx.session;
+  const loading = sessionCtx.loading;
   const notify = useNotifications();
   const { socket } = useSocket();
 
@@ -19,7 +21,7 @@ export default function Documents() {
   const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
 
   // Editor state
-  const [latexContent, setLatexContent] = useState('');
+  // Note: latexContent is now managed by Yjs editor, not React state
   const [isSaving, setIsSaving] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
 
@@ -47,29 +49,33 @@ export default function Documents() {
 
   // Load documents on mount
   useEffect(() => {
-    if (!user?.id) return;
+    if (loading || !user) return;
     
-    // Load all documents where user is editor/owner/mentor/viewer or creator
+    const userId = user.user_id || user.id;
+    if (!userId) return;
+    
     DocumentsApi.getAllDocuments()
       .then((docs) => {
-        setDocuments(Array.isArray(docs) ? docs : []);
+        const docsArray = Array.isArray(docs) ? docs : [];
+        setDocuments(docsArray);
         
-        // Try to restore last selected document from session
         if (session?.last_document_id) {
-          const lastDoc = docs.find((d: any) => d.document_id === session.last_document_id);
+          const lastDoc = docsArray.find((d: any) => d.document_id === session.last_document_id);
           if (lastDoc) {
             setSelectedDocId(session.last_document_id);
           }
         }
       })
-      .catch((err) => notify.push('Failed to load documents', undefined, true));
-  }, [user?.id]);
+      .catch((err) => {
+        notify.push('Failed to load documents', undefined, true);
+      });
+  }, [loading, user?.user_id, user?.id, session?.last_document_id]);
 
   // Load selected document details
   useEffect(() => {
     if (!selectedDocId) {
       setSelectedDoc(null);
-      setLatexContent('');
+      // Yjs editor will handle content loading
       setDocTasks([]);
       setDocFiles([]);
       return;
@@ -89,10 +95,7 @@ export default function Documents() {
       setSelectedDoc(doc);
       setAbstractText(doc.abstract || '');
       
-      // Load LaTeX content
-      DocumentsApi.getDocumentContent(selectedDocId)
-        .then(content => setLatexContent(content || ''))
-        .catch(() => setLatexContent(''));
+      // Yjs editor will load content automatically via WebSocket
 
       // Load editors to determine user role
       DocumentsApi.getEditors(selectedDocId)
@@ -126,16 +129,15 @@ export default function Documents() {
     setSelectedDocId(docId);
   };
 
-  // Save LaTeX content
+  // Manual save/audit log (Yjs auto-syncs content to backend)
   const handleSave = async () => {
     if (!selectedDocId || isReadOnly) return;
     
     setIsSaving(true);
     try {
-      await DocumentsApi.updateDocumentContent(selectedDocId, { latex_content: latexContent });
-      notify.push('Document saved', 2);
+      notify.push('Changes are automatically saved via Yjs sync', 2);
       
-      // Create audit log
+      // Create audit log for manual save action
       await fetch('/api/utility/audit-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,7 +149,7 @@ export default function Documents() {
         })
       }).catch(() => {});
     } catch (err: any) {
-      notify.push(err?.message || 'Failed to save document', undefined, true);
+      notify.push(err?.message || 'Failed to log action', undefined, true);
     } finally {
       setIsSaving(false);
     }
@@ -199,6 +201,105 @@ export default function Documents() {
     }
   };
 
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedDocId || !e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('document_id', String(selectedDocId));
+    
+    setUploading(true);
+    try {
+      // Determine upload endpoint based on file type
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg'];
+      const isImage = imageExtensions.includes(fileExtension || '');
+      
+      const endpoint = isImage ? '/api/files/upload/image' : '/api/files/upload/document';
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      notify.push('File uploaded successfully', 2);
+      
+      // Reload files
+      const filesResponse = await fetch(`/api/files/document/${selectedDocId}`, { credentials: 'include' });
+      const files = await filesResponse.json();
+      setDocFiles(Array.isArray(files) ? files : []);
+      
+      // Create audit log
+      await fetch('/api/utility/audit-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          action_type: 'upload',
+          entity_type: 'file',
+          entity_id: selectedDocId
+        })
+      }).catch(() => {});
+    } catch (err: any) {
+      notify.push(err?.message || 'Failed to upload file', undefined, true);
+    } finally {
+      setUploading(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  // Handle file delete
+  const handleFileDelete = async (fileId: number, uploadedBy: number) => {
+    if (!selectedDocId) return;
+    
+    // Check if user can delete (uploader, mentor, or admin)
+    const canDelete = uploadedBy === user?.id || userRole === 'mentor' || session?.role === 'admin';
+    if (!canDelete) {
+      notify.push('You do not have permission to delete this file', undefined, true);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/files/${fileId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Delete failed');
+      }
+      
+      notify.push('File deleted', 2);
+      
+      // Reload files
+      const filesResponse = await fetch(`/api/files/document/${selectedDocId}`, { credentials: 'include' });
+      const files = await filesResponse.json();
+      setDocFiles(Array.isArray(files) ? files : []);
+      
+      // Create audit log
+      await fetch('/api/utility/audit-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          action_type: 'delete',
+          entity_type: 'file',
+          entity_id: selectedDocId
+        })
+      }).catch(() => {});
+    } catch (err: any) {
+      notify.push(err?.message || 'Failed to delete file', undefined, true);
+    }
+  };
+
   // Show LaTeX packages info
   const showPackagesInfo = () => {
     const message = `
@@ -212,8 +313,16 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
     notify.push(message, 30); // 30 seconds duration
   };
 
+  if (loading) {
+    return <div style={{ padding: '2rem', color: 'var(--text)', textAlign: 'center' }}>
+      Loading session...
+    </div>;
+  }
+
   if (!user) {
-    return <div style={{ padding: '2rem', color: 'var(--text)' }}>Please log in to access documents.</div>;
+    return <div style={{ padding: '2rem', color: 'var(--text)' }}>
+      Please log in to access documents.
+    </div>;
   }
 
   return (
@@ -350,29 +459,29 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
 
             {/* Split view editor */}
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-              {/* Left: LaTeX code */}
+              {/* Left: LaTeX code with Yjs collaboration */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)' }}>
                 <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}>
                   <strong>LaTeX Editor</strong>
                 </div>
-                <textarea
-                  value={latexContent}
-                  onChange={(e) => setLatexContent(e.target.value)}
-                  readOnly={isReadOnly}
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    padding: '1rem',
-                    border: 'none',
-                    background: 'var(--bg)',
-                    color: 'var(--text)',
-                    fontFamily: 'monospace',
-                    fontSize: '0.95rem',
-                    resize: 'none',
-                    outline: 'none'
-                  }}
-                  placeholder="Enter LaTeX code here..."
-                />
+                {selectedDocId ? (
+                  <YjsEditor 
+                    documentId={selectedDocId} 
+                    readOnly={isReadOnly}
+                    onUserCountChange={setConnectedUsers}
+                  />
+                ) : (
+                  <div style={{ 
+                    flex: 1, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.95rem'
+                  }}>
+                    Select a document to start editing
+                  </div>
+                )}
               </div>
 
               {/* Right: Preview placeholder */}
@@ -437,19 +546,59 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 <div style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>No files uploaded</div>
               ) : (
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 0.75rem 0', fontSize: '0.85rem' }}>
-                  {docFiles.map((file: any) => (
-                    <li key={file.file_id} style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{file.file_name}</span>
-                      <button className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
-                        Delete
-                      </button>
-                    </li>
-                  ))}
+                  {docFiles.map((file: any) => {
+                    const canDelete = file.uploaded_by === user?.id || userRole === 'mentor' || session?.role === 'admin';
+                    return (
+                      <li key={file.file_id} style={{ 
+                        marginBottom: '0.5rem', 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        padding: '0.5rem',
+                        background: 'var(--bg)',
+                        borderRadius: 4,
+                        border: '1px solid var(--border)'
+                      }}>
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {file.file_name}
+                        </span>
+                        {canDelete && (
+                          <button 
+                            className="btn btn-ghost" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.5rem' }}
+                            onClick={() => {
+                              setConfirmTitle('Delete File');
+                              setConfirmQuestion(`Are you sure you want to delete "${file.file_name}"?`);
+                              setConfirmAction(() => async () => await handleFileDelete(file.file_id, file.uploaded_by));
+                              setConfirmOpen(true);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
-              <button className="btn btn-action" disabled={uploading}>
+              <label 
+                className="btn btn-action" 
+                style={{ 
+                  display: 'inline-block', 
+                  textAlign: 'center',
+                  cursor: uploading ? 'not-allowed' : 'pointer',
+                  opacity: uploading ? 0.6 : 1
+                }}
+              >
                 {uploading ? 'Uploading...' : 'Upload File'}
-              </button>
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  style={{ display: 'none' }}
+                  accept=".jpg,.jpeg,.png,.gif,.bmp,.tiff,.svg,.pdf,.bib,.tex"
+                />
+              </label>
             </div>
           </div>
         </div>

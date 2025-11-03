@@ -420,8 +420,11 @@ utilityRouter.post('/session', checkLogin, async (req: Request, res: Response) =
   try {
     // Support both session shapes: older code stored top-level user_id, newer code may store a user object.
     const sessionUser = (req.session as any).user || null;
-    const sessionUserId = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
-    if (!sessionUserId) return res.status(401).json({ error: 'Not authenticated' });
+    const sessionUserIdRaw = (req.session as any).user_id || (sessionUser && sessionUser.user_id) || null;
+    if (!sessionUserIdRaw) return res.status(401).json({ error: 'Not authenticated' });
+    
+    const sessionUserId = Number(sessionUserIdRaw);
+    if (isNaN(sessionUserId)) return res.status(400).json({ error: 'Invalid user ID in session' });
 
     // pick only allowed keys from body
     const {

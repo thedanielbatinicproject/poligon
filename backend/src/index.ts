@@ -16,6 +16,9 @@ import samlStrategy from './config/saml';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
+// Yjs WebSocket server
+import { setupYjsWebSocketServer } from './services/yjsWebSocket.service';
+
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -199,6 +202,9 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+// Setup Yjs WebSocket server for real-time collaborative editing
+setupYjsWebSocketServer(server);
 
 // Pokreni server
 server.listen(port, () => {
