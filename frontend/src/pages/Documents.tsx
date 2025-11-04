@@ -333,27 +333,29 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
       background: 'var(--bg)',
       color: 'var(--text)'
     }}>
-      {/* Top bar - Document selector */}
+      {/* Compact top bar - Document selector */}
       <div className="glass-panel" style={{ 
-        padding: '1rem', 
+        padding: '0.75rem 1rem', 
         borderBottom: '1px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
-        gap: '1rem'
+        gap: '1rem',
+        flexWrap: 'wrap'
       }}>
-        <label style={{ fontWeight: 600, color: 'var(--heading)' }}>SELECT DOCUMENT:</label>
+        <label style={{ fontWeight: 600, color: 'var(--heading)', fontSize: '0.9rem' }}>DOCUMENT:</label>
         <select
           value={selectedDocId || ''}
           onChange={(e) => handleDocumentSelect(Number(e.target.value))}
           style={{
-            flex: 1,
-            maxWidth: 500,
-            padding: '0.5rem',
+            flex: '1 1 auto',
+            minWidth: 250,
+            maxWidth: 450,
+            padding: '0.4rem 0.6rem',
             borderRadius: 6,
             border: '1px solid var(--border)',
             background: 'var(--panel)',
             color: 'var(--text)',
-            fontSize: '1rem'
+            fontSize: '0.9rem'
           }}
         >
           <option value="">-- Select a document --</option>
@@ -365,21 +367,25 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
         </select>
         
         {selectedDoc && (
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-              Connected users: <strong style={{ color: 'var(--accent)' }}>{connectedUsers}</strong>
+          <>
+            <span style={{ color: 'var(--muted)', fontSize: '0.85rem', marginLeft: 'auto' }}>
+              👥 <strong style={{ color: 'var(--accent)' }}>{connectedUsers}</strong> online
             </span>
-          </div>
+            <button className="btn btn-ghost" onClick={showPackagesInfo} style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}>
+              ℹ️ Packages
+            </button>
+          </>
         )}
       </div>
 
       {/* Main content area */}
       {selectedDocId ? (
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* Tasks sidebar */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', gap: 0 }}>
+          {/* Collapsible Left sidebar - Tasks */}
           <div style={{
-            width: sidebarCollapsed ? 40 : 300,
-            transition: 'width 0.3s ease',
+            width: sidebarCollapsed ? 48 : 280,
+            minWidth: sidebarCollapsed ? 48 : 280,
+            transition: 'all 0.3s ease',
             borderRight: '1px solid var(--border)',
             background: 'var(--panel)',
             display: 'flex',
@@ -387,54 +393,127 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
             overflow: 'hidden'
           }}>
             <div style={{ 
-              padding: '0.75rem',
+              padding: '0.6rem',
               borderBottom: '1px solid var(--border)',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              background: 'var(--bg)'
             }}>
-              {!sidebarCollapsed && <h3 style={{ margin: 0, fontSize: '1rem' }}>Tasks</h3>}
+              {!sidebarCollapsed && <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Tasks</h3>}
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="btn btn-ghost"
-                style={{ padding: '0.25rem 0.5rem' }}
+                style={{ padding: '0.3rem 0.5rem', fontSize: '1.1rem' }}
+                title={sidebarCollapsed ? 'Expand tasks' : 'Collapse tasks'}
               >
-                {sidebarCollapsed ? '→' : '←'}
+                {sidebarCollapsed ? '▶' : '◀'}
               </button>
             </div>
             
             {!sidebarCollapsed && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
                 {docTasks.length === 0 ? (
-                  <div style={{ color: 'var(--muted)', fontSize: '0.9rem', padding: '1rem' }}>No tasks</div>
+                  <div style={{ color: 'var(--muted)', fontSize: '0.85rem', padding: '1rem', textAlign: 'center' }}>
+                    No tasks assigned
+                  </div>
                 ) : (
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {docTasks.map(task => (
-                      <li key={task.task_id} style={{
-                        padding: '0.75rem',
-                        marginBottom: '0.5rem',
-                        background: 'var(--bg)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 6
-                      }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{task.task_title}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{task.task_description}</div>
-                        <div style={{ fontSize: '0.75rem', color: task.task_status === 'closed' ? 'var(--success)' : 'var(--warning)', marginTop: '0.5rem' }}>
-                          {task.task_status}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {docTasks.map(task => {
+                      const dueDate = task.due ? new Date(task.due) : null;
+                      const isOverdue = dueDate && dueDate < new Date() && task.task_status !== 'closed';
+                      const dueDateStr = dueDate ? dueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : null;
+                      
+                      return (
+                        <div key={task.task_id} style={{
+                          padding: '0.75rem',
+                          background: 'var(--bg)',
+                          border: `1px solid ${isOverdue ? 'var(--error)' : 'var(--border)'}`,
+                          borderRadius: 8,
+                          boxShadow: isOverdue ? '0 0 0 1px rgba(239, 68, 68, 0.2)' : 'none'
+                        }}>
+                          <div style={{ 
+                            fontWeight: 600, 
+                            fontSize: '0.9rem', 
+                            marginBottom: '0.4rem',
+                            color: task.task_status === 'closed' ? 'var(--success)' : 'var(--text)'
+                          }}>
+                            {task.task_title}
+                          </div>
+                          
+                          {task.task_description && (
+                            <div style={{ 
+                              fontSize: '0.8rem', 
+                              color: 'var(--muted)', 
+                              marginBottom: '0.5rem',
+                              lineHeight: 1.4,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical'
+                            }}>
+                              {task.task_description.length > 80 
+                                ? `${task.task_description.substring(0, 80)}...` 
+                                : task.task_description}
+                            </div>
+                          )}
+                          
+                          <div style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            gap: '0.3rem',
+                            fontSize: '0.75rem',
+                            color: 'var(--muted)'
+                          }}>
+                            {task.assigned_to_name && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <span>👤</span>
+                                <span style={{ fontWeight: 500, color: 'var(--text)' }}>{task.assigned_to_name}</span>
+                              </div>
+                            )}
+                            
+                            {dueDateStr && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <span>{isOverdue ? '⚠️' : '📅'}</span>
+                                <span style={{ 
+                                  fontWeight: 500,
+                                  color: isOverdue ? 'var(--error)' : 'var(--text)'
+                                }}>
+                                  Due: {dueDateStr}
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div style={{ 
+                              display: 'inline-block',
+                              marginTop: '0.3rem',
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: 4,
+                              background: task.task_status === 'closed' ? 'var(--success)' : 'var(--warning)',
+                              color: '#fff',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              alignSelf: 'flex-start'
+                            }}>
+                              {task.task_status}
+                            </div>
+                          </div>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Center - Editor area */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Editor toolbar */}
+          {/* CENTER - EDITOR AREA (MAIN FOCUS) */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+            {/* Minimal toolbar */}
             <div className="glass-panel" style={{
-              padding: '0.75rem 1rem',
+              padding: '0.5rem 1rem',
               borderBottom: '1px solid var(--border)',
               display: 'flex',
               gap: '0.5rem',
@@ -444,25 +523,37 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 className="btn btn-primary" 
                 onClick={handleSave}
                 disabled={isReadOnly || isSaving}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
               >
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
-              <button className="btn btn-ghost" onClick={showPackagesInfo}>
-                ℹ️ Packages Info
+                {isSaving ? '💾 Saving...' : '💾 Save'}
               </button>
               {isReadOnly && (
-                <span style={{ marginLeft: 'auto', color: 'var(--warning)', fontSize: '0.9rem' }}>
-                  🔒 Read-only mode
+                <span style={{ marginLeft: 'auto', color: 'var(--warning)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  🔒 <span>Read-only</span>
                 </span>
               )}
             </div>
 
-            {/* Split view editor */}
+            {/* Split view editor - 60/40 split favoring preview */}
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-              {/* Left: LaTeX code with Yjs collaboration */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)' }}>
-                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}>
-                  <strong>LaTeX Editor</strong>
+              {/* Left: LaTeX Editor (40%) */}
+              <div style={{ 
+                flex: '0 0 42%',
+                minWidth: 400,
+                display: 'flex', 
+                flexDirection: 'column', 
+                borderRight: '1px solid var(--border)',
+                background: 'var(--panel)'
+              }}>
+                <div style={{ 
+                  padding: '0.5rem 1rem', 
+                  background: 'var(--bg)', 
+                  borderBottom: '1px solid var(--border)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: 'var(--heading)'
+                }}>
+                  LaTeX Editor
                 </div>
                 {selectedDocId ? (
                   <YjsEditor 
@@ -476,57 +567,105 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    color: 'var(--text-muted)',
-                    fontSize: '0.95rem'
+                    color: 'var(--muted)',
+                    fontSize: '0.9rem'
                   }}>
                     Select a document to start editing
                   </div>
                 )}
               </div>
 
-              {/* Right: Preview placeholder */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}>
-                  <strong>Preview (Compile to view)</strong>
+              {/* Right: Preview (58%) */}
+              <div style={{ 
+                flex: 1,
+                minWidth: 450,
+                display: 'flex', 
+                flexDirection: 'column',
+                background: 'var(--bg)'
+              }}>
+                <div style={{ 
+                  padding: '0.5rem 1rem', 
+                  background: 'var(--panel)', 
+                  borderBottom: '1px solid var(--border)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: 'var(--heading)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <span>Preview</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 400 }}>
+                    (Compile to view)
+                  </span>
                 </div>
-                <div style={{ flex: 1, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
-                  Preview will be available after compilation
+                <div style={{ 
+                  flex: 1, 
+                  padding: '2rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  color: 'var(--muted)',
+                  fontSize: '0.95rem'
+                }}>
+                  📄 Preview will be available after compilation
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right sidebar - Cards */}
+          {/* Right sidebar - Compact info cards */}
           <div style={{
-            width: 320,
+            width: 260,
+            minWidth: 260,
             borderLeft: '1px solid var(--border)',
             background: 'var(--panel)',
             overflowY: 'auto',
-            padding: '1rem',
+            padding: '0.75rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1rem'
+            gap: '0.75rem'
           }}>
             {/* Abstract card */}
-            <div className="glass-panel" style={{ padding: '1rem' }}>
-              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Abstract</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+            <div className="glass-panel" style={{ padding: '0.75rem' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Abstract</h3>
+              <p style={{ 
+                fontSize: '0.8rem', 
+                color: 'var(--muted)', 
+                marginBottom: '0.6rem', 
+                lineHeight: 1.5,
+                maxHeight: 80,
+                overflow: 'auto'
+              }}>
                 {selectedDoc?.abstract || 'No abstract provided'}
               </p>
-              <button className="btn btn-action" onClick={() => setAbstractModalOpen(true)}>
+              <button className="btn btn-action" onClick={() => setAbstractModalOpen(true)} style={{ 
+                padding: '0.4rem 0.7rem', 
+                fontSize: '0.8rem',
+                width: '100%'
+              }}>
                 Edit Abstract
               </button>
             </div>
 
             {/* Submit for review card */}
-            <div className="glass-panel" style={{ padding: '1rem' }}>
-              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Submit for Review</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.75rem' }}>
-                Current status: <strong style={{ color: 'var(--accent)' }}>{selectedDoc?.status}</strong>
-              </p>
+            <div className="glass-panel" style={{ padding: '0.75rem' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Status</h3>
+              <div style={{ 
+                fontSize: '0.8rem', 
+                marginBottom: '0.6rem',
+                padding: '0.4rem 0.6rem',
+                background: 'var(--bg)',
+                borderRadius: 6,
+                border: '1px solid var(--border)'
+              }}>
+                <span style={{ color: 'var(--muted)' }}>Current: </span>
+                <strong style={{ color: 'var(--accent)' }}>{selectedDoc?.status}</strong>
+              </div>
               {selectedDoc?.status !== 'under_review' && selectedDoc?.status !== 'graded' && (
                 <button 
                   className="btn btn-primary"
+                  style={{ padding: '0.4rem 0.7rem', fontSize: '0.8rem', width: '100%' }}
                   onClick={() => {
                     setConfirmTitle('Submit for Review');
                     setConfirmQuestion('Once submitted, the document cannot be edited until reviewed by a mentor or admin. Continue?');
@@ -540,32 +679,41 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
             </div>
 
             {/* Upload files card */}
-            <div className="glass-panel" style={{ padding: '1rem' }}>
-              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Uploaded Files</h3>
+            <div className="glass-panel" style={{ padding: '0.75rem' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Files</h3>
               {docFiles.length === 0 ? (
-                <div style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>No files uploaded</div>
+                <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: '0.6rem', textAlign: 'center', padding: '0.5rem' }}>
+                  No files uploaded
+                </div>
               ) : (
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 0.75rem 0', fontSize: '0.85rem' }}>
+                <div style={{ marginBottom: '0.6rem', maxHeight: 200, overflowY: 'auto' }}>
                   {docFiles.map((file: any) => {
                     const canDelete = file.uploaded_by === user?.id || userRole === 'mentor' || session?.role === 'admin';
                     return (
-                      <li key={file.file_id} style={{ 
-                        marginBottom: '0.5rem', 
+                      <div key={file.file_id} style={{ 
+                        marginBottom: '0.4rem', 
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center',
-                        padding: '0.5rem',
+                        padding: '0.4rem 0.5rem',
                         background: 'var(--bg)',
                         borderRadius: 4,
-                        border: '1px solid var(--border)'
+                        border: '1px solid var(--border)',
+                        fontSize: '0.75rem'
                       }}>
-                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {file.file_name}
+                        <span style={{ 
+                          flex: 1, 
+                          overflow: 'hidden', 
+                          textOverflow: 'ellipsis', 
+                          whiteSpace: 'nowrap',
+                          marginRight: '0.5rem'
+                        }}>
+                          📎 {file.file_name}
                         </span>
                         {canDelete && (
                           <button 
                             className="btn btn-ghost" 
-                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.5rem' }}
+                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
                             onClick={() => {
                               setConfirmTitle('Delete File');
                               setConfirmQuestion(`Are you sure you want to delete "${file.file_name}"?`);
@@ -573,24 +721,26 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                               setConfirmOpen(true);
                             }}
                           >
-                            Delete
+                            🗑️
                           </button>
                         )}
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
               <label 
                 className="btn btn-action" 
                 style={{ 
-                  display: 'inline-block', 
+                  display: 'block', 
                   textAlign: 'center',
                   cursor: uploading ? 'not-allowed' : 'pointer',
-                  opacity: uploading ? 0.6 : 1
+                  opacity: uploading ? 0.6 : 1,
+                  padding: '0.4rem 0.7rem',
+                  fontSize: '0.8rem'
                 }}
               >
-                {uploading ? 'Uploading...' : 'Upload File'}
+                {uploading ? 'Uploading...' : '📤 Upload File'}
                 <input
                   type="file"
                   onChange={handleFileUpload}
@@ -605,8 +755,8 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ color: 'var(--heading)' }}>No document selected</h2>
-            <p>Please select a document from the dropdown above</p>
+            <h2 style={{ color: 'var(--heading)', fontSize: '1.5rem', marginBottom: '0.5rem' }}>No document selected</h2>
+            <p style={{ fontSize: '0.95rem' }}>Please select a document from the dropdown above</p>
           </div>
         </div>
       )}

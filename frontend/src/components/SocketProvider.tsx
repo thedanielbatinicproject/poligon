@@ -29,8 +29,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user) return
     const s = io(undefined as any, { // connect to same origin
       path: '/socket.io',
-      transports: ['websocket'],
-      withCredentials: true
+      // Try WebSocket first, fallback to HTTP long polling if blocked
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
     })
     setSocket(s)
 

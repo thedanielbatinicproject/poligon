@@ -19,6 +19,30 @@ import { Server as SocketIOServer } from 'socket.io';
 // Yjs WebSocket server
 import { setupYjsWebSocketServer } from './services/yjsWebSocket.service';
 
+// Error logging utility
+const logError = (error: any) => {
+  const timestamp = new Date().toISOString();
+  const logPath = path.resolve(__dirname, '../main.log');
+  const message = `[${timestamp}] ERROR: ${error?.stack || error?.message || String(error)}\n`;
+  try {
+    fs.appendFileSync(logPath, message);
+    console.error(message);
+  } catch (e) {
+    console.error('Failed to write to log file:', e);
+    console.error('Original error:', error);
+  }
+};
+
+// Global error handlers
+process.on('uncaughtException', (error) => {
+  logError(error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logError(reason);
+});
+
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -70,10 +94,10 @@ app.use(session(sessionOptions));
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(samlStrategy);
-passport.serializeUser((user, done) => {
+passport.serializeUser((user: any, done: any) => {
   done(null, user);
 });
-passport.deserializeUser((user, done) => {
+passport.deserializeUser((user: any, done: any) => {
   done(null, user as any);
 });
 
@@ -128,7 +152,12 @@ const io = new SocketIOServer(server, {
   cors: {
     origin: '*', // prilagodi po potrebi
     methods: ['GET', 'POST']
-  }
+  },
+  // SHARED HOSTING COMPATIBILITY: Try WebSocket first, fallback to polling
+  transports: ['websocket', 'polling'], // WebSocket first, then HTTP long polling
+  allowEIO3: true, // Support older Engine.IO clients
+  pingTimeout: 60000, // 60 seconds before considering connection dead
+  pingInterval: 25000 // Send ping every 25 seconds
 });
 
 // provide io instance to modules that need to emit events (avoid circular imports)
@@ -204,11 +233,18 @@ io.on('connection', (socket) => {
 });
 
 // Setup Yjs WebSocket server for real-time collaborative editing
-setupYjsWebSocketServer(server);
+try {
+  setupYjsWebSocketServer(server);
+} catch (err) {
+  logError(err);
+}
 
 // Pokreni server
 server.listen(port, () => {
   console.log(`Poligon backend running on port ${port}`);
+}).on('error', (err) => {
+  logError(err);
+  process.exit(1);
 });
 
 // Exportaj io ako trebaš koristiti u routerima

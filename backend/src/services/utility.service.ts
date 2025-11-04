@@ -116,11 +116,16 @@ export class UtilityService {
    * - updated_at: Timestamp when the task was last updated
    * Results are ordered by creation date, newest first.
    * @param document_id - The ID of the document to filter tasks by
-   * @returns Array of task objects linked to the specified document
+   * @returns Array of task objects linked to the specified document with assigned user name
   */
   static async getTasksByDocument(document_id: number): Promise<any[]> {
     const [rows] = await pool.query(
-      'SELECT * FROM tasks WHERE document_id = ? ORDER BY created_at DESC',
+      `SELECT t.*, 
+              CONCAT(u.first_name, ' ', u.last_name) as assigned_to_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assigned_to = u.user_id
+       WHERE t.document_id = ? 
+       ORDER BY t.created_at DESC`,
       [document_id]
     );
     return rows as any[];
@@ -133,9 +138,12 @@ export class UtilityService {
    */
   static async getTasksByDocumentFiltered(document_id: number, user_id: number): Promise<any[]> {
     const [rows] = await pool.query(
-      `SELECT * FROM tasks
-       WHERE document_id = ? AND (created_by = ? OR assigned_to = ?)
-       ORDER BY created_at DESC`,
+      `SELECT t.*, 
+              CONCAT(u.first_name, ' ', u.last_name) as assigned_to_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assigned_to = u.user_id
+       WHERE t.document_id = ? AND (t.created_by = ? OR t.assigned_to = ?)
+       ORDER BY t.created_at DESC`,
       [document_id, user_id, user_id]
     );
     return rows as any[];
