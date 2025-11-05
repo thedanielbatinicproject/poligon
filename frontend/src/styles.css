@@ -565,6 +565,7 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   flex-direction: column;
   gap: 0.5rem;
   text-align: center;
+  align-items: center;
 }
 
 .detail-item .auth-label {
@@ -577,6 +578,13 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .detail-item select.auth-input {
   width: 100%;
   text-align: left;
+}
+
+.detail-item textarea.auth-input {
+  min-height: 120px;
+  max-height: 300px;
+  resize: vertical;
+  width: 100% !important;
 }
 
 /* Document ID - highlighted box */
@@ -605,26 +613,35 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 /* Type row - select + info button */
 .type-row {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
+  gap: 0;
+  align-items: stretch;
   justify-content: center;
 }
 
 .type-select {
   flex: 0 1 auto;
   max-width: 300px;
+  min-width: 200px;
   text-align: left;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  height: 44px !important;
+  margin: 0 !important;
 }
 
 .type-info-btn {
   flex-shrink: 0;
-  min-width: 40px;
-  width: 40px;
-  height: 40px;
-  padding: 0.5rem !important;
+  min-width: 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  margin: 0 !important;
+  margin-left: -1px !important;
 }
 
 /* Info section - metadata display */
@@ -729,35 +746,7 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   margin-right: auto !important;
 }
 
-/* Type select: slightly wider than language but not too wide */
-.mentor-details-card select.type-select, .mentor-details-card .type-select {
-  width: 180px !important;
-  max-width: 220px !important;
-  min-width: 150px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* Type row: center the select + info button as a single compact unit inside Document details.
-   Replace the earlier half-width layout with a centered pair where the dropdown and info
-   button sit next to each other and remain responsive. */
-.mentor-details-card .type-row{
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: center; /* center the whole pair */
-  width: 100%;
-}
-.mentor-details-card .type-half{ width: auto; display:flex; align-items:center; flex: 0 0 auto }
-.mentor-details-card .type-select-wrap{ justify-content:flex-end; display:flex; align-items:center }
-.mentor-details-card .type-info-wrap{ justify-content:flex-start; display:flex; align-items:center }
-
-/* Dropdown sizing: responsive, sits adjacent to the info button */
-.mentor-details-card .type-select{
-  width: clamp(220px, 38%, 520px) !important;
-  max-width: 520px !important;
-  box-sizing: border-box !important;
-}
+/* Removed old conflicting type-select styles */
 
 /* Compact info button attached to the dropdown */
 .mentor-details-card .type-info-wrap .btn.btn-ghost{
@@ -1008,19 +997,19 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   text-align: center !important;
 }
 
-/* Force the Type dropdown to occupy approx. 50% of its parent block (mentor card)
-   This overrides broader .mentor-details-card input width rules which were forcing
-   selects to become very wide. Use !important and a specific selector to ensure
-   this takes precedence. */
-/* Ensure the select fills its designated half (the .type-select-wrap is 50% of the row)
-  and remains right-aligned inside that half. This avoids the select being centered
-  in the row when inline JS styles attempt to center the container. */
-.mentor-details-card .type-select-wrap { min-width: 0; display:flex; justify-content:flex-end }
-.mentor-details-card .type-select-wrap .type-select { width: 75% !important; max-width: none !important; box-sizing: border-box !important; position: relative !important; right: -7% !important; }
-/* Slight visual nudge for the info button half to keep it aligned without forcing
-  the select to fill the whole row. */
-.mentor-details-card .type-info-wrap .btn.btn-ghost{ width: auto !important; max-width: 140px !important }
+/* Removed old conflicting type-select positioning rules */
 
+/* Selected document title - prominent but not overwhelming */
+.selected-document-title {
+  flex: 1;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
 
 
 
@@ -1032,13 +1021,11 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   .mentor-grid{ grid-template-columns: 1fr; }
   .mentor-details-card .profile-card{ padding: 10px !important }
   .mentor-details-card .auth-input, .mentor-details-card input.auth-input, .mentor-details-card select.auth-input { width: 88% !important }
-  .mentor-details-card .type-select-wrap .type-select { width: 85% !important }
 }
 
 @media (max-width: 1000px) {
   .mentor-details-card .profile-card{ padding: 8px !important }
   .mentor-details-card .auth-input, .mentor-details-card input.auth-input, .mentor-details-card select.auth-input { width: 96% !important }
-  .mentor-details-card .type-select-wrap .type-select { width: 90% !important }
 }
 
 @media (min-width: 1600px) {

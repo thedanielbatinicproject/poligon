@@ -70,8 +70,13 @@ export class DocumentsService {
         if (typeExists) allowed.type_id = tid;
       }
     }
-    // title: only mentor
-    if ('title' in updates && role === MENTOR_ROLE) allowed.title = updates.title;
+    // title: only mentor (user role) or admin or document editor with mentor role
+    if ('title' in updates) {
+      const isMentorEditor = await this.isEditor(document_id, user_id, ['mentor']);
+      if ((role === MENTOR_ROLE || role === 'admin' || isMentorEditor) && typeof updates.title === 'string' && updates.title.trim().length > 0) {
+        allowed.title = updates.title;
+      }
+    }
     // abstract: mentor or student/editor
     if ('abstract' in updates) {
       const isEditor = await this.isEditor(document_id, user_id, ['editor', 'owner', MENTOR_ROLE]);

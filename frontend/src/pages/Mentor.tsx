@@ -542,12 +542,7 @@ export default function Mentor() {
             </button>
           ) : (
             <>
-              <div style={{ 
-                flex: 1,
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                color: 'var(--heading)'
-              }}>
+              <div className="selected-document-title">
                 {selectedDoc.title}
               </div>
               <button
