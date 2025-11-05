@@ -419,7 +419,7 @@ documentsRouter.get('/:document_id/audit-log', checkLogin, async (req: Request, 
   }
 });
 
-// PUT /api/documents/:document_id/status - Change document status (admin or mentor only)
+// PUT /api/documents/:document_id/status - Change document status
 documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res: Response) => {
   const document_id = Number(req.params.document_id);
   const user_id = req.session.user_id;
@@ -429,13 +429,28 @@ documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res
   if (!user_id || !role) {
     return res.status(401).json({ error: 'User not authenticated.' });
   }
-  // Only admin or mentor of this document can change status
-  const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
-  if (role !== 'admin' && !isMentor) {
-    return res.status(403).json({ error: `Only admin or mentor can change document status! Your user role is ${role}.` });
-  }
 
   try {
+    // Get current document to check status
+    const currentDoc = await DocumentsService.getDocumentById(document_id);
+    if (!currentDoc) {
+      return res.status(404).json({ error: 'Document not found.' });
+    }
+
+    // Special case: Students can submit for review (set to under_review) ONLY if current status is draft
+    if (role === 'student' && status === 'under_review') {
+      if (currentDoc.status !== 'draft') {
+        return res.status(403).json({ error: 'You can only submit documents for review when they are in draft status.' });
+      }
+      // Student is allowed to submit draft for review - proceed
+    } else {
+      // For all other status changes: Only admin or mentor of this document can change status
+      const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
+      if (role !== 'admin' && !isMentor) {
+        return res.status(403).json({ error: `Only admin or mentor can change document status! Your user role is ${role}.` });
+      }
+    }
+
     // Update status in documents table
     const updated = await DocumentsService.updateDocumentStatus(document_id, status);
     if (!updated) {

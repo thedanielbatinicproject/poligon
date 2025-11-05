@@ -70,15 +70,17 @@ const DocumentGrader: React.FC<DocumentGraderProps> = ({
 
   // Show status descriptions notification
   const showStatusInfo = () => {
-    const message = `
-**Document Status Descriptions:**
+    const message = `Document Status Descriptions:
 
-• **draft** - Document is still being edited
-• **under_review** - Mentor or other editor is reviewing the document
-• **graded** - Document has been given a grade
-• **submitted** - Document has been submitted to faculty
-• **finished** - Faculty has accepted this document
-    `.trim();
+• draft - Document is still being edited
+
+• under_review - Mentor or other editor is reviewing the document
+
+• graded - Document has been given a grade
+
+• submitted - Document has been submitted to faculty
+
+• finished - Faculty has accepted this document`;
     
     notify.push(message, 15);
   };

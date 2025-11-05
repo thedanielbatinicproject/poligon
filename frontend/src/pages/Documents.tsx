@@ -662,19 +662,61 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 <span style={{ color: 'var(--muted)' }}>Current: </span>
                 <strong style={{ color: 'var(--accent)' }}>{selectedDoc?.status}</strong>
               </div>
-              {selectedDoc?.status !== 'under_review' && selectedDoc?.status !== 'graded' && (
+
+              {/* If draft status, show submit for review button with confirmation */}
+              {selectedDoc?.status === 'draft' && (
                 <button 
                   className="btn btn-primary"
                   style={{ padding: '0.4rem 0.7rem', fontSize: '0.8rem', width: '100%' }}
                   onClick={() => {
                     setConfirmTitle('Submit for Review');
-                    setConfirmQuestion('Once submitted, the document cannot be edited until reviewed by a mentor or admin. Continue?');
+                    setConfirmQuestion('Once submitted, the document cannot be edited until a mentor reviews and returns it or grades it. Continue?');
                     setConfirmAction(() => handleSubmitForReview);
                     setConfirmOpen(true);
                   }}
                 >
                   Submit for Review
                 </button>
+              )}
+
+              {/* If finished, submitted, or graded status, show grade */}
+              {(selectedDoc?.status === 'finished' || selectedDoc?.status === 'submitted' || selectedDoc?.status === 'graded') && (
+                <div style={{ marginTop: '0.6rem' }}>
+                  {selectedDoc.grade !== null && selectedDoc.grade !== undefined ? (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem',
+                      borderRadius: 8,
+                      background: 'var(--bg)',
+                      border: '2px solid var(--border)'
+                    }}>
+                      <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>GRADE:</span>
+                      <span style={{
+                        fontWeight: 'bold',
+                        fontSize: selectedDoc.grade >= 90 ? '2rem' : selectedDoc.grade >= 75 ? '1.5rem' : selectedDoc.grade >= 50 ? '1.2rem' : '1.4rem',
+                        color: selectedDoc.grade >= 90 ? '#00ff00' : selectedDoc.grade >= 75 ? '#28a745' : selectedDoc.grade >= 50 ? '#ff8c00' : '#dc3545'
+                      }}>
+                        {selectedDoc.grade}
+                        {selectedDoc.grade >= 90 && ' 😎'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '0.75rem',
+                      borderRadius: 8,
+                      background: 'var(--bg)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--muted)',
+                      fontSize: '0.85rem',
+                      textAlign: 'center'
+                    }}>
+                      Grade not found!
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

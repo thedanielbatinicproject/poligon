@@ -108,6 +108,18 @@ export default function Mentor() {
     setPreGradeConfirmOpen(true);
   };
 
+  // Reload workflow history for selected document
+  const reloadWorkflowHistory = async () => {
+    if (!selectedDocId) return;
+    try {
+      const wf = await fetch(`/api/documents/${selectedDocId}/workflow`, { credentials: 'include' })
+        .then(r => r.ok ? r.json() : []);
+      setWorkflowHistory(Array.isArray(wf) ? wf : []);
+    } catch (err) {
+      setWorkflowHistory([]);
+    }
+  };
+
   // Get the user who sent document to review from workflow history
   const getUnderReviewUser = () => {
     if (!workflowHistory || workflowHistory.length === 0) return null;
@@ -116,7 +128,7 @@ export default function Mentor() {
     const underReviewEvent = workflowHistory
       .slice()
       .reverse()
-      .find((event: any) => event.new_status === 'under_review');
+      .find((event: any) => event.status === 'under_review' || event.new_status === 'under_review');
     
     if (!underReviewEvent) return null;
     
@@ -187,7 +199,8 @@ export default function Mentor() {
   useEffect(() => {
     if (!selectedDocId) return;
     const existing = documents.find((x) => Number(x.document_id) === Number(selectedDocId)) || null;
-    if (existing && (!selectedDoc || Number(selectedDoc.document_id) !== Number(existing.document_id))) {
+    if (existing) {
+      // Always update to get fresh status/grade changes
       setSelectedDoc(existing);
     }
   }, [documents, selectedDocId]);
@@ -249,7 +262,7 @@ export default function Mentor() {
         }
       })
       .catch(() => setWorkflowHistory([]));
-  // we depend on selectedDocId and usersMap may change but that's okay
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDocId]);
 
   // Ensure we have uploader display names for files
@@ -536,7 +549,11 @@ export default function Mentor() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="accent-btn" onClick={openCreate}>Create document</button>
-          <button className="btn-action" onClick={async () => { const list = await DocumentsApi.getAllDocuments(); setDocuments(Array.isArray(list) ? list : []); }}>Refresh</button>
+          <button className="btn-action" onClick={async () => { 
+            const list = await DocumentsApi.getAllDocuments(); 
+            setDocuments(Array.isArray(list) ? list : []); 
+            await reloadWorkflowHistory();
+          }}>Refresh</button>
         </div>
       </div>
 
@@ -1071,6 +1088,85 @@ export default function Mentor() {
               >
                 GRADE THIS DOCUMENT
               </button>
+
+              {/* Show SUBMITTED button if status is graded */}
+              {selectedDoc.status === 'graded' && (
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    className="btn"
+                    onClick={async () => {
+                      try {
+                        await fetch(`/api/documents/${selectedDoc.document_id}/status`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({ status: 'submitted' })
+                        });
+                        notify.push('Document status changed to submitted', 5);
+                        // Reload workflow history to update banner
+                        await reloadWorkflowHistory();
+                        // Reload documents to update sidebar and selectedDoc
+                        DocumentsApi.getAllDocuments()
+                          .then((list: any[]) => setDocuments(Array.isArray(list) ? list : []))
+                          .catch((err: any) => notify.push(String(err), undefined, true));
+                      } catch (err: any) {
+                        notify.push(String(err), undefined, true);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      background: 'linear-gradient(135deg, #ff8c00, #ffa500)',
+                      color: 'white',
+                      fontWeight: 600
+                    }}
+                  >
+                    CHANGE DOCUMENT STATUS TO SUBMITTED
+                  </button>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: 6, lineHeight: 1.4 }}>
+                    Submitted status means the document has been submitted to faculty for final review.
+                  </p>
+                </div>
+              )}
+
+              {/* Show FINISH button if status is submitted */}
+              {selectedDoc.status === 'submitted' && (
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    className="btn"
+                    onClick={async () => {
+                      try {
+                        await fetch(`/api/documents/${selectedDoc.document_id}/status`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({ status: 'finished' })
+                        });
+                        notify.push('Document status changed to finished', 5);
+                        // Reload workflow history to update banner
+                        await reloadWorkflowHistory();
+                        // Reload documents to update sidebar and selectedDoc
+                        DocumentsApi.getAllDocuments()
+                          .then((list: any[]) => setDocuments(Array.isArray(list) ? list : []))
+                          .catch((err: any) => notify.push(String(err), undefined, true));
+                      } catch (err: any) {
+                        notify.push(String(err), undefined, true);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      background: 'linear-gradient(135deg, #28a745, #34d058)',
+                      color: 'white',
+                      fontWeight: 600
+                    }}
+                  >
+                    FINISH DOCUMENT
+                  </button>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: 6, lineHeight: 1.4 }}>
+                    Finished status means faculty has accepted and finalized this document.
+                  </p>
+                </div>
+              )}
+
               <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes pulse {
                   0%, 100% { box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.6); }
@@ -1130,12 +1226,14 @@ export default function Mentor() {
           documentId={selectedDoc.document_id}
           currentGrade={selectedDoc.grade}
           currentStatus={selectedDoc.status}
-          onGradeSuccess={() => {
+          onGradeSuccess={async () => {
             setDocumentGraderOpen(false);
-            // Reload documents list
+            // Reload workflow history to update banner
+            await reloadWorkflowHistory();
+            // Reload documents list which will trigger selectedDoc update via useEffect
             DocumentsApi.getAllDocuments()
               .then((list: any[]) => setDocuments(Array.isArray(list) ? list : []))
-              .catch((err) => notify.push(String(err), undefined, true));
+              .catch((err: any) => notify.push(String(err), undefined, true));
           }}
         />
       )}
