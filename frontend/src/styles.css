@@ -556,12 +556,27 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 .details-grid {
   display: grid;
   gap: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .detail-item {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  text-align: center;
+}
+
+.detail-item .auth-label {
+  text-align: center;
+}
+
+.detail-item .auth-input,
+.detail-item input.auth-input,
+.detail-item textarea.auth-input,
+.detail-item select.auth-input {
+  width: 100%;
+  text-align: left;
 }
 
 /* Document ID - highlighted box */
@@ -577,12 +592,14 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 600;
+  text-align: center;
 }
 
 .detail-value {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--accent);
+  text-align: center;
 }
 
 /* Type row - select + info button */
@@ -590,16 +607,24 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  justify-content: center;
 }
 
 .type-select {
-  flex: 1;
+  flex: 0 1 auto;
+  max-width: 300px;
+  text-align: left;
 }
 
 .type-info-btn {
   flex-shrink: 0;
   min-width: 40px;
-  padding: 0.5rem 0.75rem !important;
+  width: 40px;
+  height: 40px;
+  padding: 0.5rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Info section - metadata display */
@@ -611,24 +636,28 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   border-radius: 8px;
   border: 1px solid var(--border);
   margin-top: 0.5rem;
+  text-align: center;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  text-align: center;
 }
 
 .info-label {
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 600;
+  text-align: center;
 }
 
 .info-value {
   font-size: 0.875rem;
   color: var(--text);
   word-break: break-all;
+  text-align: center;
 }
 
 .info-row {
@@ -637,15 +666,33 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   gap: 0.75rem;
 }
 
-/* Action buttons */
+/* Action buttons - centered render with delete square on right */
 .mentor-action-row {
   display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   gap: 0.75rem !important;
   margin-top: 1rem !important;
+  position: relative !important;
 }
 
-.mentor-action-row .btn {
-  flex: 1;
+.mentor-action-row .btn-render {
+  flex: 0 0 auto;
+  min-width: 200px;
+}
+
+.btn-delete-square {
+  position: absolute !important;
+  right: 0 !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.25rem !important;
+  border-radius: 8px !important;
 }
 
 /* Render button highlight for mentor panel */

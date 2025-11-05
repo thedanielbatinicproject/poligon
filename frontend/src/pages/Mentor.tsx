@@ -829,7 +829,7 @@ export default function Mentor() {
                 
                 <div className="mentor-action-row">
                   <button className="btn btn-action btn-render" onClick={() => { DocumentsApi.renderDocument(Number(selectedDocId)).then(() => notify.push('Render started', 3)).catch((e) => notify.push(String(e), undefined, true)); }}>Render</button>
-                  <button className="btn btn-danger" onClick={() => { setConfirmTitle('Confirm DELETE action'); setConfirmQuestion('Are you sure you want to delete this document?'); setConfirmAction(() => handleDelete); setConfirmOpen(true); }}>Delete</button>
+                  <button className="btn btn-danger btn-delete-square" onClick={() => { setConfirmTitle('Confirm DELETE action'); setConfirmQuestion('Are you sure you want to delete this document?'); setConfirmAction(() => handleDelete); setConfirmOpen(true); }} title="Delete document">🗑</button>
                 </div>
               </div>
             </div>
