@@ -108,25 +108,35 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
 });
 
 // GET /api/documents/all - Get all documents for current user (owner/editor/mentor/viewer or created_by)
+// Admin gets ALL documents from database
 documentsRouter.get('/all', checkLogin, async (req: Request, res: Response) => {
   const user_id = req.session.user_id;
+  const role = req.session.role;
   if (!user_id) {
     return res.status(401).json({ error: 'User not logged in!' });
   }
   try {
-    // Single query to get all documents where user is:
-    // 1. In document_editors table (any role: owner, editor, mentor, viewer)
-    // 2. OR is the creator (created_by)
-    const [rows] = await pool.query(
-      `SELECT DISTINCT d.* 
-       FROM documents d
-       LEFT JOIN document_editors de ON d.document_id = de.document_id
-       WHERE de.user_id = ? OR d.created_by = ?
-       ORDER BY d.updated_at DESC`,
-      [user_id, user_id]
-    );
+    let documents: any[];
     
-    const documents = rows as any[];
+    // Admin gets ALL documents
+    if (role === 'admin') {
+      const [rows] = await pool.query(
+        `SELECT * FROM documents ORDER BY updated_at DESC`
+      );
+      documents = rows as any[];
+    } else {
+      // Regular users get only documents where they are editor or creator
+      const [rows] = await pool.query(
+        `SELECT DISTINCT d.* 
+         FROM documents d
+         LEFT JOIN document_editors de ON d.document_id = de.document_id
+         WHERE de.user_id = ? OR d.created_by = ?
+         ORDER BY d.updated_at DESC`,
+        [user_id, user_id]
+      );
+      documents = rows as any[];
+    }
+    
     res.json(documents);
   } catch (err) {
     console.error('[/api/documents/all] Error:', err);

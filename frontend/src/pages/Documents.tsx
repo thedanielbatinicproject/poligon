@@ -361,13 +361,21 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
         ) : (
           <>
             <div style={{ 
-              fontSize: '1.1rem',
+              fontSize: (() => {
+                const wordCount = (selectedDoc.title || '').trim().split(/\s+/).length;
+                if (wordCount <= 5) return '1.1rem';
+                if (wordCount <= 10) return '1rem';
+                if (wordCount <= 15) return '0.95rem';
+                if (wordCount <= 20) return '0.9rem';
+                if (wordCount <= 30) return '0.85rem';
+                return '0.8rem'; // max compression for very long titles
+              })(),
               fontWeight: 700,
               color: 'var(--heading)',
-              maxWidth: 400,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
+              flex: 1,
+              lineHeight: 1.3,
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word'
             }}>
               {selectedDoc.title}
             </div>
