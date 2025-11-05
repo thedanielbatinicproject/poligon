@@ -4,6 +4,7 @@ import { useNotifications } from '../lib/notifications';
 import DocumentsApi from '../lib/documentsApi';
 import * as TasksApi from '../lib/tasksApi';
 import ConfirmationBox from '../components/ConfirmationBox';
+import DocumentFinder from '../components/DocumentFinder';
 import YjsEditor from '../components/YjsEditor';
 import { useSocket } from '../components/SocketProvider';
 
@@ -40,6 +41,7 @@ export default function Documents() {
   const [confirmAction, setConfirmAction] = useState<(() => Promise<any>) | null>(null);
   const [confirmTitle, setConfirmTitle] = useState('Confirm action');
   const [confirmQuestion, setConfirmQuestion] = useState('Are you sure?');
+  const [documentFinderOpen, setDocumentFinderOpen] = useState(false);
 
   // Connected users (for real-time collaboration)
   const [connectedUsers, setConnectedUsers] = useState<number>(0);
@@ -343,31 +345,33 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
         flexWrap: 'wrap'
       }}>
         <label style={{ fontWeight: 600, color: 'var(--heading)', fontSize: '0.9rem' }}>DOCUMENT:</label>
-        <select
-          value={selectedDocId || ''}
-          onChange={(e) => handleDocumentSelect(Number(e.target.value))}
+        <button
+          className="btn btn-primary"
+          onClick={() => setDocumentFinderOpen(true)}
           style={{
             flex: '1 1 auto',
             minWidth: 250,
             maxWidth: 450,
-            padding: '0.4rem 0.6rem',
-            borderRadius: 6,
-            border: '1px solid var(--border)',
-            background: 'var(--panel)',
-            color: 'var(--text)',
-            fontSize: '0.9rem'
+            padding: '0.5rem 1rem',
+            fontSize: '0.9rem',
+            fontWeight: 600
           }}
         >
-          <option value="">-- Select a document --</option>
-          {documents.map(doc => (
-            <option key={doc.document_id} value={doc.document_id}>
-              {doc.title} ({doc.status})
-            </option>
-          ))}
-        </select>
+          {selectedDoc ? selectedDoc.title : 'SELECT DOCUMENT'}
+        </button>
         
         {selectedDoc && (
           <>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setDocumentFinderOpen(true)}
+              style={{
+                padding: '0.4rem 0.8rem',
+                fontSize: '0.8rem'
+              }}
+            >
+              CHANGE
+            </button>
             <span style={{ color: 'var(--muted)', fontSize: '0.85rem', marginLeft: 'auto' }}>
               👥 <strong style={{ color: 'var(--accent)' }}>{connectedUsers}</strong> online
             </span>
@@ -880,6 +884,13 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
           setConfirmOpen(false);
           setConfirmAction(null);
         }}
+      />
+
+      {/* Document Finder */}
+      <DocumentFinder
+        open={documentFinderOpen}
+        onClose={() => setDocumentFinderOpen(false)}
+        onSelect={(documentId) => handleDocumentSelect(documentId)}
       />
     </div>
   );

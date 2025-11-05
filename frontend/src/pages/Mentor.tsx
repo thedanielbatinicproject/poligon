@@ -4,6 +4,7 @@ import { useNotifications } from '../lib/notifications';
 import DocumentsApi from '../lib/documentsApi';
 import * as TasksApi from '../lib/tasksApi';
 import UserFinder from '../components/UserFinder';
+import DocumentFinder from '../components/DocumentFinder';
 import ConfirmationBox from '../components/ConfirmationBox';
 import { useSocket } from '../components/SocketProvider';
 import WorkflowHistoryModal from '../components/WorkflowHistoryModal';
@@ -48,6 +49,7 @@ export default function Mentor() {
   const [documentGraderOpen, setDocumentGraderOpen] = useState(false);
   const [preGradeConfirmOpen, setPreGradeConfirmOpen] = useState(false);
   const [preGradeConfirmMessage, setPreGradeConfirmMessage] = useState('');
+  const [documentFinderOpen, setDocumentFinderOpen] = useState(false);
 
   // helper: format timestamp to DD.MM.YYYY.@HH:MM(:SS)
   // includeSeconds: when false, omit the trailing :SS
@@ -526,26 +528,32 @@ export default function Mentor() {
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
         <div style={{ flex: 1 }}>
-          <label style={{ color: 'var(--muted)' }}>Select document:</label>
-          <select
-            className="auth-input doc-select"
-            value={selectedDocId ?? ''}
-            onChange={async (e) => {
-              const v = e.target.value ? Number(e.target.value) : null;
-              setSelectedDocId(v);
-              // Persist selection to session (so it survives refresh)
-              try {
-                if (sessionCtx && typeof sessionCtx.patchSession === 'function') await sessionCtx.patchSession({ last_document_id: v });
-              } catch (err) {
-                // ignore patch errors silently
-              }
+          <button
+            className="btn btn-primary"
+            onClick={() => setDocumentFinderOpen(true)}
+            style={{ 
+              width: '100%',
+              padding: '0.75rem 1rem',
+              fontSize: '1rem',
+              fontWeight: 600
             }}
           >
-            <option value="">(All / Global)</option>
-            {documents.map(d => (
-              <option key={d.document_id} value={d.document_id}>{d.title}</option>
-            ))}
-          </select>
+            {selectedDoc ? selectedDoc.title : 'SELECT DOCUMENT'}
+          </button>
+          {selectedDoc && (
+            <button
+              className="btn btn-ghost"
+              onClick={() => setDocumentFinderOpen(true)}
+              style={{
+                width: '100%',
+                marginTop: '0.5rem',
+                padding: '0.5rem',
+                fontSize: '0.85rem'
+              }}
+            >
+              CHANGE DOCUMENT
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="accent-btn" onClick={openCreate}>Create document</button>
@@ -1260,6 +1268,22 @@ export default function Mentor() {
         onClose={() => setAuditLogOpen(false)}
         documentId={selectedDocId}
         usersMap={usersMap}
+      />
+
+      <DocumentFinder
+        open={documentFinderOpen}
+        onClose={() => setDocumentFinderOpen(false)}
+        onSelect={async (documentId) => {
+          setSelectedDocId(documentId);
+          // Persist selection to session
+          try {
+            if (sessionCtx && typeof sessionCtx.patchSession === 'function') {
+              await sessionCtx.patchSession({ last_document_id: documentId });
+            }
+          } catch (err) {
+            // ignore patch errors silently
+          }
+        }}
       />
     </div>
   );
