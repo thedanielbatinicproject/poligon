@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import * as DocumentsApi from '../lib/documentsApi';
+import { useNotifications } from '../lib/notifications';
 
 interface Document {
   document_id: number;
@@ -45,6 +46,8 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
   const [editorsMap, setEditorsMap] = useState<Record<number, string[]>>({});
   const [usersMap, setUsersMap] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
+  const [showAllEditorsFor, setShowAllEditorsFor] = useState<Record<number, boolean>>({});
+  const { push } = useNotifications();
 
   // Load documents and document types on open
   useEffect(() => {
@@ -52,57 +55,51 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
     
     setLoading(true);
     
-    // Fetch all documents
-    DocumentsApi.getAllDocuments()
-      .then((docs: any[]) => {
+    // First, fetch all users to populate usersMap
+    fetch('/api/users/reduced', { credentials: 'include' })
+      .then(r => {
+        if (!r.ok) throw new Error(`Failed to fetch users: ${r.status}`);
+        return r.json();
+      })
+      .then((users: User[]) => {
+        const newUsersMap: Record<number, string> = {};
+        users.forEach((u: User) => {
+          const name = u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || `User ${u.user_id}`;
+          newUsersMap[u.user_id] = name;
+        });
+        setUsersMap(newUsersMap);
+        
+        // Now fetch all documents
+        return DocumentsApi.getAllDocuments().then(docs => ({ docs, usersMap: newUsersMap }));
+      })
+      .then(({ docs, usersMap: currentUsersMap }) => {
         const list = Array.isArray(docs) ? docs : [];
         setDocuments(list);
         setFilteredDocuments(list);
         
         // Fetch editors for each document
-        list.forEach((doc: Document) => {
+        const editorsPromises = list.map((doc: Document) =>
           DocumentsApi.getEditors(doc.document_id)
             .then((editors: any[]) => {
-              const editorNames: string[] = [];
-              const missingUserIds: number[] = [];
-              
-              editors.forEach((editor: Editor) => {
-                if (usersMap[editor.user_id]) {
-                  editorNames.push(usersMap[editor.user_id]);
-                } else {
-                  missingUserIds.push(editor.user_id);
-                }
-              });
-              
-              setEditorsMap(prev => ({ ...prev, [doc.document_id]: editorNames }));
-              
-              // Fetch missing user names
-              if (missingUserIds.length > 0) {
-                fetch('/api/utility/reduced-users', { credentials: 'include' })
-                  .then(r => r.json())
-                  .then((users: User[]) => {
-                    const newUsersMap: Record<number, string> = {};
-                    users.forEach((u: User) => {
-                      const name = u.display_name || `${u.first_name} ${u.last_name}`;
-                      newUsersMap[u.user_id] = name;
-                    });
-                    setUsersMap(prev => ({ ...prev, ...newUsersMap }));
-                    
-                    // Update editor names
-                    const updatedEditorNames = editors.map((e: Editor) => 
-                      newUsersMap[e.user_id] || usersMap[e.user_id] || `User ${e.user_id}`
-                    );
-                    setEditorsMap(prev => ({ ...prev, [doc.document_id]: updatedEditorNames }));
-                  })
-                  .catch(() => {});
-              }
+              const editorNames = editors.map((e: Editor) => 
+                currentUsersMap[e.user_id] || `User ${e.user_id}`
+              );
+              return { docId: doc.document_id, editors: editorNames };
             })
-            .catch(() => {
-              setEditorsMap(prev => ({ ...prev, [doc.document_id]: [] }));
-            });
+            .catch(() => ({ docId: doc.document_id, editors: [] }))
+        );
+        
+        Promise.all(editorsPromises).then(results => {
+          const newEditorsMap: Record<number, string[]> = {};
+          results.forEach(({ docId, editors }) => {
+            newEditorsMap[docId] = editors;
+          });
+          setEditorsMap(newEditorsMap);
         });
       })
-      .catch(() => {
+      .catch((err) => {
+        push('Failed to load documents. Please try again.', 5, true);
+        console.error('DocumentFinder error:', err);
         setDocuments([]);
         setFilteredDocuments([]);
       })
@@ -110,7 +107,10 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
     
     // Fetch document types
     fetch('/api/utility/document-types', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`Failed to fetch document types: ${r.status}`);
+        return r.json();
+      })
       .then((types: DocumentType[]) => {
         const typesMap: Record<number, string> = {};
         types.forEach((t: DocumentType) => {
@@ -118,9 +118,12 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
         });
         setDocumentTypes(typesMap);
       })
-      .catch(() => {});
+      .catch((err) => {
+        push('Failed to load document types.', 3, true);
+        console.error('DocumentFinder types error:', err);
+      });
       
-  }, [open]);
+  }, [open, push]);
 
   // Filter documents based on search query
   useEffect(() => {
@@ -172,7 +175,7 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft': return 'var(--muted)';
-      case 'submitted': return '#ff8c00';
+      case 'submitted': return 'var(--warning)';
       case 'under_review': return 'var(--warning)';
       case 'graded': return 'var(--accent)';
       case 'finished': return 'var(--success)';
@@ -181,10 +184,10 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
   };
 
   const getGradeColor = (grade: number) => {
-    if (grade >= 90) return '#00ff00';
-    if (grade >= 75) return '#28a745';
-    if (grade >= 50) return '#ff8c00';
-    return '#dc3545';
+    if (grade >= 90) return 'var(--success)';
+    if (grade >= 75) return 'var(--success)';
+    if (grade >= 50) return 'var(--warning)';
+    return 'var(--danger)';
   };
 
   const modal = (
@@ -263,7 +266,8 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
               borderRadius: 8,
               background: 'var(--bg)',
               color: 'var(--text)',
-              fontSize: '1rem'
+              fontSize: '1rem',
+              boxSizing: 'border-box'
             }}
           />
         </div>
@@ -379,10 +383,10 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
                       fontSize: '0.8rem',
                       padding: '0.3rem 0.6rem',
                       borderRadius: 6,
-                      background: getStatusColor(doc.status) + '20',
-                      color: getStatusColor(doc.status),
+                      background: getStatusColor(doc.status),
+                      color: 'white',
                       fontWeight: 600,
-                      border: `1px solid ${getStatusColor(doc.status)}40`
+                      border: `1px solid ${getStatusColor(doc.status)}`
                     }}>
                       {doc.status.toUpperCase()}
                     </span>
@@ -390,11 +394,35 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
                       <span style={{
                         fontSize: '0.9rem',
                         fontWeight: 700,
-                        color: getGradeColor(doc.grade)
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: 6,
+                        background: getGradeColor(doc.grade),
+                        color: 'white'
                       }}>
-                        Grade: {doc.grade}
+                        {doc.grade}
                       </span>
                     )}
+                  </div>
+
+                  {/* Created by */}
+                  <div style={{ 
+                    marginTop: '0.5rem',
+                    paddingTop: '0.75rem',
+                    borderTop: '1px solid var(--border)'
+                  }}>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: 'var(--muted)', 
+                      marginBottom: '0.25rem'
+                    }}>
+                      Created by: <strong style={{ color: 'var(--text)' }}>{usersMap[doc.created_by] || `User ${doc.created_by}`}</strong>
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: 'var(--muted)'
+                    }}>
+                      {formatDate(doc.created_at)}
+                    </div>
                   </div>
 
                   {/* Editors */}
@@ -410,27 +438,44 @@ const DocumentFinder: React.FC<DocumentFinderProps> = ({ open, onClose, onSelect
                         marginBottom: '0.25rem',
                         fontWeight: 600
                       }}>
-                        Editors:
+                        Editors ({editorsMap[doc.document_id].length}):
                       </div>
                       <div style={{ 
                         fontSize: '0.8rem', 
                         color: 'var(--text)',
                         lineHeight: 1.4
                       }}>
-                        {editorsMap[doc.document_id].join(', ')}
+                        {showAllEditorsFor[doc.document_id] || editorsMap[doc.document_id].length <= 3
+                          ? editorsMap[doc.document_id].join(', ')
+                          : editorsMap[doc.document_id].slice(0, 3).join(', ') + '...'
+                        }
                       </div>
+                      {editorsMap[doc.document_id].length > 3 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowAllEditorsFor(prev => ({
+                              ...prev,
+                              [doc.document_id]: !prev[doc.document_id]
+                            }));
+                          }}
+                          style={{
+                            marginTop: '0.5rem',
+                            padding: '0.25rem 0.5rem',
+                            fontSize: '0.7rem',
+                            background: 'var(--accent)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 4,
+                            cursor: 'pointer',
+                            fontWeight: 600
+                          }}
+                        >
+                          {showAllEditorsFor[doc.document_id] ? 'SHOW LESS' : 'SHOW ALL'}
+                        </button>
+                      )}
                     </div>
                   )}
-
-                  {/* Created date */}
-                  <div style={{ 
-                    fontSize: '0.75rem', 
-                    color: 'var(--muted)',
-                    marginTop: 'auto',
-                    paddingTop: '0.5rem'
-                  }}>
-                    Created: {formatDate(doc.created_at)}
-                  </div>
                 </div>
               ))}
             </div>

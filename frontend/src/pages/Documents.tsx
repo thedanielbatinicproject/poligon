@@ -345,23 +345,32 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
         flexWrap: 'wrap'
       }}>
         <label style={{ fontWeight: 600, color: 'var(--heading)', fontSize: '0.9rem' }}>DOCUMENT:</label>
-        <button
-          className="btn btn-primary"
-          onClick={() => setDocumentFinderOpen(true)}
-          style={{
-            flex: '1 1 auto',
-            minWidth: 250,
-            maxWidth: 450,
-            padding: '0.5rem 1rem',
-            fontSize: '0.9rem',
-            fontWeight: 600
-          }}
-        >
-          {selectedDoc ? selectedDoc.title : 'SELECT DOCUMENT'}
-        </button>
         
-        {selectedDoc && (
+        {!selectedDoc ? (
+          <button
+            className="btn btn-primary"
+            onClick={() => setDocumentFinderOpen(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              fontSize: '0.9rem',
+              fontWeight: 600
+            }}
+          >
+            SELECT DOCUMENT
+          </button>
+        ) : (
           <>
+            <div style={{ 
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              color: 'var(--heading)',
+              maxWidth: 400,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {selectedDoc.title}
+            </div>
             <button
               className="btn btn-ghost"
               onClick={() => setDocumentFinderOpen(true)}

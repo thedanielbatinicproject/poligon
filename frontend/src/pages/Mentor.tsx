@@ -497,9 +497,9 @@ export default function Mentor() {
         // fallback: refresh list
         const list = await DocumentsApi.getAllDocuments();
         setDocuments(Array.isArray(list) ? list : []);
-        notify.push('Saved', 2);
+        notify.push('Document details saved.', 2);
       }
-      notify.push('Saved', 2);
+      notify.push('Document updated.', 2);
       return true;
       } catch (err: any) {
       // Debug: log error details to browser console
@@ -527,32 +527,40 @@ export default function Mentor() {
       <h2>Mentor Panel</h2>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-        <div style={{ flex: 1 }}>
-          <button
-            className="btn btn-primary"
-            onClick={() => setDocumentFinderOpen(true)}
-            style={{ 
-              width: '100%',
-              padding: '0.75rem 1rem',
-              fontSize: '1rem',
-              fontWeight: 600
-            }}
-          >
-            {selectedDoc ? selectedDoc.title : 'SELECT DOCUMENT'}
-          </button>
-          {selectedDoc && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {!selectedDoc ? (
             <button
-              className="btn btn-ghost"
+              className="btn btn-primary"
               onClick={() => setDocumentFinderOpen(true)}
-              style={{
-                width: '100%',
-                marginTop: '0.5rem',
-                padding: '0.5rem',
-                fontSize: '0.85rem'
+              style={{ 
+                padding: '0.6rem 1.25rem',
+                fontSize: '0.95rem',
+                fontWeight: 600
               }}
             >
-              CHANGE DOCUMENT
+              SELECT DOCUMENT
             </button>
+          ) : (
+            <>
+              <div style={{ 
+                flex: 1,
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--heading)'
+              }}>
+                {selectedDoc.title}
+              </div>
+              <button
+                className="btn btn-ghost"
+                onClick={() => setDocumentFinderOpen(true)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.85rem'
+                }}
+              >
+                CHANGE DOCUMENT
+              </button>
+            </>
           )}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -738,31 +746,28 @@ export default function Mentor() {
 
         <div className="mentor-grid">
           <div>
-            <div className="glass-panel profile-card mentor-details-card" style={{ padding: 12, margin: '0 auto' }}>
-              <h3 style={{ marginTop: 0 }}>Document details</h3>
-              <div style={{ display: 'grid', gap: 12, justifyItems: 'stretch', textAlign: 'center' }}>
-                <div>
-                  <div style={{ color: 'var(--muted)' }}>Document ID</div>
-                  <div><strong>{selectedDoc.document_id}</strong></div>
+            <div className="glass-panel profile-card mentor-details-card">
+              <h3>Document details</h3>
+              <div className="details-grid">
+                <div className="detail-item detail-id">
+                  <div className="detail-label">Document ID</div>
+                  <div className="detail-value">{selectedDoc.document_id}</div>
                 </div>
-                <div>
+                <div className="detail-item">
                   <label className="auth-label">Title</label>
                   <input className="auth-input" defaultValue={selectedDoc.title || ''} onBlur={e => saveField('title', e.target.value)} />
                 </div>
-                <div>
+                <div className="detail-item">
                   <label className="auth-label">Type</label>
-                  <div className="type-row" style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
-                    <div className="type-half type-select-wrap">
-                      <select className="auth-input type-select" value={selectedDoc.type_id ?? ''} disabled={savingType} onChange={async e => {
+                  <div className="type-row">
+                    <select className="auth-input type-select" value={selectedDoc.type_id ?? ''} disabled={savingType} onChange={async e => {
                         const newVal = e.target.value ? Number(e.target.value) : null;
-                        // optimistic UI update so the select shows the new value immediately
                         const prevVal = selectedDoc?.type_id ?? null;
                         setSelectedDoc((prev: any) => prev ? ({ ...prev, type_id: newVal }) : prev);
                         try {
                           setSavingType(true);
                           const ok = await saveField('type_id', newVal);
                           if (!ok) {
-                            // rollback optimistic change
                             setSelectedDoc((prev: any) => prev ? ({ ...prev, type_id: prevVal }) : prev);
                           }
                         } finally {
@@ -774,52 +779,55 @@ export default function Mentor() {
                           <option key={dt.type_id} value={dt.type_id}>{dt.type_name}</option>
                         ))}
                       </select>
-                    </div>
-                    <div className="type-half type-info-wrap">
-                      <button className="btn btn-ghost" type="button" onClick={() => {
+                      <button className="btn btn-ghost type-info-btn" type="button" onClick={() => {
                         const sel = documentTypes.find(d => Number(d.type_id) === Number(selectedDoc.type_id));
                         if (!sel) return notify.push('Select a document type first', undefined, true);
                         notify.push(sel.description || 'No description available', 8);
                       }}>ⓘ</button>
-                    </div>
                   </div>
                 </div>
-                <div>
+                <div className="detail-item">
                   <label className="auth-label">Abstract</label>
                   <textarea className="auth-input" defaultValue={selectedDoc.abstract || ''} onBlur={e => saveField('abstract', e.target.value)} />
                 </div>
-                <div>
+                <div className="detail-item">
                   <label className="auth-label">Language</label>
                   <select className="auth-input lang-select" defaultValue={selectedDoc.language || 'hr'} onChange={e => saveField('language', e.target.value)}>
                     <option value="hr">hr</option>
                     <option value="en">en</option>
                   </select>
                 </div>
-                <div>
+                <div className="detail-item">
                   <label className="auth-label">Status</label>
                   <div className="status-display auth-input" title="Status is read-only in this panel">{selectedDoc.status || 'draft'}</div>
                 </div>
-                <div>
-                  <div style={{ color: 'var(--muted)' }}>Compiled PDF path on server</div>
-                  <div style={{ fontSize: '0.9em', wordBreak: 'break-all' }}>{selectedDoc.compiled_pdf_path || '—'}</div>
+                
+                <div className="detail-info-section">
+                  <div className="info-item">
+                    <div className="info-label">Compiled PDF path</div>
+                    <div className="info-value">{selectedDoc.compiled_pdf_path || '—'}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Created by</div>
+                    <div className="info-value">{(() => {
+                      const id = Number(selectedDoc.created_by || 0);
+                      const nm = usersMap[id];
+                      return nm ? `${nm} (${id})` : String(selectedDoc.created_by);
+                    })()}</div>
+                  </div>
+                  <div className="info-row">
+                    <div className="info-item">
+                      <div className="info-label">Created at</div>
+                      <div className="info-value">{formatDate(selectedDoc.created_at)}</div>
+                    </div>
+                    <div className="info-item">
+                      <div className="info-label">Updated at</div>
+                      <div className="info-value">{formatDate(selectedDoc.updated_at)}</div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ color: 'var(--muted)' }}>Created by</div>
-                  <div>{(() => {
-                    const id = Number(selectedDoc.created_by || 0);
-                    const nm = usersMap[id];
-                    return nm ? `${nm} (${id})` : String(selectedDoc.created_by);
-                  })()}</div>
-                </div>
-                <div>
-                  <div style={{ color: 'var(--muted)' }}>Created at</div>
-                  <div>{formatDate(selectedDoc.created_at)}</div>
-                </div>
-                <div>
-                  <div style={{ color: 'var(--muted)' }}>Updated at</div>
-                  <div>{formatDate(selectedDoc.updated_at)}</div>
-                </div>
-                <div className="mentor-action-row" style={{ display: 'flex', gap: 8 }}>
+                
+                <div className="mentor-action-row">
                   <button className="btn btn-action btn-render" onClick={() => { DocumentsApi.renderDocument(Number(selectedDocId)).then(() => notify.push('Render started', 3)).catch((e) => notify.push(String(e), undefined, true)); }}>Render</button>
                   <button className="btn btn-danger" onClick={() => { setConfirmTitle('Confirm DELETE action'); setConfirmQuestion('Are you sure you want to delete this document?'); setConfirmAction(() => handleDelete); setConfirmOpen(true); }}>Delete</button>
                 </div>

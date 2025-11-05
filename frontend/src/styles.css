@@ -536,67 +536,117 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
 
 /* Mentor-specific document details card: responsive widths and wider controls */
 .mentor-details-card{
-  /* allow the card to expand on large screens while staying responsive */
-  max-width: min(1100px, 96%);
+  max-width: min(900px, 96%);
   margin: 0 auto;
+  padding: 1.5rem;
 }
 
-/* Override and expand input widths specifically for the Mentor details card so fields
-   look proportionate inside a wide panel. Inputs are centered and capped with large
-   max-width values for FullHD / ultra-wide screens. */
-.mentor-details-card .profile-card .auth-input, .mentor-details-card .profile-card input.auth-input, .mentor-details-card .profile-card textarea.auth-input, .mentor-details-card .profile-card select.auth-input, .mentor-details-card .profile-card .auth-input input, .mentor-details-card .profile-card .auth-input textarea, .mentor-details-card .profile-card .auth-input select {
-  width: 72%;
-  max-width: 1100px;
-  margin: 0 auto; /* center inputs inside the card */
+.mentor-details-card h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--heading);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.75rem;
+  text-align: center;
 }
 
-.mentor-details-card .profile-card textarea.auth-input, .mentor-details-card .profile-card .auth-input textarea {
-  min-height: 100px; /* give abstract more space */
+/* Details grid - clean form layout */
+.details-grid {
+  display: grid;
+  gap: 1rem;
 }
 
-@media (min-width: 1400px) {
-  .mentor-details-card{ max-width: 1400px; }
-  .mentor-details-card .profile-card .auth-input, .mentor-details-card .profile-card input.auth-input, .mentor-details-card .profile-card select.auth-input { width: 100%; max-width: 1400px; }
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-@media (min-width: 1900px) {
-  .mentor-details-card{ max-width: 1600px; }
-  .mentor-details-card .profile-card .auth-input, .mentor-details-card .profile-card input.auth-input, .mentor-details-card .profile-card select.auth-input { width: 100%; max-width: 1600px; }
+/* Document ID - highlighted box */
+.detail-id {
+  padding: 1rem;
+  background: rgba(var(--accent-rgb), 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  text-align: center;
 }
 
-/* Stronger overrides: ensure all input variations inside the mentor details card expand
-   (handles both wrapper .auth-input and direct input.auth-input usages). Placed after
-   the earlier rules to ensure higher specificity and take precedence. */
-.mentor-details-card .auth-input,
-.mentor-details-card input.auth-input,
-.mentor-details-card textarea.auth-input,
-.mentor-details-card select.auth-input,
-.mentor-details-card .auth-input input,
-.mentor-details-card .auth-input select,
-.mentor-details-card .auth-input textarea {
-  /* Use a middle-ground width: never smaller than 360px, prefer ~60% of the card,
-     and never larger than 900px by default. This avoids being too narrow or too wide. */
-  width: clamp(360px, 60%, 900px) !important;
-  max-width: 920px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  box-sizing: border-box !important;
+.detail-label {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
-/* Make textareas more generous inside the details card */
-.mentor-details-card textarea.auth-input,
-.mentor-details-card .auth-input textarea {
-  min-height: 140px !important;
+.detail-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
 }
 
-/* Widen primary action buttons (Render / Delete) inside the mentor details card so they
-   visually match the wider inputs. Use min-width + padding for consistent sizing. */
-.mentor-details-card .btn {
-  min-width: 120px;
-  padding: 10px 16px;
+/* Type row - select + info button */
+.type-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
-.mentor-details-card .btn.btn-action { min-width: 120px; }
-.mentor-details-card .btn.btn-danger { min-width: 120px; }
+
+.type-select {
+  flex: 1;
+}
+
+.type-info-btn {
+  flex-shrink: 0;
+  min-width: 40px;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Info section - metadata display */
+.detail-info-section {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(var(--panel-rgb), 0.5);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.info-value {
+  font-size: 0.875rem;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Action buttons */
+.mentor-action-row {
+  display: flex !important;
+  gap: 0.75rem !important;
+  margin-top: 1rem !important;
+}
+
+.mentor-action-row .btn {
+  flex: 1;
+}
 
 /* Render button highlight for mentor panel */
 .btn-render {
@@ -609,10 +659,6 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   letter-spacing: 0.06em;
 }
 .btn-render:hover{ box-shadow: 0 14px 40px rgba(var(--accent-rgb),0.24), 0 0 26px rgba(var(--accent-rgb),0.18) }
-
-
-/* Center the action button row inside the card reliably by targeting the explicit class */
-.mentor-action-row{ display:flex !important; justify-content:center !important; gap:8px !important; margin-top:6px }
 
 /* Status display (read-only) styled to look like inputs inside profile cards */
 .status-display{

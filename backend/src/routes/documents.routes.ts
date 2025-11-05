@@ -456,6 +456,12 @@ documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res
     if (!updated) {
       return res.status(400).json({ error: 'Invalid status or document not found in database!' });
     }
+    
+    // If status is changed to draft, clear the grade
+    if (status === 'draft') {
+      await DocumentsService.updateDocumentGrade(document_id, null);
+    }
+    
     // Log to workflow history
     await DocumentWorkflowService.addWorkflowEvent(document_id, status, user_id);
     // Log to audit log

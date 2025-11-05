@@ -383,7 +383,9 @@ export class DocumentsService {
    * @returns {Promise<boolean>} True if updated, false otherwise
    */
   static async updateDocumentGrade(document_id: number, newGrade: number | null): Promise<boolean> {
+    // Allow null to clear grade, otherwise validate range
     if (newGrade !== null && (newGrade < 1 || newGrade > 100)) return false;
+    
     const [result] = await pool.query(
       'UPDATE documents SET grade = ?, updated_at = NOW() WHERE document_id = ?',
       [newGrade, document_id]
