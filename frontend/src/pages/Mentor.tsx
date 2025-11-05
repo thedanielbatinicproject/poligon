@@ -8,6 +8,7 @@ import ConfirmationBox from '../components/ConfirmationBox';
 import { useSocket } from '../components/SocketProvider';
 import WorkflowHistoryModal from '../components/WorkflowHistoryModal';
 import AuditLogModal from '../components/AuditLogModal';
+import DocumentGrader from '../components/DocumentGrader';
 
 export default function Mentor() {
   const sessionCtx = useSession();
@@ -44,6 +45,9 @@ export default function Mentor() {
   const [workflowHistoryOpen, setWorkflowHistoryOpen] = useState(false);
   const [workflowHistory, setWorkflowHistory] = useState<any[]>([]);
   const [auditLogOpen, setAuditLogOpen] = useState(false);
+  const [documentGraderOpen, setDocumentGraderOpen] = useState(false);
+  const [preGradeConfirmOpen, setPreGradeConfirmOpen] = useState(false);
+  const [preGradeConfirmMessage, setPreGradeConfirmMessage] = useState('');
 
   // helper: format timestamp to DD.MM.YYYY.@HH:MM(:SS)
   // includeSeconds: when false, omit the trailing :SS
@@ -66,6 +70,60 @@ export default function Mentor() {
       const hhmm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
       return includeSeconds ? `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} @ ${hhmm}:${pad(d.getSeconds())}` : `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} @ ${hhmm}`;
     } catch (e) { return '—'; }
+  };
+
+  // Handle Grade Document button click with confirmation for non-under_review statuses
+  const handleGradeDocumentClick = () => {
+    if (!selectedDoc) return;
+    
+    const status = selectedDoc.status;
+    
+    // If under_review, open directly with pulsing effect
+    if (status === 'under_review') {
+      setDocumentGraderOpen(true);
+      return;
+    }
+    
+    // For other statuses, show confirmation first
+    let confirmMessage = '';
+    
+    switch (status) {
+      case 'graded':
+        confirmMessage = 'This document is already graded. Proceeding will result in an irreversible grade overwrite!';
+        break;
+      case 'submitted':
+        confirmMessage = 'This document has been submitted to faculty. Are you sure you want to grade it now?';
+        break;
+      case 'finished':
+        confirmMessage = 'This document has been marked as finished by the faculty. Are you sure you want to change the grade?';
+        break;
+      case 'draft':
+        confirmMessage = 'This document is still in draft status. Are you sure you want to grade it?';
+        break;
+      default:
+        confirmMessage = 'Are you sure you want to grade this document?';
+    }
+    
+    setPreGradeConfirmMessage(confirmMessage);
+    setPreGradeConfirmOpen(true);
+  };
+
+  // Get the user who sent document to review from workflow history
+  const getUnderReviewUser = () => {
+    if (!workflowHistory || workflowHistory.length === 0) return null;
+    
+    // Find the most recent 'under_review' status change
+    const underReviewEvent = workflowHistory
+      .slice()
+      .reverse()
+      .find((event: any) => event.new_status === 'under_review');
+    
+    if (!underReviewEvent) return null;
+    
+    const userId = underReviewEvent.changed_by;
+    const userName = usersMap[userId] || `User ${userId}`;
+    
+    return { userId, userName };
   };
 
   useEffect(() => {
@@ -541,7 +599,119 @@ export default function Mentor() {
       )}
 
       {selectedDoc && (
-  <div className="mentor-grid">
+        <>
+          {/* Status alert banner based on document status */}
+          {(() => {
+            const status = selectedDoc.status;
+            const reviewer = getUnderReviewUser();
+            
+            // under_review - urgent yellow alert
+            if (status === 'under_review') {
+              return (
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '1rem 1.5rem',
+                    marginBottom: '1.5rem',
+                    background: 'rgba(255, 184, 77, 0.15)',
+                    border: '2px solid var(--warning)',
+                    borderRadius: 12,
+                    boxShadow: '0 4px 24px rgba(255, 184, 77, 0.3), 0 0 0 1px rgba(255, 184, 77, 0.2)',
+                    backdropFilter: 'blur(12px)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--warning)', marginBottom: '0.25rem' }}>
+                        DOCUMENT UNDER REVIEW
+                      </div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 }}>
+                        Document was sent for review by <strong>{reviewer?.userName || 'Unknown'}</strong>. 
+                        Any changes to the document are not possible until one of the mentors grades or returns the document to draft!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // graded - blue info banner
+            if (status === 'graded') {
+              return (
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '0.875rem 1.25rem',
+                    marginBottom: '1rem',
+                    background: 'rgba(var(--accent-rgb), 0.12)',
+                    border: '1px solid var(--accent)',
+                    borderRadius: 8,
+                    boxShadow: '0 2px 12px rgba(var(--accent-rgb), 0.15)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.2rem' }}>📝</span>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+                      <strong>Document Graded:</strong> This document has been graded with a score of <strong>{selectedDoc.grade ?? 'N/A'}</strong>.
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // submitted - orange info banner
+            if (status === 'submitted') {
+              return (
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '0.875rem 1.25rem',
+                    marginBottom: '1rem',
+                    background: 'rgba(255, 152, 0, 0.12)',
+                    border: '1px solid #ff9800',
+                    borderRadius: 8,
+                    boxShadow: '0 2px 12px rgba(255, 152, 0, 0.15)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.2rem' }}>📤</span>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+                      <strong>Document Submitted:</strong> This document has been submitted to the faculty.
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // finished - green success banner
+            if (status === 'finished') {
+              return (
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '0.875rem 1.25rem',
+                    marginBottom: '1rem',
+                    background: 'rgba(var(--success-rgb), 0.12)',
+                    border: '1px solid var(--success)',
+                    borderRadius: 8,
+                    boxShadow: '0 2px 12px rgba(var(--success-rgb), 0.15)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.2rem' }}>✅</span>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+                      <strong>Document Finished:</strong> Faculty has accepted this document.
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            return null;
+          })()}
+
+        <div className="mentor-grid">
           <div>
             <div className="glass-panel profile-card mentor-details-card" style={{ padding: 12, margin: '0 auto' }}>
               <h3 style={{ marginTop: 0 }}>Document details</h3>
@@ -885,6 +1055,34 @@ export default function Mentor() {
               <button className="btn-action" onClick={() => setWorkflowHistoryOpen(true)}>SEE WORKFLOW HISTORY</button>
             </div>
 
+            {/* Grade Document Card */}
+            <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
+              <h3>Grade Document</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: 12, lineHeight: 1.5 }}>
+                Assign a grade to this document and set its status. The grade can range from 0 to 100 points.
+              </p>
+              <button 
+                className={selectedDoc.status === 'under_review' ? 'btn-action grade-pulse' : 'btn btn-primary'}
+                onClick={handleGradeDocumentClick}
+                style={selectedDoc.status === 'under_review' ? {
+                  boxShadow: '0 0 20px rgba(var(--accent-rgb), 0.6)',
+                  animation: 'pulse 2s infinite'
+                } : {}}
+              >
+                GRADE THIS DOCUMENT
+              </button>
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes pulse {
+                  0%, 100% { box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.6); }
+                  50% { box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.9); }
+                }
+                .grade-pulse:hover {
+                  transform: scale(1.05);
+                  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.6) !important;
+                }
+              ` }} />
+            </div>
+
             <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
               <h3>Audit Log History</h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: 12 }}>
@@ -894,6 +1092,7 @@ export default function Mentor() {
             </div>
           </div>
         </div>
+        </>
       )}
 
       <ConfirmationBox
@@ -912,6 +1111,34 @@ export default function Mentor() {
         }}
         onCancel={() => { setConfirmOpen(false); setConfirmAction(null); }}
       />
+
+      <ConfirmationBox
+        title="Confirm Grading"
+        question={preGradeConfirmMessage}
+        isOpen={preGradeConfirmOpen}
+        onConfirm={() => {
+          setPreGradeConfirmOpen(false);
+          setDocumentGraderOpen(true);
+        }}
+        onCancel={() => setPreGradeConfirmOpen(false)}
+      />
+
+      {selectedDoc && (
+        <DocumentGrader
+          isOpen={documentGraderOpen}
+          onClose={() => setDocumentGraderOpen(false)}
+          documentId={selectedDoc.document_id}
+          currentGrade={selectedDoc.grade}
+          currentStatus={selectedDoc.status}
+          onGradeSuccess={() => {
+            setDocumentGraderOpen(false);
+            // Reload documents list
+            DocumentsApi.getAllDocuments()
+              .then((list: any[]) => setDocuments(Array.isArray(list) ? list : []))
+              .catch((err) => notify.push(String(err), undefined, true));
+          }}
+        />
+      )}
 
       <UserFinder open={userFinderOpen} onClose={() => setUserFinderOpen(false)} onSelect={async (uid) => {
         try {

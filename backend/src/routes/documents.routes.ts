@@ -457,8 +457,8 @@ documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res
 });
 
 
-// PUT /api/documents/:document_id/grade - Only mentors of the document can change the grade
-documentsRouter.put('/:document_id/grade', checkMentor, async (req: Request, res: Response) => {
+// PUT /api/documents/:document_id/grade - Admin or mentor of the document can change the grade
+documentsRouter.put('/:document_id/grade', checkLogin, async (req: Request, res: Response) => {
   const document_id = Number(req.params.document_id);
   const user_id = req.session.user_id;
   const role = req.session.role;
@@ -467,10 +467,10 @@ documentsRouter.put('/:document_id/grade', checkMentor, async (req: Request, res
   if (!user_id || !role) {
     return res.status(401).json({ error: 'User not authenticated.' });
   }
-  // Only mentor of this document can change grade (no admin access)
+  // Only admin or mentor of this document can change grade
   const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
-  if (!isMentor) {
-    return res.status(403).json({ error: 'Only mentor of this document can change the grade.' });
+  if (role !== 'admin' && !isMentor) {
+    return res.status(403).json({ error: 'Only admin or mentor of this document can change the grade.' });
   }
 
   try {
