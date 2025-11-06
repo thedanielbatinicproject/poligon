@@ -565,4 +565,15 @@ documentsRouter.get('/:document_id/hash', checkLogin, async (req: Request, res: 
   }
 });
 
+// GET /api/documents/renders/count - Get total count of all renders (admin only)
+documentsRouter.get('/renders/count', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const totalRenders = await DocumentsService.getTotalRenders();
+    res.status(200).json({ total_renders: totalRenders });
+  } catch (err) {
+    console.error('[ERROR] /api/documents/renders/count', err);
+    res.status(500).json({ error: 'Failed to fetch total renders count.', details: err });
+  }
+});
+
 export default documentsRouter;

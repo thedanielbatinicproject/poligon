@@ -11,7 +11,7 @@
   /* divider color used for subtle separators (light theme) */
   --divider: rgba(0,0,0,0.06);
   --primary: #009875; /* vivid aurora green */
-  --accent: #8ff7cf; /* soft accent glow */
+  --accent: #1c9022; /* soft accent glow */
   --accent-rgb: 143,247,207;
   /* explicit accent color variable (hex preferred). Falls back to --accent if not set.) */
   --accent_color: var(--accent);

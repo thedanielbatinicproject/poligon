@@ -164,6 +164,11 @@ export const api = {
   loginLocal: (payload: { email: string; password: string }) => postJSON('/api/auth/login-local', payload),
   status: () => getJSON('/api/status'),
   logout: () => postJSON('/api/auth/logout', {}),
+  // Admin statistics endpoints
+  getTotalRenders: () => getJSON('/api/documents/renders/count'),
+  getStorageStats: () => getJSON('/api/utility/storage'),
+  getActiveSessionsCount: () => getJSON('/api/utility/sessions/count'),
+  getRenderServiceStatus: () => getJSON('/api/utility/render-service/status'),
 };
 
 export default api;

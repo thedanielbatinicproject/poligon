@@ -1,5 +1,7 @@
 import pool from '../db';
 import { User } from '../types/user';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 export class UtilityService {
   /**
@@ -482,6 +484,94 @@ static async updateSessionAttributes(userId: number, attrs: Partial<{
   const [result] = await pool.query(sql, values);
   const affected = (result as any).affectedRows || 0;
   return affected;
+}
+
+/**
+ * Returns the total storage size (in bytes) from the file_uploads table.
+ * Sums the file_size column to get the database-recorded total.
+ * @returns Total file size in bytes
+ */
+static async getUploadsStorageSize(): Promise<number> {
+  const [rows] = await pool.query('SELECT COALESCE(SUM(file_size), 0) as total_size FROM file_uploads');
+  return (rows as any[])[0]?.total_size || 0;
+}
+
+/**
+ * Measures the actual disk usage of the uploads folder by recursively summing file sizes.
+ * @param uploadsPath - Absolute path to the uploads directory (defaults to ../uploads from backend root)
+ * @returns Total folder size in bytes
+ */
+static async getUploadsFolderSize(uploadsPath: string = path.join(__dirname, '../../uploads')): Promise<number> {
+  let totalSize = 0;
+  
+  async function traverseDirectory(dirPath: string): Promise<void> {
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+        
+        if (entry.isDirectory()) {
+          await traverseDirectory(fullPath);
+        } else if (entry.isFile()) {
+          const stats = await fs.stat(fullPath);
+          totalSize += stats.size;
+        }
+      }
+    } catch (err) {
+      console.error(`Error reading directory ${dirPath}:`, err);
+    }
+  }
+  
+  await traverseDirectory(uploadsPath);
+  return totalSize;
+}
+
+/**
+ * Returns the count of active sessions (not expired).
+ * @returns Number of active sessions
+ */
+static async getActiveSessionsCount(): Promise<number> {
+  const [rows] = await pool.query('SELECT COUNT(*) as count FROM sessions WHERE expires_at > NOW()');
+  return (rows as any[])[0]?.count || 0;
+}
+
+/**
+ * Checks if the external LaTeX rendering service is accessible.
+ * @returns Object with isOnline status and URL
+ */
+static async checkRenderServiceStatus(): Promise<{ isOnline: boolean; url: string }> {
+  const url = process.env.EXTERNAL_RENDERER_URL || '';
+  
+  if (!url) {
+    return { isOnline: false, url: '' };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Poligon-HealthCheck/1.0',
+      },
+    });
+
+    clearTimeout(timeoutId);
+    
+    return {
+      isOnline: response.ok || response.status === 301 || response.status === 302,
+      url,
+    };
+  } catch (err) {
+    console.warn('Render service check failed:', err);
+    return {
+      isOnline: false,
+      url,
+    };
+  }
 }
 
 }

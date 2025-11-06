@@ -599,4 +599,40 @@ utilityRouter.delete('/session/:session_id', checkLogin, async (req: Request, re
 //API ALLOWANCE ROUTES
 //TODO: implement API allowance management routes here
 
+// ADMIN STATISTICS ROUTES
+// GET /api/utility/storage - Returns database and folder storage sizes (admin only)
+utilityRouter.get('/storage', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const databaseSize = await UtilityService.getUploadsStorageSize();
+    const folderSize = await UtilityService.getUploadsFolderSize();
+    res.status(200).json({ database_size: databaseSize, folder_size: folderSize });
+  } catch (err) {
+    console.error('Failed to fetch storage statistics:', err);
+    res.status(500).json({ error: 'Failed to fetch storage statistics', details: String(err) });
+  }
+});
+
+// GET /api/utility/sessions/count - Returns count of active sessions (admin only)
+utilityRouter.get('/sessions/count', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const activeSessionsCount = await UtilityService.getActiveSessionsCount();
+    res.status(200).json({ active_sessions: activeSessionsCount });
+  } catch (err) {
+    console.error('Failed to fetch sessions count:', err);
+    res.status(500).json({ error: 'Failed to fetch sessions count', details: String(err) });
+  }
+});
+
+// GET /api/utility/render-service/status - Check LaTeX render service availability (admin only)
+utilityRouter.get('/render-service/status', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const status = await UtilityService.checkRenderServiceStatus();
+    res.status(200).json(status);
+  } catch (err) {
+    console.error('Failed to check render service status:', err);
+    res.status(500).json({ error: 'Failed to check render service status', details: String(err) });
+  }
+});
+
 export default utilityRouter;
+

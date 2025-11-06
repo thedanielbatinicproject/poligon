@@ -471,4 +471,17 @@ export class DocumentsService {
   const [result] = await pool.query('DELETE FROM document_types WHERE type_id = ?', [type_id]);
   return (result as any).affectedRows > 0;
   }
+
+  /**
+   * Gets the total count of all document versions (renders) across all documents.
+   * Admin-only statistic for system overview dashboard.
+   * 
+   * @returns {Promise<number>} Total number of document versions/renders in the system
+   * 
+   * Example: returns 1523 if there are 1523 total renders across all documents
+   */
+  static async getTotalRenders(): Promise<number> {
+    const [rows] = await pool.query('SELECT COUNT(*) as count FROM document_versions');
+    return (rows as any[])[0]?.count || 0;
+  }
 }
