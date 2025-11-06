@@ -33,6 +33,8 @@ export default function Documents() {
   // Files
   const [docFiles, setDocFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [docVersions, setDocVersions] = useState<any[]>([]);
+  const [shareLink, setShareLink] = useState<string | null>(null);
 
   // Modals
   const [abstractModalOpen, setAbstractModalOpen] = useState(false);
@@ -123,8 +125,32 @@ export default function Documents() {
         .then(r => r.json())
         .then((files: any) => setDocFiles(Array.isArray(files) ? files : []))
         .catch(() => setDocFiles([]));
+      // Load versions
+      DocumentsApi.getVersions(selectedDocId)
+        .then((v: any[]) => setDocVersions(Array.isArray(v) ? v : []))
+        .catch(() => setDocVersions([]));
     }
   }, [selectedDocId, documents, user?.id]);
+
+  // Fetch share link if versions exist
+  useEffect(() => {
+    let mounted = true;
+    async function fetchLink() {
+      if (!selectedDocId) return setShareLink(null);
+      if (!docVersions || docVersions.length === 0) return setShareLink(null);
+      try {
+        const res = await DocumentsApi.getShareLink(selectedDocId);
+        if (!mounted) return;
+        if (res && res.link) setShareLink(res.link);
+        else setShareLink(null);
+      } catch (err) {
+        if (!mounted) return;
+        setShareLink(null);
+      }
+    }
+    fetchLink();
+    return () => { mounted = false; };
+  }, [selectedDocId, docVersions]);
 
   // Handle document selection
   const handleDocumentSelect = (docId: number) => {
@@ -813,6 +839,27 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 />
               </label>
             </div>
+
+            {/* Share this document card - appears like other right-sidebar cards when renders exist */}
+            {docVersions && docVersions.length > 0 && (
+              <div className="glass-panel" style={{ padding: '0.75rem' }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Share this document</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 8 }}>Copy a permanent share link to the latest render.</p>
+                <input
+                  readOnly
+                  value={shareLink || ''}
+                  placeholder={shareLink ? '' : 'Share link will appear here'}
+                  onClick={(e) => {
+                    try {
+                      (e.target as HTMLInputElement).select();
+                      if (shareLink) navigator.clipboard.writeText(shareLink).then(() => notify.push('Share link copied to clipboard', 2)).catch(() => {});
+                    } catch (err) {}
+                  }}
+                  className="auth-input"
+                  style={{ cursor: shareLink ? 'pointer' : 'default', color: 'var(--accent)', border: '1px solid var(--border)', width: '100%' }}
+                />
+              </div>
+            )}
           </div>
         </div>
       ) : (

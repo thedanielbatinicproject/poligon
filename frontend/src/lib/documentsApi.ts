@@ -99,6 +99,11 @@ export async function getVersions(documentId: number) {
   return handleRes(res);
 }
 
+export async function getShareLink(documentId: number) {
+  const res = await fetch(`${base}/${documentId}/hash`, { credentials: 'include' });
+  return handleRes(res);
+}
+
 export async function getFiles(documentId: number) {
   const res = await fetch(`/api/files/document/${documentId}`, { credentials: 'include' });
   return handleRes(res);
@@ -120,7 +125,8 @@ export default {
   getEditors,
   addEditor,
   removeEditor,
-  getVersions
+  getVersions,
+  getShareLink
   , getDocumentTypes,
   getFiles,
   deleteFile

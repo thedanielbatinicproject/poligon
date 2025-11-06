@@ -38,6 +38,7 @@ export default function Mentor() {
   // tasks for document
   const [docTasks, setDocTasks] = useState<any[]>([]);
   const [docVersions, setDocVersions] = useState<any[]>([]);
+  const [shareLink, setShareLink] = useState<string | null>(null);
   const [docFiles, setDocFiles] = useState<any[]>([]);
   const [savingType, setSavingType] = useState(false);
   const [uploadFileName, setUploadFileName] = useState<string>('');
@@ -266,6 +267,26 @@ export default function Mentor() {
       .catch(() => setWorkflowHistory([]));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDocId]);
+
+  // Fetch share link when there are renders available for selected document
+  useEffect(() => {
+    let mounted = true;
+    async function fetchLink() {
+      if (!selectedDocId) return setShareLink(null);
+      if (!docVersions || docVersions.length === 0) return setShareLink(null);
+      try {
+        const res = await DocumentsApi.getShareLink(Number(selectedDocId));
+        if (!mounted) return;
+        if (res && res.link) setShareLink(res.link);
+        else setShareLink(null);
+      } catch (err) {
+        if (!mounted) return;
+        setShareLink(null);
+      }
+    }
+    fetchLink();
+    return () => { mounted = false; };
+  }, [selectedDocId, docVersions]);
 
   // Ensure we have uploader display names for files
   useEffect(() => {
@@ -1197,6 +1218,28 @@ export default function Mentor() {
               </p>
               <button className="btn-action" onClick={() => setAuditLogOpen(true)}>SEARCH AUDIT LOG FOR THIS DOCUMENT</button>
             </div>
+            {/* Share this document card - only if renders exist */}
+            {docVersions && docVersions.length > 0 && (
+              <div className="glass-panel profile-card" style={{ padding: 12, marginTop: 12 }}>
+                <h3>Share this document</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: 8 }}>
+                  You are about to copy the perma-share link to the latest render of this document!
+                </p>
+                <input
+                  readOnly
+                  value={shareLink || ''}
+                  placeholder={shareLink ? '' : 'Share link will appear here'}
+                  onClick={(e) => {
+                    try {
+                      (e.target as HTMLInputElement).select();
+                      if (shareLink) navigator.clipboard.writeText(shareLink).then(() => notify.push('Share link copied to clipboard', 2)).catch(() => {});
+                    } catch (err) {}
+                  }}
+                  className="auth-input"
+                  style={{ cursor: shareLink ? 'pointer' : 'default', color: 'var(--accent)', border: '1px solid var(--border)', width: '100%' }}
+                />
+              </div>
+            )}
           </div>
         </div>
         </>

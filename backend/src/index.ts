@@ -9,8 +9,13 @@ import apiRouter from './routes/api.routes';
 import latexContentRouter from './routes/latexContent.routes';
 import { setIo } from './render/onlineRenderer';
 import fs from 'fs';
+import path from 'path';
 import passport from 'passport';
 import samlStrategy from './config/saml';
+import { generateMetadata } from './config/saml';
+import { decodeDocumentHash } from './utils/documentHash';
+import { DocumentsService } from './services/documents.service';
+import { ErrorTemplates } from './render/errorTemplates';
 
 // Socket.io i HTTP server import
 import http from 'http';
@@ -99,6 +104,69 @@ passport.serializeUser((user: any, done: any) => {
 });
 passport.deserializeUser((user: any, done: any) => {
   done(null, user as any);
+});
+
+// SAML SP Metadata endpoint - PUBLIC, no auth required
+app.get('/metadata', (req, res) => {
+  try {
+    const metadata = generateMetadata();
+    res.set('Content-Type', 'application/xml');
+    res.send(metadata);
+  } catch (err) {
+    console.error('Failed to generate metadata:', err);
+    res.status(500).json({ error: 'Failed to generate SAML metadata' });
+  }
+});
+
+// SAML SP EntityID endpoint - PUBLIC, no auth required
+app.get('/sp', (req, res) => {
+  const entityID = process.env.SAML_ISSUER || `${process.env.BASE_URL || 'http://localhost:5000'}/sp`;
+  res.set('Content-Type', 'text/plain');
+  res.send(entityID);
+});
+
+// Public document sharing endpoint - GET /d/:hashCode
+// Decodes hash, fetches latest PDF version, serves inline in browser
+app.get('/d/:hashCode', async (req, res) => {
+  const hashCode = req.params.hashCode;
+  
+  try {
+    // Decode hash to get document_id
+    const document_id = decodeDocumentHash(hashCode);
+    
+    if (!document_id) {
+      return res.status(404).send(ErrorTemplates.invalidLink());
+    }
+
+    // Check if document exists
+    const doc = await DocumentsService.getDocumentById(document_id);
+    if (!doc) {
+      return res.status(404).send(ErrorTemplates.documentNotFound(document_id));
+    }
+
+    // Get all versions for this document
+    const versions = await DocumentsService.getDocumentVersions(document_id);
+    
+    if (!versions || versions.length === 0) {
+      return res.status(404).send(ErrorTemplates.noRenders(document_id));
+    }
+
+    // Get latest version (last in array since ordered by version_number ASC)
+    const latestVersion = versions[versions.length - 1];
+    
+    if (!latestVersion.compiled_pdf_path) {
+      return res.status(404).send(ErrorTemplates.pdfNotAvailable(document_id));
+    }
+
+    // Serve PDF inline in browser
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+    return res.sendFile(latestVersion.compiled_pdf_path, { root: process.cwd() });
+    
+  } catch (err) {
+    console.error('[ERROR] /d/:hashCode', err);
+    return res.status(500).send(ErrorTemplates.serverError());
+  }
 });
 
 // Main routes

@@ -5,21 +5,8 @@ import passport from 'passport';
 import { SessionData } from 'express-session';
 import bcrypt from 'bcrypt';
 import { OID } from '../config/oid';
-import { generateMetadata } from '../config/saml';
 
 const authRouter = Router();
-
-// GET /auth/metadata - SAML SP Metadata XML
-authRouter.get('/metadata', (req: Request, res: Response) => {
-  try {
-    const metadata = generateMetadata();
-    res.set('Content-Type', 'application/xml');
-    res.send(metadata);
-  } catch (err) {
-    console.error('Failed to generate metadata:', err);
-    res.status(500).json({ error: 'Failed to generate SAML metadata' });
-  }
-});
 
 // GET /auth/login/aaieduhr - Initiate SAML login
 authRouter.get('/login/aaieduhr', (req: Request, res: Response) => {

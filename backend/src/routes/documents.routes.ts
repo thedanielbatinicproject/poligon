@@ -6,6 +6,7 @@ import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
 import { createTempUrl, startOnlineRender, isRendering as isOnlineRendering } from '../render/onlineRenderer';
 import { DocumentWorkflowService } from '../services/documentWorkflow.service';
+import { encodeDocumentId } from '../utils/documentHash';
 
 const documentsRouter = Router();
 
@@ -529,6 +530,38 @@ documentsRouter.get('/audit-log', checkLogin, checkAdmin, async (req: Request, r
     res.status(200).json(allLogs);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch audit logs.', details: err });
+  }
+});
+
+// GET /api/documents/:document_id/hash - Get shareable link for document PDF (authenticated users only)
+documentsRouter.get('/:document_id/hash', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  
+  if (!user_id) {
+    return res.status(401).json({ error: 'User not authenticated.' });
+  }
+
+  try {
+    // Check if document exists
+    const doc = await DocumentsService.getDocumentById(document_id);
+    if (!doc) {
+      return res.status(404).json({ error: 'Document not found.' });
+    }
+
+    // Generate hash and construct shareable link
+    const hashCode = encodeDocumentId(document_id);
+    const baseUrl = process.env.BASE_URL || process.env.URL || 'http://localhost:5000';
+    const shareableLink = `${baseUrl}/d/${hashCode}`;
+
+    res.status(200).json({ 
+      link: shareableLink,
+      hash: hashCode,
+      document_id 
+    });
+  } catch (err) {
+    console.error('[ERROR] /api/documents/:id/hash', err);
+    res.status(500).json({ error: 'Failed to generate shareable link.', details: err });
   }
 });
 
