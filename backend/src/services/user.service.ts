@@ -327,3 +327,92 @@ export async function getRoleById(userId: number): Promise<string | null> {
   const row = (rows as any[])[0];
   return row ? (row.role as string) : null;
 }
+
+/**
+ * Retrieves all users from the database (including admins).
+ * Used for admin dashboard user management.
+ * @returns Array of all User objects
+ */
+export async function getAllUsers(): Promise<User[]> {
+  const [rows] = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
+  return rows as User[];
+}
+
+/**
+ * Retrieves all active sessions for a specific user.
+ * Returns session metadata including session_id, user_agent, ip_address, created_at, expires_at, last_activity.
+ * @param userId - The user_id to query sessions for
+ * @returns Array of session objects with metadata
+ */
+export async function getUserSessions(userId: number): Promise<any[]> {
+  const [rows] = await pool.query(
+    `SELECT session_id, user_id, user_agent, ip_address, created_at, expires_at, last_activity
+     FROM sessions
+     WHERE user_id = ? AND expires_at > NOW()
+     ORDER BY last_activity DESC`,
+    [userId]
+  );
+  return rows as any[];
+}
+
+/**
+ * Deletes all sessions for a specific user (force logout).
+ * Admin-only action to terminate all active sessions for a user.
+ * @param userId - The user_id whose sessions will be deleted
+ * @returns Number of sessions deleted
+ */
+export async function deleteAllUserSessions(userId: number): Promise<number> {
+  const [result] = await pool.query('DELETE FROM sessions WHERE user_id = ?', [userId]);
+  return (result as any).affectedRows || 0;
+}
+
+/**
+ * Updates the role for multiple users in a single transaction.
+ * Used for bulk role assignment in admin dashboard.
+ * @param userIds - Array of user_id values to update
+ * @param newRole - New role value ('user', 'student', 'mentor', 'admin')
+ * @returns Number of users updated
+ */
+export async function bulkUpdateUserRoles(userIds: number[], newRole: string): Promise<number> {
+  if (!userIds || userIds.length === 0) return 0;
+  
+  // Validate role enum
+  const validRoles = ['user', 'student', 'mentor', 'admin'];
+  if (!validRoles.includes(newRole)) {
+    throw new Error(`Invalid role: ${newRole}. Must be one of: ${validRoles.join(', ')}`);
+  }
+
+  const placeholders = userIds.map(() => '?').join(',');
+  const [result] = await pool.query(
+    `UPDATE users SET role = ?, updated_at = NOW() WHERE user_id IN (${placeholders})`,
+    [newRole, ...userIds]
+  );
+  return (result as any).affectedRows || 0;
+}
+
+/**
+ * Retrieves all active sessions in the system with user information.
+ * Used for admin session management dashboard.
+ * @returns Array of sessions with joined user data (first_name, last_name, email, role)
+ */
+export async function getAllSessions(): Promise<any[]> {
+  const [rows] = await pool.query(
+    `SELECT 
+      s.session_id, 
+      s.user_id, 
+      s.user_agent, 
+      s.ip_address, 
+      s.created_at, 
+      s.expires_at, 
+      s.last_activity,
+      u.first_name,
+      u.last_name,
+      u.email,
+      u.role
+     FROM sessions s
+     INNER JOIN users u ON s.user_id = u.user_id
+     WHERE s.expires_at > NOW()
+     ORDER BY s.last_activity DESC`
+  );
+  return rows as any[];
+}

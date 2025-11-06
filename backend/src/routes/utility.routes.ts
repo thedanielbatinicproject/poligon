@@ -6,6 +6,7 @@ import { AuditService } from '../services/audit.service';
 import { io } from '../index'; // emiting messages via socket.io
 import sessionStore from '../config/sessionStore';
 import { getSessionById } from '../services/session.service';
+import { getAllSessions } from '../services/user.service';
 
 
 const utilityRouter = Router();
@@ -634,5 +635,17 @@ utilityRouter.get('/render-service/status', checkLogin, checkAdmin, async (req: 
   }
 });
 
+// GET /api/utility/sessions/all - Get all active sessions with user info (admin-only)
+utilityRouter.get('/sessions/all', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const sessions = await getAllSessions();
+    res.status(200).json(sessions);
+  } catch (err) {
+    console.error('Failed to fetch all sessions:', err);
+    res.status(500).json({ error: 'Failed to fetch all sessions', details: String(err) });
+  }
+});
+
 export default utilityRouter;
+
 

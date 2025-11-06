@@ -1,7 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import AdminUserBrowser from '../components/admin/AdminUserBrowser';
+import AdminUserFinder from '../components/admin/AdminUserFinder';
+import AdminEditCreateUser from '../components/admin/AdminEditCreateUser';
+import AdminRoleAssignment from '../components/admin/AdminRoleAssignment';
+import AdminSessionManager from '../components/admin/AdminSessionManager';
 import '../styles.css';
 import './admin.css';
+
+interface User {
+  user_id: number;
+  principal_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: 'user' | 'student' | 'mentor' | 'admin';
+  preferred_language: 'hr' | 'en';
+  affiliation: string | null;
+  display_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface SystemStats {
   totalRenders: number;
@@ -53,6 +72,13 @@ export default function Admin() {
     url: import.meta.env.VITE_EXTERNAL_RENDERER_URL || '',
     checking: true,
   });
+  const [showUserBrowser, setShowUserBrowser] = useState(false);
+  const [showUserFinder, setShowUserFinder] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [showEditUser, setShowEditUser] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
+  const [showRoleAssignment, setShowRoleAssignment] = useState(false);
+  const [showSessionManager, setShowSessionManager] = useState(false);
 
   useEffect(() => {
     loadStatistics();
@@ -132,6 +158,11 @@ export default function Admin() {
 
   const isCardCollapsed = (cardId: string): boolean => {
     return collapsedCards.has(cardId);
+  };
+
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setShowEditUser(true);
   };
 
   if (loading) {
@@ -226,7 +257,55 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+        <div className={`admin-card user-management ${isCardCollapsed('user-management') ? 'collapsed' : ''}`}>
+          <div className="card-header" onClick={() => toggleCardCollapse('user-management')}>
+            <h2>User Management</h2>
+            <span className="collapse-icon">{isCardCollapsed('user-management') ? '▼' : '▲'}</span>
+          </div>
+          <div className="card-body">
+            <div className="user-management-grid">
+              <div className="management-item" onClick={() => setShowUserBrowser(true)}>
+                <h3>Browse All Users</h3>
+                <p>View all registered users with advanced filtering and search capabilities</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowUserFinder(true)}>
+                <h3>Edit User</h3>
+                <p>Search for a user and modify their account details, role, and preferences</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowCreateUser(true)}>
+                <h3>Create New User</h3>
+                <p>Register a new user account with automatic password generation</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowRoleAssignment(true)}>
+                <h3>Bulk Role Assignment</h3>
+                <p>Change roles for multiple users at once with confirmation</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowSessionManager(true)}>
+                <h3>Session Management</h3>
+                <p>View active sessions and force logout users from their devices</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {showUserBrowser && <AdminUserBrowser onClose={() => setShowUserBrowser(false)} />}
+      {showUserFinder && <AdminUserFinder onClose={() => setShowUserFinder(false)} onEditUser={handleEditUser} />}
+      {showCreateUser && <AdminEditCreateUser onClose={() => setShowCreateUser(false)} mode="create" />}
+      {showEditUser && editingUser && (
+        <AdminEditCreateUser 
+          onClose={() => { setShowEditUser(false); setEditingUser(undefined); }} 
+          user={editingUser}
+          mode="edit" 
+        />
+      )}
+      {showRoleAssignment && <AdminRoleAssignment onClose={() => setShowRoleAssignment(false)} />}
+      {showSessionManager && <AdminSessionManager onClose={() => setShowSessionManager(false)} />}
     </div>
   );
 }

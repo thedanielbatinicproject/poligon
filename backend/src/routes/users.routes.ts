@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { checkLogin, checkAdmin, checkMentor } from '../middleware/auth.middleware';
 import { getUserById, createUser, editUser, getAllNonAdminUsers, 
         getAllUsersReduced, createLocalUser, generateMemorablePassword, 
-        getUserByEmail, changeLocalUserPassword, getLocalUserByEmail, getRoleById } from '../services/user.service';
+        getUserByEmail, changeLocalUserPassword, getLocalUserByEmail, getRoleById,
+        getAllUsers, getUserSessions, deleteAllUserSessions, bulkUpdateUserRoles } from '../services/user.service';
 import {sendPasswordEmail} from '../services/mail.service';
 import bcrypt from 'bcrypt';
 import { get } from 'http';
@@ -32,6 +33,31 @@ usersRouter.post('/', checkLogin, checkAdmin, async (req: Request, res: Response
     res.status(201).json(user);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create user!', details: err });
+  }
+});
+
+// PUT /api/users/bulk-role - Bulk update roles for multiple users (admin-only)
+// MUST come BEFORE /:user_id route to avoid route parameter collision
+usersRouter.put('/bulk-role', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const { user_ids, new_role } = req.body;
+    
+    console.log('[BULK-ROLE] Received request:', { user_ids, new_role, body: req.body });
+    
+    if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({ error: 'user_ids must be a non-empty array' });
+    }
+    
+    if (!new_role || typeof new_role !== 'string') {
+      return res.status(400).json({ error: 'new_role must be a valid string' });
+    }
+
+    const updatedCount = await bulkUpdateUserRoles(user_ids, new_role);
+    console.log('[BULK-ROLE] Successfully updated', updatedCount, 'users');
+    res.json({ success: true, users_updated: updatedCount });
+  } catch (err: any) {
+    console.error('[BULK-ROLE] Error:', err);
+    res.status(500).json({ error: 'Failed to update user roles!', details: err.message || String(err) });
   }
 });
 
@@ -223,6 +249,44 @@ usersRouter.post('/local-change-password', checkLogin, async (req, res) => {
     // log server-side error for debugging
     console.error('Error in /api/users/local-change-password:', err);
     res.status(500).json({ error: 'Password change failed!', details: String(err) });
+  }
+});
+
+// GET /api/users - Get ALL users including admins (admin-only)
+usersRouter.get('/', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const users = await getAllUsers();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch all users from database!', details: err });
+  }
+});
+
+// GET /api/users/sessions/:user_id - Get all active sessions for a specific user (admin-only)
+usersRouter.get('/sessions/:user_id', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.params.user_id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user_id' });
+    }
+    const sessions = await getUserSessions(userId);
+    res.json(sessions);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch user sessions!', details: err });
+  }
+});
+
+// DELETE /api/users/sessions/:user_id - Delete all sessions for a user (force logout, admin-only)
+usersRouter.delete('/sessions/:user_id', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.params.user_id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user_id' });
+    }
+    const deletedCount = await deleteAllUserSessions(userId);
+    res.json({ success: true, sessions_deleted: deletedCount });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete user sessions!', details: err });
   }
 });
 

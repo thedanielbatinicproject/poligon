@@ -159,6 +159,77 @@ export async function getJSON(path: string) {
   return data;
 }
 
+async function putJSON(path: string, body?: any) {
+  const res = await fetch(API_BASE + path, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  })
+  const contentType = res.headers.get('content-type') || ''
+  let data: any = null
+  if (contentType.includes('application/json')) {
+    data = await res.json()
+  } else {
+    data = await res.text()
+  }
+  if (!res.ok) {
+    let message = 'Request failed';
+    try {
+      if (data && typeof data === 'object') {
+        message = data.error ?? data.message ?? JSON.stringify(data);
+      } else if (typeof data === 'string') {
+        message = data;
+      }
+    } catch (e) {}
+    const err: any = new Error(message)
+    err.status = res.status
+    err.body = data
+    try {
+      if ((window as any).__pushNotification) {
+        ;(window as any).__pushNotification(String(message), undefined, true)
+      }
+    } catch (e) {}
+    throw err
+  }
+  return data;
+}
+
+async function deleteJSON(path: string) {
+  const res = await fetch(API_BASE + path, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  const contentType = res.headers.get('content-type') || ''
+  let data: any = null
+  if (contentType.includes('application/json')) {
+    data = await res.json()
+  } else {
+    data = await res.text()
+  }
+  if (!res.ok) {
+    let message = 'Request failed';
+    try {
+      if (data && typeof data === 'object') {
+        message = data.error ?? data.message ?? JSON.stringify(data);
+      } else if (typeof data === 'string') {
+        message = data;
+      }
+    } catch (e) {}
+    const err: any = new Error(message)
+    err.status = res.status
+    err.body = data
+    try {
+      if ((window as any).__pushNotification) {
+        ;(window as any).__pushNotification(String(message), undefined, true)
+      }
+    } catch (e) {}
+    throw err
+  }
+  return data;
+}
+
 // High-level endpoints
 export const api = {
   loginLocal: (payload: { email: string; password: string }) => postJSON('/api/auth/login-local', payload),
@@ -169,6 +240,18 @@ export const api = {
   getStorageStats: () => getJSON('/api/utility/storage'),
   getActiveSessionsCount: () => getJSON('/api/utility/sessions/count'),
   getRenderServiceStatus: () => getJSON('/api/utility/render-service/status'),
+  // User management endpoints (admin-only)
+  getAllUsers: () => getJSON('/api/users'),
+  getUserById: (userId: number) => getJSON(`/api/users/check/${userId}`),
+  createUser: (userData: any) => postJSON('/api/users', userData),
+  updateUser: (userId: number, userData: any) => putJSON(`/api/users/${userId}`, userData),
+  deleteUser: (userId: number) => deleteJSON(`/api/users/${userId}`),
+  getUserSessions: (userId: number) => getJSON(`/api/users/sessions/${userId}`),
+  deleteAllUserSessions: (userId: number) => deleteJSON(`/api/users/sessions/${userId}`),
+  bulkUpdateRoles: (payload: { user_ids: number[], new_role: string }) => putJSON('/api/users/bulk-role', payload),
+  getAllSessions: () => getJSON('/api/utility/sessions/all'),
+  deleteSession: (sessionId: string) => deleteJSON(`/api/utility/session/${sessionId}`),
 };
 
 export default api;
+
