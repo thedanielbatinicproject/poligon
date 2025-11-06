@@ -9,7 +9,6 @@ import apiRouter from './routes/api.routes';
 import latexContentRouter from './routes/latexContent.routes';
 import { setIo } from './render/onlineRenderer';
 import fs from 'fs';
-import path from 'path';
 import passport from 'passport';
 import samlStrategy from './config/saml';
 import { generateMetadata } from './config/saml';
@@ -155,6 +154,12 @@ app.get('/d/:hashCode', async (req, res) => {
     const latestVersion = versions[versions.length - 1];
     
     if (!latestVersion.compiled_pdf_path) {
+      return res.status(404).send(ErrorTemplates.pdfNotAvailable(document_id));
+    }
+
+    // Check if PDF file actually exists on disk
+    const pdfPath = path.resolve(process.cwd(), latestVersion.compiled_pdf_path);
+    if (!fs.existsSync(pdfPath)) {
       return res.status(404).send(ErrorTemplates.pdfNotAvailable(document_id));
     }
 
