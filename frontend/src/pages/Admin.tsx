@@ -143,8 +143,10 @@ export default function Admin() {
     }
   };
 
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
+  const formatBytes = (bytes: number, type: 'database' | 'disk' = 'database'): string => {
+    if (!bytes || isNaN(bytes) || bytes === 0) {
+      return type === 'disk' ? 'no data saved on disk' : 'no db records';
+    }
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -228,13 +230,13 @@ export default function Admin() {
 
               <div className="stat-item">
                 <div className="stat-label">Database Storage</div>
-                <div className="stat-value">{formatBytes(stats?.databaseSize || 0)}</div>
+                <div className="stat-value">{formatBytes(stats?.databaseSize || 0, 'database')}</div>
                 <div className="stat-description">Recorded file sizes in database</div>
               </div>
 
               <div className="stat-item">
                 <div className="stat-label">Disk Storage</div>
-                <div className="stat-value">{formatBytes(stats?.folderSize || 0)}</div>
+                <div className="stat-value">{formatBytes(stats?.folderSize || 0, 'disk')}</div>
                 <div className="stat-description">Actual files on disk</div>
               </div>
 

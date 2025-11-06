@@ -426,13 +426,19 @@ export default function AdminDocumentEditors({ onClose }: AdminDocumentEditorsPr
                             <td>{editor.added_by_name || 'N/A'}</td>
                             <td>{formatDate(editor.added_at)}</td>
                             <td>
-                              <button
-                                onClick={() => openRemoveConfirmation(editor)}
-                                className="btn btn-danger"
-                                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                              >
-                                Remove
-                              </button>
+                              {editor.role !== 'owner' ? (
+                                <button
+                                  onClick={() => openRemoveConfirmation(editor)}
+                                  className="btn btn-danger"
+                                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                                >
+                                  Remove
+                                </button>
+                              ) : (
+                                <span style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
+                                  Cannot remove owner
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))

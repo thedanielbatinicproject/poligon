@@ -338,10 +338,6 @@ export default function AdminDocumentVersions({ onClose }: AdminDocumentVersions
             </>
           )}
         </div>
-
-        <div className="admin-modal-footer">
-          <button onClick={onClose} className="btn btn-secondary">Close</button>
-        </div>
       </div>
     </div>
   );

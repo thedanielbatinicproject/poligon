@@ -25,8 +25,8 @@ utilityRouter.get('/document-types', checkLogin, async (req: Request, res: Respo
 // POST /api/document-types - Only admin can add a new document type
 utilityRouter.post('/document-types', checkAdmin, async (req: Request, res: Response) => {
   const { type_name, description } = req.body;
-  if (!type_name || typeof type_name !== 'string' || type_name.length > 50 || type_name.length !== 0) {
-    return res.status(400).json({ error: 'Invalid type_name. Allowed: string, max 50, chars cannot be empty.' });
+  if (!type_name || typeof type_name !== 'string' || type_name.trim().length === 0 || type_name.length > 50) {
+    return res.status(400).json({ error: 'Invalid type_name. Allowed: string, max 50 chars, cannot be empty.' });
   }
   try {
     const type_id = await DocumentsService.createDocumentType(type_name, description || '');

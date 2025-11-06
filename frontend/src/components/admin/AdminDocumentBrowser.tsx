@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../lib/api';
+import WorkflowHistoryModal from '../WorkflowHistoryModal';
+import * as TasksApi from '../../lib/tasksApi';
 
 interface Document {
   document_id: number;
@@ -15,6 +17,12 @@ interface Document {
   mentor_names: string | null;
 }
 
+interface DocumentType {
+  type_id: number;
+  type_name: string;
+  description: string;
+}
+
 type SortField = 'document_id' | 'title' | 'status' | 'language' | 'grade' | 'created_at' | 'updated_at' | 'creator_name' | 'type_name';
 type SortDirection = 'asc' | 'desc' | null;
 
@@ -25,12 +33,19 @@ interface AdminDocumentBrowserProps {
 export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Workflow History Modal
+  const [showWorkflowHistory, setShowWorkflowHistory] = useState(false);
+  const [workflowDocumentId, setWorkflowDocumentId] = useState<number | null>(null);
+  const [usersMap, setUsersMap] = useState<Record<number, string>>({});
   
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [languageFilter, setLanguageFilter] = useState<string>('');
+  const [typeFilter, setTypeFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Sorting
@@ -39,11 +54,13 @@ export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserPr
 
   useEffect(() => {
     loadDocuments();
+    loadDocumentTypes();
+    loadUsersMap();
   }, []);
 
   useEffect(() => {
     filterAndSortDocuments();
-  }, [documents, statusFilter, languageFilter, searchQuery, sortField, sortDirection]);
+  }, [documents, statusFilter, languageFilter, typeFilter, searchQuery, sortField, sortDirection]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -76,6 +93,35 @@ export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserPr
     }
   }
 
+  async function loadDocumentTypes() {
+    try {
+      const data = await api.getAllDocumentTypes();
+      setDocumentTypes(data);
+    } catch (err: any) {
+      console.error('Failed to load document types:', err);
+    }
+  }
+
+  async function loadUsersMap() {
+    try {
+      const list = await TasksApi.getReducedUsers();
+      if (!Array.isArray(list)) return;
+      const map: Record<number, string> = {};
+      for (const u of list) {
+        const id = Number(u.user_id ?? u.id ?? u.userId ?? 0);
+        if (!id) continue;
+        const name = (u.display_name && String(u.display_name).trim()) || 
+                     `${(u.first_name ?? u.firstName ?? '').trim()} ${(u.last_name ?? u.lastName ?? '').trim()}`.trim() || 
+                     (u.email ?? '') || 
+                     String(id);
+        map[id] = name;
+      }
+      setUsersMap(map);
+    } catch (err) {
+      console.error('Failed to load users map:', err);
+    }
+  }
+
   function filterAndSortDocuments() {
     let result = [...documents];
 
@@ -87,6 +133,14 @@ export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserPr
     // Apply language filter
     if (languageFilter) {
       result = result.filter(doc => doc.language === languageFilter);
+    }
+
+    // Apply type filter
+    if (typeFilter) {
+      const selectedType = documentTypes.find(t => t.type_id.toString() === typeFilter);
+      if (selectedType) {
+        result = result.filter(doc => doc.type_name === selectedType.type_name);
+      }
     }
 
     // Apply search filter
@@ -217,11 +271,21 @@ export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserPr
                       <th onClick={() => handleSort('title')} className="sortable-header">
                         Title {getSortIcon('title')}
                       </th>
-                      <th onClick={() => handleSort('type_name')} className="sortable-header">
-                        Type {getSortIcon('type_name')}
-                      </th>
-                      <th onClick={() => handleSort('type_name')} className="sortable-header">
-                        Type {getSortIcon('type_name')}
+                      <th>
+                        Type
+                        <select
+                          value={typeFilter}
+                          onChange={e => setTypeFilter(e.target.value)}
+                          className="column-filter"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <option value="">All Types</option>
+                          {documentTypes.map(type => (
+                            <option key={type.type_id} value={type.type_id.toString()}>
+                              {type.type_name}
+                            </option>
+                          ))}
+                        </select>
                       </th>
                       <th>
                         Status
@@ -257,18 +321,18 @@ export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserPr
                       </th>
                       <th onClick={() => handleSort('creator_name')} className="sortable-header">
                         Creator {getSortIcon('creator_name')}
-                        Creator {getSortIcon('creator_name')}
                       </th>
                       <th>Mentors</th>
                       <th onClick={() => handleSort('updated_at')} className="sortable-header">
                         Updated {getSortIcon('updated_at')}
                       </th>
+                      <th>Workflow</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredDocuments.length === 0 ? (
                       <tr>
-                        <td colSpan={9} style={{ textAlign: 'center', padding: '2rem' }}>
+                        <td colSpan={10} style={{ textAlign: 'center', padding: '2rem' }}>
                           No documents found
                         </td>
                       </tr>
@@ -279,11 +343,23 @@ export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserPr
                           <td title={doc.title}>{doc.title}</td>
                           <td>{doc.type_name || 'N/A'}</td>
                           <td>{getStatusBadge(doc.status)}</td>
-                          <td>{doc.language.toUpperCase()}</td>
+                          <td>{doc.language ? doc.language.toUpperCase() : '-'}</td>
                           <td>{doc.grade !== null ? doc.grade : '-'}</td>
-                          <td title={doc.creator_email}>{doc.creator_name}</td>
+                          <td title={doc.creator_email}>{doc.creator_name || '-'}</td>
                           <td>{doc.mentor_names || '-'}</td>
                           <td>{formatDate(doc.updated_at)}</td>
+                          <td>
+                            <button
+                              onClick={() => {
+                                setWorkflowDocumentId(doc.document_id);
+                                setShowWorkflowHistory(true);
+                              }}
+                              className="btn btn-secondary"
+                              style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
+                            >
+                              SEE WORKFLOW HISTORY
+                            </button>
+                          </td>
                         </tr>
                       ))
                     )}
@@ -294,6 +370,17 @@ export default function AdminDocumentBrowser({ onClose }: AdminDocumentBrowserPr
           )}
         </div>
       </div>
+
+      {/* Workflow History Modal */}
+      <WorkflowHistoryModal
+        open={showWorkflowHistory}
+        onClose={() => {
+          setShowWorkflowHistory(false);
+          setWorkflowDocumentId(null);
+        }}
+        documentId={workflowDocumentId}
+        usersMap={usersMap}
+      />
     </div>
   );
 }

@@ -136,15 +136,14 @@ export class DocumentsService {
     if (!doc) return false;
     const isMentorOrOwner = await this.isEditor(document_id, user_id, ['owner', MENTOR_ROLE]);
     if (role === 'admin' || (role === MENTOR_ROLE && isMentorOrOwner)) {
-      // Delete from related tables
+      // Delete all related data first
       await pool.query('DELETE FROM document_editors WHERE document_id = ?', [document_id]);
       await pool.query('DELETE FROM document_versions WHERE document_id = ?', [document_id]);
       await pool.query('DELETE FROM workflow_history WHERE document_id = ?', [document_id]);
       await pool.query('DELETE FROM tasks WHERE document_id = ?', [document_id]);
-      // Set document_id to NULL in file_uploads and sessions
-      await pool.query('UPDATE file_uploads SET document_id = NULL WHERE document_id = ?', [document_id]);
-      await pool.query('UPDATE sessions SET document_id = NULL WHERE document_id = ?', [document_id]);
-      // Delete document itself
+      await pool.query('DELETE FROM file_uploads WHERE document_id = ?', [document_id]);
+      // Don't touch sessions - they will expire naturally and document_id FK allows NULL
+      // Delete the document itself from documents table
       await pool.query('DELETE FROM documents WHERE document_id = ?', [document_id]);
       return true;
     }

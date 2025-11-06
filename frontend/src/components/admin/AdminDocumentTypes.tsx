@@ -178,13 +178,14 @@ export default function AdminDocumentTypes({ onClose }: AdminDocumentTypesProps)
                             <button
                               onClick={() => openEditForm(type)}
                               className="btn btn-secondary"
-                              style={{ marginRight: '0.5rem' }}
+                              style={{ minWidth: '80px', marginRight: '0.75rem' }}
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => openDeleteConfirmation(type)}
                               className="btn btn-danger"
+                              style={{ minWidth: '80px' }}
                             >
                               Delete
                             </button>

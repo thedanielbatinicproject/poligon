@@ -845,6 +845,7 @@ input.auth-input, .auth-input input, .profile-card input.auth-input, .profile-ca
   max-height: 60vh; /* increased from 40vh */
   display: flex;
   flex-direction: column;
+  z-index: 10000; /* below notifications (99999) */
 }
 .chat-widget-header {
   display: flex;

@@ -167,6 +167,7 @@ export default function AdminFileManager({ onClose }: AdminFileManagerProps) {
   }
 
   function formatFileSize(bytes: number): string {
+    if (!bytes || isNaN(bytes)) return 'empty';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
@@ -184,12 +185,12 @@ export default function AdminFileManager({ onClose }: AdminFileManagerProps) {
 
   function getFileTypeIcon(fileType: string): string {
     const icons: Record<string, string> = {
-      image: '🖼️',
-      pdf: '📄',
-      bib: '📚',
-      tex: '📝'
+      image: 'IMG',
+      pdf: 'PDF',
+      bib: 'BIB',
+      tex: 'TEX'
     };
-    return icons[fileType] || '📎';
+    return icons[fileType] || 'FILE';
   }
 
   return (
@@ -361,22 +362,20 @@ export default function AdminFileManager({ onClose }: AdminFileManagerProps) {
             </>
           )}
         </div>
-
-        <div className="admin-modal-footer">
-          <button onClick={onClose} className="btn btn-secondary">Close</button>
-        </div>
       </div>
 
       {/* Delete Confirmation */}
-      {showDeleteConfirm && fileToDelete && (
-        <ConfirmationBox
-          title="Delete File"
-          question={`Are you sure you want to delete "${fileToDelete.file_name}"? This action cannot be undone.`}
-          isOpen={showDeleteConfirm}
-          onConfirm={handleDeleteFile}
-          onCancel={() => setShowDeleteConfirm(false)}
-        />
-      )}
+      <div onClick={e => e.stopPropagation()}>
+        {showDeleteConfirm && fileToDelete && (
+          <ConfirmationBox
+            title="Delete File"
+            question={`Are you sure you want to delete "${fileToDelete.file_name}"? This action cannot be undone.`}
+            isOpen={showDeleteConfirm}
+            onConfirm={handleDeleteFile}
+            onCancel={() => setShowDeleteConfirm(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -53,6 +53,10 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Trust proxy - enable if behind nginx or cloud load balancer
+// This allows Express to read X-Forwarded-For and X-Real-IP headers
+app.set('trust proxy', true);
+
 // Middleware
 app.use(morgan('dev'));
 app.use(express.json());
@@ -93,6 +97,25 @@ const sessionOptions: session.SessionOptions = {
   cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 * 365 * 5 } // session duration set to 5 years
 };
 app.use(session(sessionOptions));
+
+// Middleware to capture IP address and user agent in session
+app.use((req, res, next) => {
+  if (req.session) {
+    // Get real IP address (handles proxy/localhost scenarios)
+    const ip = req.headers['x-forwarded-for'] || 
+               req.headers['x-real-ip'] || 
+               req.socket.remoteAddress || 
+               req.ip || 
+               '127.0.0.1';
+    
+    // Store IP address (use first IP if comma-separated list from proxies)
+    (req.session as any).ip_address = Array.isArray(ip) ? ip[0] : ip.toString().split(',')[0].trim();
+    
+    // Store user agent
+    (req.session as any).user_agent = req.headers['user-agent'] || 'Unknown';
+  }
+  next();
+});
 
 // Initialize Passport and use SAML strategy
 app.use(passport.initialize());
