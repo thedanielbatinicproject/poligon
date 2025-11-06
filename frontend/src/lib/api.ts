@@ -195,11 +195,12 @@ async function putJSON(path: string, body?: any) {
   return data;
 }
 
-async function deleteJSON(path: string) {
+async function deleteJSON(path: string, body?: any) {
   const res = await fetch(API_BASE + path, {
     method: 'DELETE',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
   })
   const contentType = res.headers.get('content-type') || ''
   let data: any = null
@@ -251,6 +252,64 @@ export const api = {
   bulkUpdateRoles: (payload: { user_ids: number[], new_role: string }) => putJSON('/api/users/bulk-role', payload),
   getAllSessions: () => getJSON('/api/utility/sessions/all'),
   deleteSession: (sessionId: string) => deleteJSON(`/api/utility/session/${sessionId}`),
+  // Document management endpoints (admin-only)
+  getAllDocuments: () => getJSON('/api/documents/all'),
+  getDocumentById: (documentId: number) => getJSON(`/api/documents/${documentId}`),
+  deleteDocument: (documentId: number) => deleteJSON(`/api/documents/${documentId}`),
+  // Document types CRUD
+  getAllDocumentTypes: () => getJSON('/api/utility/document-types'),
+  createDocumentType: (data: { type_name: string; description: string }) => postJSON('/api/utility/document-types', data),
+  updateDocumentType: (typeId: number, data: { type_name: string; description: string }) => putJSON(`/api/utility/document-types/${typeId}`, data),
+  deleteDocumentType: (typeId: number) => deleteJSON(`/api/utility/document-types/${typeId}`),
+  // Document editors management
+  getDocumentEditors: (documentId: number) => getJSON(`/api/documents/${documentId}/editors`),
+  addDocumentEditor: (documentId: number, data: { user_id: number; editor_role: string }) => postJSON(`/api/documents/${documentId}/editors`, data),
+  removeDocumentEditor: (documentId: number, userId: number) => deleteJSON(`/api/documents/${documentId}/editors`, { user_id: userId }),
+  // File management
+  getDocumentFiles: (documentId: number) => getJSON(`/api/files/document/${documentId}`),
+  uploadImage: (documentId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('document_id', String(documentId));
+    return fetch(API_BASE + '/api/files/upload/image', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
+    }).then(async res => {
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        const err: any = new Error(data.error || 'Upload failed');
+        err.status = res.status;
+        err.body = data;
+        throw err;
+      }
+      return data;
+    });
+  },
+  uploadDocument: (documentId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('document_id', String(documentId));
+    return fetch(API_BASE + '/api/files/upload/document', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
+    }).then(async res => {
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        const err: any = new Error(data.error || 'Upload failed');
+        err.status = res.status;
+        err.body = data;
+        throw err;
+      }
+      return data;
+    });
+  },
+  deleteFile: (fileId: number) => deleteJSON(`/api/files/${fileId}`),
+  downloadFile: (fileId: number) => `${API_BASE}/api/files/download/${fileId}`,
+  // Document versions
+  getDocumentVersions: (documentId: number) => getJSON(`/api/documents/${documentId}/versions`),
+  downloadVersion: (documentId: number, versionId: number) => `${API_BASE}/api/documents/${documentId}/versions/${versionId}/download`,
 };
 
 export default api;

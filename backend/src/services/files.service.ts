@@ -45,7 +45,16 @@ export async function deleteFileUpload(file_id: number): Promise<void> {
 
 // Get all files for a document
 export async function getFilesByDocument(document_id: number): Promise<FileUpload[]> {
-  const [rows] = await db.execute('SELECT * FROM file_uploads WHERE document_id = ?', [document_id]);
+  const [rows] = await db.execute(
+    `SELECT 
+      f.*,
+      CONCAT(u.first_name, ' ', u.last_name) AS uploader_name
+     FROM file_uploads f
+     LEFT JOIN users u ON f.uploaded_by = u.user_id
+     WHERE f.document_id = ?
+     ORDER BY f.uploaded_at DESC`,
+    [document_id]
+  );
   return rows as FileUpload[];
 }
 

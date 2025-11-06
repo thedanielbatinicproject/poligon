@@ -163,13 +163,54 @@ export class DocumentsService {
   }
 
   /**
+   * Gets all documents with enriched data (creator name, type name, mentor names).
+   * Admin-only method for Document Management dashboard.
+   * @returns Array of documents with joined data
+   */
+  static async getAllDocumentsForAdmin(): Promise<any[]> {
+    const [rows] = await pool.query(
+      `SELECT 
+        d.*,
+        CONCAT(creator.first_name, ' ', creator.last_name) AS creator_name,
+        creator.email AS creator_email,
+        dt.type_name,
+        GROUP_CONCAT(
+          CASE WHEN de.role = 'mentor' 
+          THEN CONCAT(mentor.first_name, ' ', mentor.last_name)
+          ELSE NULL END
+          SEPARATOR ', '
+        ) AS mentor_names
+       FROM documents d
+       LEFT JOIN users creator ON d.created_by = creator.user_id
+       LEFT JOIN document_types dt ON d.type_id = dt.type_id
+       LEFT JOIN document_editors de ON d.document_id = de.document_id
+       LEFT JOIN users mentor ON de.user_id = mentor.user_id AND de.role = 'mentor'
+       GROUP BY d.document_id
+       ORDER BY d.updated_at DESC`
+    );
+    return rows as any[];
+  }
+
+  /**
    * Gets all editors for a document.
    * @param document_id Document ID
    * @returns Array of editor objects (user_id, role, added_by, added_at)
    */
   static async getDocumentEditors(document_id: number): Promise<Array<{ user_id: number; role: string; added_by: number; added_at: Date | string }>> {
     const [rows] = await pool.query(
-      'SELECT user_id, role, added_by, added_at FROM document_editors WHERE document_id = ?',
+      `SELECT 
+        de.user_id, 
+        de.role, 
+        de.added_by, 
+        de.added_at,
+        CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+        u.email,
+        CONCAT(adder.first_name, ' ', adder.last_name) AS added_by_name
+       FROM document_editors de
+       LEFT JOIN users u ON de.user_id = u.user_id
+       LEFT JOIN users adder ON de.added_by = adder.user_id
+       WHERE de.document_id = ?
+       ORDER BY de.added_at DESC`,
       [document_id]
     );
     return rows as Array<{ user_id: number; role: string; added_by: number; added_at: Date | string }>;
@@ -328,7 +369,15 @@ export class DocumentsService {
   */
   static async getDocumentVersions(document_id: number): Promise<any[]> {
     const [rows] = await pool.query(
-      'SELECT * FROM document_versions WHERE document_id = ? ORDER BY version_number ASC',
+      `SELECT 
+        dv.*,
+        CONCAT(u.first_name, ' ', u.last_name) AS editor_name,
+        d.title AS document_title
+       FROM document_versions dv
+       LEFT JOIN users u ON dv.edited_by = u.user_id
+       LEFT JOIN documents d ON dv.document_id = d.document_id
+       WHERE dv.document_id = ? 
+       ORDER BY dv.version_number DESC`,
       [document_id]
     );
     return rows as any[];

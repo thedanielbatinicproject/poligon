@@ -109,7 +109,7 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
 });
 
 // GET /api/documents/all - Get all documents for current user (owner/editor/mentor/viewer or created_by)
-// Admin gets ALL documents from database
+// Admin gets ALL documents from database with enriched data (creator name, type name, mentor names)
 documentsRouter.get('/all', checkLogin, async (req: Request, res: Response) => {
   const user_id = req.session.user_id;
   const role = req.session.role;
@@ -119,12 +119,9 @@ documentsRouter.get('/all', checkLogin, async (req: Request, res: Response) => {
   try {
     let documents: any[];
     
-    // Admin gets ALL documents
+    // Admin gets ALL documents with enriched data
     if (role === 'admin') {
-      const [rows] = await pool.query(
-        `SELECT * FROM documents ORDER BY updated_at DESC`
-      );
-      documents = rows as any[];
+      documents = await DocumentsService.getAllDocumentsForAdmin();
     } else {
       // Regular users get only documents where they are editor or creator
       const [rows] = await pool.query(

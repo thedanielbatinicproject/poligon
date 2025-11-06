@@ -5,6 +5,11 @@ import AdminUserFinder from '../components/admin/AdminUserFinder';
 import AdminEditCreateUser from '../components/admin/AdminEditCreateUser';
 import AdminRoleAssignment from '../components/admin/AdminRoleAssignment';
 import AdminSessionManager from '../components/admin/AdminSessionManager';
+import AdminDocumentBrowser from '../components/admin/AdminDocumentBrowser';
+import AdminDocumentTypes from '../components/admin/AdminDocumentTypes';
+import AdminDocumentEditors from '../components/admin/AdminDocumentEditors';
+import AdminFileManager from '../components/admin/AdminFileManager';
+import AdminDocumentVersions from '../components/admin/AdminDocumentVersions';
 import '../styles.css';
 import './admin.css';
 
@@ -79,6 +84,13 @@ export default function Admin() {
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
   const [showRoleAssignment, setShowRoleAssignment] = useState(false);
   const [showSessionManager, setShowSessionManager] = useState(false);
+  
+  // Document Management modals
+  const [showDocumentBrowser, setShowDocumentBrowser] = useState(false);
+  const [showDocumentTypes, setShowDocumentTypes] = useState(false);
+  const [showDocumentEditors, setShowDocumentEditors] = useState(false);
+  const [showFileManager, setShowFileManager] = useState(false);
+  const [showDocumentVersions, setShowDocumentVersions] = useState(false);
 
   useEffect(() => {
     loadStatistics();
@@ -292,6 +304,41 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+        <div className={`admin-card document-management ${isCardCollapsed('document-management') ? 'collapsed' : ''}`}>
+          <div className="card-header" onClick={() => toggleCardCollapse('document-management')}>
+            <h2>Document Management</h2>
+            <span className="collapse-icon">{isCardCollapsed('document-management') ? '▼' : '▲'}</span>
+          </div>
+          <div className="card-body">
+            <div className="user-management-grid">
+              <div className="management-item" onClick={() => setShowDocumentBrowser(true)}>
+                <h3>All Documents</h3>
+                <p>Browse all documents with advanced filtering by status, type, and language</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowDocumentTypes(true)}>
+                <h3>Document Types</h3>
+                <p>Manage document type categories (thesis, report, seminar, etc.)</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowDocumentEditors(true)}>
+                <h3>Change Document Editors</h3>
+                <p>Add or remove editors, viewers, and mentors for any document</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowFileManager(true)}>
+                <h3>Storage Management</h3>
+                <p>View and manage uploaded files (images, PDFs, BIB, TEX) per document</p>
+              </div>
+
+              <div className="management-item" onClick={() => setShowDocumentVersions(true)}>
+                <h3>Document Versions</h3>
+                <p>Browse all rendered versions with download capability</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {showUserBrowser && <AdminUserBrowser onClose={() => setShowUserBrowser(false)} />}
@@ -306,6 +353,12 @@ export default function Admin() {
       )}
       {showRoleAssignment && <AdminRoleAssignment onClose={() => setShowRoleAssignment(false)} />}
       {showSessionManager && <AdminSessionManager onClose={() => setShowSessionManager(false)} />}
+      
+      {showDocumentBrowser && <AdminDocumentBrowser onClose={() => setShowDocumentBrowser(false)} />}
+      {showDocumentTypes && <AdminDocumentTypes onClose={() => setShowDocumentTypes(false)} />}
+      {showDocumentEditors && <AdminDocumentEditors onClose={() => setShowDocumentEditors(false)} />}
+      {showFileManager && <AdminFileManager onClose={() => setShowFileManager(false)} />}
+      {showDocumentVersions && <AdminDocumentVersions onClose={() => setShowDocumentVersions(false)} />}
     </div>
   );
 }
