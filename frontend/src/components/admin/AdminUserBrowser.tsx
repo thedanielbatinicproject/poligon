@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import AdminResendPasswordModal from './AdminResendPasswordModal';
 
 interface User {
   user_id: number;
@@ -13,6 +14,7 @@ interface User {
   display_name: string | null;
   created_at: string;
   updated_at: string;
+  has_local?: boolean; // Whether user exists in local_users table
 }
 
 interface AdminUserBrowserProps {
@@ -28,6 +30,7 @@ export default function AdminUserBrowser({ onClose }: AdminUserBrowserProps) {
   const [languageFilter, setLanguageFilter] = useState<string>('no filter');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+  const [resendPasswordUser, setResendPasswordUser] = useState<User | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -67,7 +70,20 @@ export default function AdminUserBrowser({ onClose }: AdminUserBrowserProps) {
     try {
       setLoading(true);
       const data = await api.getAllUsers();
-      setUsers(data);
+      
+      // Check which users have local_users entries
+      const usersWithLocalStatus = await Promise.all(
+        data.map(async (user: User) => {
+          try {
+            const { has_local } = await api.checkUserHasLocal(user.user_id);
+            return { ...user, has_local };
+          } catch (err) {
+            return { ...user, has_local: false };
+          }
+        })
+      );
+      
+      setUsers(usersWithLocalStatus);
     } catch (err) {
       console.error('Failed to load users:', err);
     } finally {
@@ -260,6 +276,7 @@ export default function AdminUserBrowser({ onClose }: AdminUserBrowserProps) {
                   <th onClick={() => handleSort('created_at')} className="sortable-header">
                     Created At {getSortIcon('created_at')}
                   </th>
+                  <th style={{ textAlign: 'center' }}>Quick Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -277,6 +294,18 @@ export default function AdminUserBrowser({ onClose }: AdminUserBrowserProps) {
                     <td>{user.preferred_language.toUpperCase()}</td>
                     <td className="affiliation-cell">{user.affiliation || '-'}</td>
                     <td className="date-cell">{formatDate(user.created_at)}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      {user.has_local && (
+                        <button 
+                          onClick={() => setResendPasswordUser(user)} 
+                          className="btn btn-sm btn-primary"
+                          style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                          title="Generate and send new password"
+                        >
+                          SEND NEW PASSWORD
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -284,6 +313,14 @@ export default function AdminUserBrowser({ onClose }: AdminUserBrowserProps) {
           </div>
         </div>
       </div>
+      
+      {resendPasswordUser && (
+        <AdminResendPasswordModal 
+          user={resendPasswordUser} 
+          onClose={() => setResendPasswordUser(null)}
+          onSuccess={() => loadUsers()}
+        />
+      )}
     </div>
   );
 }

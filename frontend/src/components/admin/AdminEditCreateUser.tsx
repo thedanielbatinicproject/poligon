@@ -89,7 +89,7 @@ export default function AdminEditCreateUser({ onClose, user, mode }: AdminEditCr
     e.preventDefault();
 
     // Validation
-    if (!formData.email || !formData.first_name || !formData.last_name || !formData.role) {
+    if (!formData.email || !formData.first_name || !formData.last_name) {
       window.__pushNotification?.('Please fill in all required fields', 'error');
       return;
     }
@@ -98,17 +98,24 @@ export default function AdminEditCreateUser({ onClose, user, mode }: AdminEditCr
       setSubmitting(true);
 
       if (mode === 'create') {
-        await api.createUser({
-          principal_name: formData.principal_name || formData.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          email: formData.email,
-          role: formData.role,
-          preferred_language: formData.preferred_language,
-          affiliation: formData.affiliation || null,
-          display_name: formData.display_name || null,
+        // Use register-local endpoint for creating users with local_users entry
+        await fetch('/api/users/register-local', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: formData.email,
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+          })
+        }).then(async res => {
+          if (!res.ok) {
+            const errBody = await res.json();
+            throw new Error(errBody.error || 'Registration failed');
+          }
+          return res.json();
         });
-        window.__pushNotification?.('User created successfully', 'success');
+        window.__pushNotification?.('User created successfully. Password sent to email.', 8000, false);
       } else if (mode === 'edit' && formData.user_id) {
         await api.updateUser(formData.user_id, {
           principal_name: formData.principal_name,
@@ -126,7 +133,7 @@ export default function AdminEditCreateUser({ onClose, user, mode }: AdminEditCr
       onClose();
     } catch (err: any) {
       console.error('Failed to save user:', err);
-      window.__pushNotification?.(err.body?.error || 'Failed to save user', 'error');
+      window.__pushNotification?.(err.message || err.body?.error || 'Failed to save user', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -141,128 +148,181 @@ export default function AdminEditCreateUser({ onClose, user, mode }: AdminEditCr
         </div>
         <div className="admin-modal-body">
           <form onSubmit={handleSubmit} className="admin-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label>
-                  Email <span className="required">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  placeholder="user@example.com"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Principal Name (OID)</label>
-                <input
-                  type="text"
-                  name="principal_name"
-                  value={formData.principal_name}
-                  onChange={handleChange}
-                  placeholder="Leave empty to use email"
-                />
-                <span className="hint">Unique identifier for SAML/OID authentication</span>
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>
-                  First Name <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  Last Name <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Display Name</label>
-                <input
-                  type="text"
-                  name="display_name"
-                  value={formData.display_name || ''}
-                  onChange={handleChange}
-                  placeholder="Optional custom display name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Affiliation</label>
-                <input
-                  type="text"
-                  name="affiliation"
-                  value={formData.affiliation || ''}
-                  onChange={handleChange}
-                  placeholder="Organization or institution"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>
-                  Role <span className="required">*</span>
-                </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="user">User</option>
-                  <option value="student">Student</option>
-                  <option value="mentor">Mentor</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>
-                  Preferred Language <span className="required">*</span>
-                </label>
-                <select
-                  name="preferred_language"
-                  value={formData.preferred_language}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="hr">Croatian (HR)</option>
-                  <option value="en">English (EN)</option>
-                </select>
-              </div>
-            </div>
-
-            {mode === 'create' && (
-              <div className="form-row">
-                <div className="form-group">
-                  <span className="hint">
-                    Password will be automatically generated and sent to the user's email address.
-                  </span>
+            {mode === 'create' ? (
+              <>
+                {/* Simple form for creating users - matches RegisterForm */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      Email <span className="required">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="user@example.com"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      First Name <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="first_name"
+                      value={formData.first_name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      Last Name <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <span className="hint" style={{ display: 'block', marginBottom: '16px', color: 'var(--text-secondary)' }}>
+                      Password will be automatically generated and sent to the user's email address.
+                      User will be created with default role 'student' and language 'Croatian'.
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Full form for editing users */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      Email <span className="required">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="user@example.com"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Principal Name (OID)</label>
+                    <input
+                      type="text"
+                      name="principal_name"
+                      value={formData.principal_name}
+                      onChange={handleChange}
+                      placeholder="Leave empty to use email"
+                    />
+                    <span className="hint">Unique identifier for SAML/OID authentication</span>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      First Name <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="first_name"
+                      value={formData.first_name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>
+                      Last Name <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Display Name</label>
+                    <input
+                      type="text"
+                      name="display_name"
+                      value={formData.display_name || ''}
+                      onChange={handleChange}
+                      placeholder="Optional custom display name"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Affiliation</label>
+                    <input
+                      type="text"
+                      name="affiliation"
+                      value={formData.affiliation || ''}
+                      onChange={handleChange}
+                      placeholder="Organization or institution"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      Role <span className="required">*</span>
+                    </label>
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="user">User</option>
+                      <option value="student">Student</option>
+                      <option value="mentor">Mentor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>
+                      Preferred Language <span className="required">*</span>
+                    </label>
+                    <select
+                      name="preferred_language"
+                      value={formData.preferred_language}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="hr">Croatian (HR)</option>
+                      <option value="en">English (EN)</option>
+                    </select>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="form-actions">
@@ -279,7 +339,7 @@ export default function AdminEditCreateUser({ onClose, user, mode }: AdminEditCr
                 className="form-btn form-btn-primary"
                 disabled={submitting}
               >
-                {submitting ? 'Saving...' : mode === 'create' ? 'Create User' : 'Save Changes'}
+                {submitting ? (mode === 'create' ? 'Registering...' : 'Saving...') : (mode === 'create' ? 'Register New User' : 'Save Changes')}
               </button>
             </div>
           </form>

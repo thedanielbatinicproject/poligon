@@ -27,7 +27,10 @@ export default function Documents() {
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   // Tasks sidebar
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    // Initialize from session if available
+    return session?.sidebar_state === 'closed';
+  });
   const [docTasks, setDocTasks] = useState<any[]>([]);
 
   // Files
@@ -50,6 +53,27 @@ export default function Documents() {
 
   // User's role on selected document
   const [userRole, setUserRole] = useState<string>('viewer');
+
+  // Load sidebar state from session
+  useEffect(() => {
+    if (session?.sidebar_state) {
+      setSidebarCollapsed(session.sidebar_state === 'closed');
+    }
+  }, [session?.sidebar_state]);
+
+  // Toggle sidebar and save to session
+  const toggleSidebar = () => {
+    const newState = !sidebarCollapsed;
+    setSidebarCollapsed(newState);
+    
+    // Save to session
+    fetch('/api/utility/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ sidebar_state: newState ? 'closed' : 'open' })
+    }).catch(() => {});
+  };
 
   // Load documents on mount
   useEffect(() => {
@@ -288,8 +312,10 @@ export default function Documents() {
   const handleFileDelete = async (fileId: number, uploadedBy: number) => {
     if (!selectedDocId) return;
     
+    const userId = user?.id || user?.user_id || session?.user_id;
+    
     // Check if user can delete (uploader, mentor, or admin)
-    const canDelete = uploadedBy === user?.id || userRole === 'mentor' || session?.role === 'admin';
+    const canDelete = uploadedBy === userId || userRole === 'mentor' || session?.role === 'admin';
     if (!canDelete) {
       notify.push('You do not have permission to delete this file', undefined, true);
       return;
@@ -449,7 +475,7 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
             }}>
               {!sidebarCollapsed && <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Tasks</h3>}
               <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                onClick={toggleSidebar}
                 className="btn btn-ghost"
                 style={{ padding: '0.3rem 0.5rem', fontSize: '1.1rem' }}
                 title={sidebarCollapsed ? 'Expand tasks' : 'Collapse tasks'}
@@ -777,7 +803,8 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
               ) : (
                 <div style={{ marginBottom: '0.6rem', maxHeight: 200, overflowY: 'auto' }}>
                   {docFiles.map((file: any) => {
-                    const canDelete = file.uploaded_by === user?.id || userRole === 'mentor' || session?.role === 'admin';
+                    const userId = user?.id || user?.user_id || session?.user_id;
+                    const canDelete = file.uploaded_by === userId || userRole === 'mentor' || session?.role === 'admin';
                     return (
                       <div key={file.file_id} style={{ 
                         marginBottom: '0.4rem', 
@@ -797,12 +824,12 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                           whiteSpace: 'nowrap',
                           marginRight: '0.5rem'
                         }}>
-                          📎 {file.file_name}
+                          {file.file_name}
                         </span>
                         {canDelete && (
                           <button 
-                            className="btn btn-ghost" 
-                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
+                            className="btn btn-danger" 
+                            style={{ padding: '0.3rem 0.5rem', fontSize: '0.7rem', minWidth: '40px' }}
                             onClick={() => {
                               setConfirmTitle('Delete File');
                               setConfirmQuestion(`Are you sure you want to delete "${file.file_name}"?`);
@@ -810,7 +837,7 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                               setConfirmOpen(true);
                             }}
                           >
-                            🗑️
+                            DEL
                           </button>
                         )}
                       </div>
@@ -829,7 +856,7 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                   fontSize: '0.8rem'
                 }}
               >
-                {uploading ? 'Uploading...' : '📤 Upload File'}
+                {uploading ? 'Uploading...' : 'Upload File'}
                 <input
                   type="file"
                   onChange={handleFileUpload}

@@ -15,6 +15,9 @@ const utilityRouter = Router();
 // GET /api/document-types - All logged-in users can get list of document types
 utilityRouter.get('/document-types', checkLogin, async (req: Request, res: Response) => {
   try {
+    // Cache for 5 minutes - document types rarely change
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    
     const types = await DocumentsService.getAllDocumentTypes();
     res.status(200).json(types);
   } catch (err) {

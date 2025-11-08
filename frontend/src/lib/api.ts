@@ -250,6 +250,8 @@ export const api = {
   getUserSessions: (userId: number) => getJSON(`/api/users/sessions/${userId}`),
   deleteAllUserSessions: (userId: number) => deleteJSON(`/api/users/sessions/${userId}`),
   bulkUpdateRoles: (payload: { user_ids: number[], new_role: string }) => putJSON('/api/users/bulk-role', payload),
+  resendPassword: (userId: number, recipientEmail: string) => postJSON('/api/users/resend-password', { user_id: userId, recipient_email: recipientEmail }),
+  checkUserHasLocal: (userId: number) => getJSON(`/api/users/${userId}/has-local`),
   getAllSessions: () => getJSON('/api/utility/sessions/all'),
   deleteSession: (sessionId: string) => deleteJSON(`/api/utility/session/${sessionId}`),
   // Document management endpoints (admin-only)

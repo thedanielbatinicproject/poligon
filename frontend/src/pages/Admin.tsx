@@ -110,8 +110,8 @@ export default function Admin() {
 
       setStats({
         totalRenders: renders.total_renders || 0,
-        databaseSize: storage.database_size || 0,
-        folderSize: storage.folder_size || 0,
+        databaseSize: Number(storage.database_size) || 0,
+        folderSize: Number(storage.folder_size) || 0,
         activeSessions: sessions.active_sessions || 0,
       });
     } catch (err: any) {

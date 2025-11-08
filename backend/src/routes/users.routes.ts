@@ -127,6 +127,9 @@ usersRouter.get('/check/:user_id', checkLogin, async (req: Request, res: Respons
 // GET /api/users/reduced - Get reduced user list for messaging, accessible to all logged-in users
 usersRouter.get('/reduced', checkLogin, async (req: Request, res: Response) => {
   try {
+    // Cache for 2 minutes - user list changes infrequently
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    
     // Allow admins and mentors to see admin users as well (so they can be selected/seen)
     const sessionRole = req.session?.role;
     const includeAdmins = sessionRole === 'admin' || sessionRole === 'mentor';
@@ -173,7 +176,7 @@ usersRouter.post('/register-local', async (req, res) => {
       }
 
       // pošalji email s lozinkom
-      await sendPasswordEmail(email, password);
+      await sendPasswordEmail(email, password, `${existing.first_name} ${existing.last_name}`, false);
 
       return res.status(201).json({ success: true, user_id: existing.user_id });
     }
@@ -205,7 +208,7 @@ usersRouter.post('/register-local', async (req, res) => {
       return res.status(500).json({ error: 'Failed to create user in local_users table.' });
     }
 
-    await sendPasswordEmail(email, password);
+    await sendPasswordEmail(email, password, `${first_name} ${last_name}`, false);
     res.status(201).json({ success: true, user_id: user.user_id });
   } catch (err) {
     res.status(500).json({ error: 'Registration failed', details: err });
@@ -287,6 +290,81 @@ usersRouter.delete('/sessions/:user_id', checkLogin, checkAdmin, async (req: Req
     res.json({ success: true, sessions_deleted: deletedCount });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete user sessions!', details: err });
+  }
+});
+
+// POST /api/users/resend-password - Resend password to custom email (admin only)
+usersRouter.post('/resend-password', checkLogin, checkAdmin, async (req, res) => {
+  try {
+    const { user_id, recipient_email } = req.body;
+
+    if (!user_id || !recipient_email) {
+      return res.status(400).json({ error: 'Missing required fields: user_id, recipient_email' });
+    }
+
+    const userId = Number(user_id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'Invalid user_id' });
+    }
+
+    // Check if local user exists
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const localUser = await getLocalUserByEmail(user.email);
+    if (!localUser) {
+      return res.status(404).json({ error: 'Local user not found. User must be registered in local_users table.' });
+    }
+
+    // Generate new password
+    const password = generateMemorablePassword(6);
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Update password in database
+    const updated = await changeLocalUserPassword(userId, passwordHash);
+    if (!updated) {
+      return res.status(500).json({ error: 'Failed to update password' });
+    }
+
+    // Log out user from all sessions after password reset
+    try {
+      await deleteAllUserSessions(userId);
+    } catch (err) {
+      console.warn('Failed to delete user sessions after password reset:', err);
+      // Continue anyway - password was reset successfully
+    }
+
+    // Send password to specified email (which may differ from user's registered email)
+    // Use isResend=true to send the password reset email
+    await sendPasswordEmail(recipient_email, password, `${user.first_name} ${user.last_name}`, true);
+    
+    res.json({ success: true, message: 'Password resent successfully' });
+  } catch (err) {
+    console.error('Error in /api/users/resend-password:', err);
+    res.status(500).json({ error: 'Failed to resend password', details: String(err) });
+  }
+});
+
+// GET /api/users/:user_id/has-local - Check if user has local_users entry (admin only)
+usersRouter.get('/:user_id/has-local', checkLogin, checkAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.user_id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'Invalid user_id' });
+    }
+
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const localUser = await getLocalUserByEmail(user.email);
+    res.json({ has_local: !!localUser });
+  } catch (err) {
+    console.error('Error in /api/users/:user_id/has-local:', err);
+    res.status(500).json({ error: 'Failed to check local user status', details: String(err) });
   }
 });
 

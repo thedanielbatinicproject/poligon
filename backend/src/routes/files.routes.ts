@@ -163,8 +163,34 @@ filesRouter.delete('/:file_id', checkLogin, async (req: Request, res: Response) 
     if (!file) return res.status(404).json({ error: 'File with id ' + (file_id||"{wrong file id format}") + ' not found!' });
     const user_id = req.session.user_id;
     const user_role = req.session.role;
-    if (user_role !== 'admin' && file.uploaded_by !== user_id) {
-      return res.status(403).json({ error: 'Not authorized to delete this file' });
+    
+    if (!user_id) {
+      return res.status(401).json({ error: 'User ID not found in session' });
+    }
+    
+    // Check permissions: admin, uploader, or mentor on the document
+    let canDelete = false;
+    if (user_role === 'admin') {
+      canDelete = true;
+    } else if (file.uploaded_by === user_id) {
+      canDelete = true;
+    } else if (file.document_id) {
+      // Check if user is mentor on the document
+      const isMentor = await DocumentsService.isEditor(file.document_id, user_id, ['mentor']);
+      if (isMentor) {
+        canDelete = true;
+      }
+    }
+    
+    if (!canDelete) {
+      // Return detailed debug info in error
+      return res.status(403).json({ 
+        error: 'Not authorized to delete this file' +
+          file.uploaded_by + ' ' +
+          user_id + ' ' +
+          user_role
+        
+      });
     }
     // construct full disk path from stored folder path + filename
     const folder = (file.file_path || '').replace(/^\/+/, '');
