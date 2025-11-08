@@ -71,8 +71,8 @@
 /* Off-range days (prev/next month) should be toned down */
 .rbc-off-range { opacity: 0.45; }
 
-/* Highlight today with accent outline */
-.rbc-today { background: linear-gradient(90deg, rgba(var(--accent-rgb,59,130,246),0.03), transparent) !important; }
+/* Highlight today with custom background color */
+.rbc-today { background: var(--current-day-bg) !important; }
 
 /* Event styling using CSS variables. Use --event-bg and --event-foreground optionally set per-event */
 .rbc-event {
@@ -139,7 +139,7 @@
 .rbc-time-view .rbc-event { border-left: 4px solid var(--accent); }
 
 /* Today and selected day */
-.rbc-today { background: linear-gradient(90deg, rgba(0,0,0,0.02), transparent); }
+.rbc-today { background: var(--current-day-bg) !important; }
 .rbc-selected { box-shadow: 0 6px 18px rgba(var(--accent-rgb,59,130,246),0.12); }
 .rbc-month-row .rbc-date-cell {
   font-weight: 600;
@@ -148,7 +148,7 @@
 .rbc-week-number { color: var(--muted); }
 
 /* Day cells */
-.rbc-day-bg { background: var(--bg); }
+.rbc-day-bg:not(.rbc-today) { background: var(--bg); }
 .rbc-day-slot .rbc-time-slot { border-top: 1px solid var(--border); }
 
 /* Make event titles inherit site font color when rendered in popover */
@@ -169,19 +169,49 @@
 .task-row { background: transparent; }
 
 /* Centered create form styles */
-.task-create-card { padding: 1rem; }
-.task-create-form-centered { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.task-create-form-centered .form-row { width: 100%; max-width: 820px; display: flex; flex-direction: column; }
-.task-create-form-centered .form-row .auth-input, .task-create-form-centered .form-row textarea { width: 100%; box-sizing: border-box; max-width: 820px; }
-.task-create-form-centered .two-cols { display: flex; gap: 12px; width: 100%; max-width: 820px; }
-.task-create-form-centered .two-cols .form-row { flex: 1; }
-.task-create-form-centered .actions { display: flex; gap: 12px; justify-content: center; width: 100%; max-width: 820px; }
-.task-create-form-centered .actions .btn { min-width: 160px; width: 45%; max-width: 300px; }
-.task-create-form-centered .auth-label { margin-bottom: 6px; color: var(--muted); font-weight: 600; text-align: center; }
+.task-create-card { 
+  padding: 1.5rem; 
+  max-width: 720px; 
+  margin: 16px auto;
+}
+.task-create-form-centered { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 16px; 
+}
+.task-create-form-centered .form-row { 
+  display: flex; 
+  flex-direction: column;
+  gap: 6px;
+}
+.task-create-form-centered .form-row .auth-input, 
+.task-create-form-centered .form-row textarea { 
+  width: 100%; 
+  box-sizing: border-box;
+}
+.task-create-form-centered .two-cols { 
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.task-create-form-centered .actions { 
+  display: flex; 
+  gap: 12px; 
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.task-create-form-centered .actions .btn { 
+  min-width: 120px;
+}
+.task-create-form-centered .auth-label { 
+  margin-bottom: 0;
+  color: var(--muted); 
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: left;
+}
 
-/* Center labels and inputs */
-.task-create-form-centered .form-row { align-items: center; text-align: center; }
-.task-create-form-centered .form-row .auth-input { margin: 0 auto; }
+/* Center labels and inputs - REMOVED, use left-aligned instead */
 
 /* Assigned-to picker styles */
 .assigned-picker { display: inline-block; text-align: center; cursor: default; border-radius: 10px; padding: 10px 14px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); min-height: 44px; box-sizing: border-box; }

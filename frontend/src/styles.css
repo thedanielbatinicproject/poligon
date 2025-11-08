@@ -53,6 +53,7 @@
   --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
   /* Input background for compose field (80% opacity feel) */
   --input-bg: rgba(255,255,255,0.9);
+  --current-day-bg: rgba(0,156,117,0.12);
 }
 
 [data-theme="dark"]{
@@ -105,6 +106,7 @@
   /* divider color used for subtle separators (dark theme) */
   --divider: rgba(255,255,255,0.2);
   --input-bg: rgba(7,20,42,0.9);
+  --current-day-bg: rgba(72, 102, 182, 0.415);
 }
 
 /* basic page */
