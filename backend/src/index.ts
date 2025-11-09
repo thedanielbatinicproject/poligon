@@ -96,7 +96,17 @@ const sessionOptions: session.SessionOptions = {
   store: new CustomSessionStore(),
   cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 * 365 * 5 } // session duration set to 5 years
 };
-app.use(session(sessionOptions));
+
+// CRITICAL FIX: Skip session middleware for WebSocket upgrade requests
+// Session can cause blocking/timeout on WebSocket connections
+const sessionMiddleware = session(sessionOptions);
+app.use((req, res, next) => {
+  // Skip session for WebSocket upgrade requests
+  if (req.headers.upgrade === 'websocket' || req.path.startsWith('/socket.io') || req.path.startsWith('/yjs')) {
+    return next();
+  }
+  return sessionMiddleware(req, res, next);
+});
 
 // Middleware to capture IP address and user agent in session
 app.use((req, res, next) => {
@@ -240,6 +250,15 @@ try {
 
 app.use('/', (req, res) => {
   res.status(404).json({ error: 'Required resource is not accessible.' });
+});
+
+// DEBUG: Log all incoming requests to see if WebSocket upgrade reaches server
+app.use((req, res, next) => {
+  if (req.headers.upgrade === 'websocket') {
+    logSocket(`[DEBUG] WebSocket upgrade request: ${req.method} ${req.url}`);
+    logSocket(`[DEBUG] Headers: ${JSON.stringify(req.headers)}`);
+  }
+  next();
 });
 
 // --- SOCKET.IO SETUP ---
