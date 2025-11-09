@@ -244,6 +244,22 @@ app.use('/', (req, res) => {
 
 // --- SOCKET.IO SETUP ---
 const server = http.createServer(app);
+
+// Socket.io detailed logging to file
+const socketLogPath = path.resolve(__dirname, '../socket.log');
+const logSocket = (message: string) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}\n`;
+  try {
+    fs.appendFileSync(socketLogPath, logMessage);
+    console.log(logMessage.trim());
+  } catch (e) {
+    console.error('Failed to write socket log:', e);
+  }
+};
+
+logSocket('=== Socket.io server initializing ===');
+
 const io = new SocketIOServer(server, {
   cors: {
     origin: '*', // prilagodi po potrebi
@@ -256,6 +272,12 @@ const io = new SocketIOServer(server, {
   pingInterval: 25000 // Send ping every 25 seconds
 });
 
+logSocket('Socket.io server created with config: ' + JSON.stringify({
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000
+}));
+
 // provide io instance to modules that need to emit events (avoid circular imports)
 setIo(io);
 
@@ -264,7 +286,21 @@ setIo(io);
 const presenceMap: Map<string, Set<string>> = new Map(); // userId -> set of socket ids
 
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  logSocket(`[CONNECTION] Client connected: ${socket.id}, transport: ${socket.conn.transport.name}`);
+
+  // Log transport upgrades
+  socket.conn.on('upgrade', (transport) => {
+    logSocket(`[UPGRADE] Socket ${socket.id} upgraded to: ${transport.name}`);
+  });
+
+  // Log errors
+  socket.on('error', (err) => {
+    logSocket(`[ERROR] Socket ${socket.id} error: ${err.message || err}`);
+  });
+
+  socket.conn.on('error', (err) => {
+    logSocket(`[CONN ERROR] Socket ${socket.id} connection error: ${err.message || err}`);
+  });
 
   // Registracija usera u sobu
   socket.on('register_user', (userId) => {
@@ -276,7 +312,7 @@ io.on('connection', (socket) => {
       // store mapping on socket so we can clean up on disconnect
       (socket as any).registeredUserId = id;
       socket.join(id);
-      console.log('socket joined room for user:', id);
+      logSocket(`[REGISTER] Socket ${socket.id} joined room for user: ${id}`);
 
       // update presence map
       const set = presenceMap.get(id) || new Set<string>();
@@ -295,18 +331,19 @@ io.on('connection', (socket) => {
         // ignore
       }
     } catch (err) {
-      console.warn('register_user handler error', err);
+      logSocket(`[ERROR] register_user handler error: ${err}`);
     }
   });
 
   // Slanje poruke
   socket.on('send_message', (data) => {
     // data: { toUserId, fromUserId, message }
+    logSocket(`[MESSAGE] Socket ${socket.id} sending message to user ${data.toUserId}`);
     io.to(data.toUserId).emit('receive_message', data);
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+  socket.on('disconnect', (reason) => {
+    logSocket(`[DISCONNECT] Socket ${socket.id} disconnected, reason: ${reason}`);
     try {
       const id = (socket as any).registeredUserId as string | undefined
       if (id) {
@@ -317,28 +354,35 @@ io.on('connection', (socket) => {
             presenceMap.delete(id)
             // notify all clients that this user is now offline
             io.emit('user:presence:update', { user_id: id, online: false, lastSeen: new Date().toISOString() })
+            logSocket(`[PRESENCE] User ${id} now offline`);
           } else {
             presenceMap.set(id, set)
           }
         }
       }
     } catch (err) {
-      console.warn('error cleaning up presence on disconnect', err)
+      logSocket(`[ERROR] disconnect cleanup error: ${err}`);
     }
   });
 });
 
 // Setup Yjs WebSocket server for real-time collaborative editing
 try {
+  logSocket('=== Initializing Yjs WebSocket server ===');
   setupYjsWebSocketServer(server);
+  logSocket('=== Yjs WebSocket server initialized ===');
 } catch (err) {
+  logSocket(`[ERROR] Failed to setup Yjs WebSocket: ${err}`);
   logError(err);
 }
 
 // Pokreni server
 server.listen(port, () => {
-  console.log(`Poligon backend running on port ${port}`);
+  const msg = `Poligon backend running on port ${port}`;
+  console.log(msg);
+  logSocket(`=== ${msg} ===`);
 }).on('error', (err) => {
+  logSocket(`[FATAL] Server error: ${err}`);
   logError(err);
   process.exit(1);
 });
