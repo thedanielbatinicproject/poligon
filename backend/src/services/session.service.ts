@@ -17,7 +17,21 @@ export async function getActiveSessionIdsForUser(userId: number) {
 
 // Get session by session_id (returns full session object)
 export async function getSessionById(session_id: string): Promise<SessionData | null> {
-  const [rows] = await pool.query('SELECT * FROM sessions WHERE session_id = ?', [session_id]);
+  let decodedSessionId = session_id;
+  try {
+    decodedSessionId = decodeURIComponent(session_id);
+  } catch (e) {
+    // ignore
+  }
+  // Parsiraj core session id (makni prefiks 's:' i suffix nakon točke)
+  let coreSessionId = decodedSessionId;
+  if (coreSessionId.startsWith('s:')) {
+    coreSessionId = coreSessionId.substring(2);
+  }
+  if (coreSessionId.includes('.')) {
+    coreSessionId = coreSessionId.split('.')[0];
+  }
+  const [rows] = await pool.query('SELECT * FROM sessions WHERE session_id = ?', [coreSessionId]);
   if ((rows as any[]).length === 0) return null;
   const row = (rows as any)[0];
   // Parse session_data JSON and merge with explicit columns
@@ -43,6 +57,12 @@ export async function getSessionById(session_id: string): Promise<SessionData | 
 // Insert or update session (full schema)
 export async function upsertSession(session_id: string, sessionData: SessionData) {
   const user_id = sessionData.user_id || null;
+  if (user_id === null) {
+    // TODO: remove log in production
+    console.warn('[SESSION WARNING] Tried to upsert session without user_id, skipping DB write.');
+    console.warn(new Error().stack); // Dodaj stack trace
+    return;
+  }
   const session_data = JSON.stringify(sessionData);
   const last_route = sessionData.last_route || null;
   const last_document_id = sessionData.last_document_id || null;

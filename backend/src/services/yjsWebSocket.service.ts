@@ -31,8 +31,36 @@ export function setupYjsWebSocketServer(server: http.Server) {
     }
   });
 
+
   wss.on('connection', async (ws: WebSocket, request) => {
     console.log('[YjsWS] New WebSocket connection');
+
+    // DEBUG: Log cookies and session info
+    const cookieHeader = request.headers['cookie'];
+    let sessionId = null;
+    if (cookieHeader) {
+      // Try to extract session id from cookie string (assume connect.sid or poligon.sid)
+      const match = cookieHeader.match(/(connect\.sid|poligon\.sid)=([^;]+)/);
+      if (match) sessionId = match[2];
+    }
+    console.log('[YjsWS][DEBUG] Cookie header:', cookieHeader);
+    console.log('[YjsWS][DEBUG] Extracted session id:', sessionId);
+    if (sessionId) {
+      try {
+        const { getSessionById } = await import('./session.service');
+        const session = await getSessionById(sessionId);
+        console.log('[YjsWS][DEBUG] Session from DB:', session);
+        if (session) {
+          console.log('[YjsWS][DEBUG] Session user_id:', session.user_id);
+        } else {
+          console.warn('[YjsWS][DEBUG] No session found for session_id:', sessionId);
+        }
+      } catch (err) {
+        console.error('[YjsWS][DEBUG] Error fetching session:', err);
+      }
+    } else {
+      console.warn('[YjsWS][DEBUG] No session id found in cookie header');
+    }
 
     // Parse document ID from URL query params
     const url = new URL(request.url || '', `http://${request.headers.host}`);

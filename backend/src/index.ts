@@ -70,14 +70,7 @@ const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
   : null;
 
 const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    // If no origin (e.g., server-to-server or curl), allow it
-    if (!origin) return callback(null, true);
-    // If no allowedOrigins configured, reflect the request origin (dev friendly)
-    if (!allowedOrigins) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
-    return callback(new Error('CORS origin not allowed'));
-  },
+  origin: 'https://poligon.live',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
@@ -282,7 +275,8 @@ logSocket('=== Socket.io server initializing ===');
 
 const io = new SocketIOServer(server, {
   cors: {
-    origin: '*', // prilagodi po potrebi
+    origin: 'https://poligon.live',
+    credentials: true,
     methods: ['GET', 'POST']
   },
   // SHARED HOSTING COMPATIBILITY: Try WebSocket first, fallback to polling
@@ -306,7 +300,12 @@ setIo(io);
 const presenceMap: Map<string, Set<string>> = new Map(); // userId -> set of socket ids
 
 io.on('connection', (socket) => {
-  logSocket(`[CONNECTION] Client connected: ${socket.id}, transport: ${socket.conn.transport.name}`);
+  // TODO: remove logs in production - BEGIN
+  logSocket(`[DEBUG SOCKET] handshake.headers.cookie: ${socket.handshake && socket.handshake.headers ? socket.handshake.headers.cookie : 'NO COOKIE'}`);
+  logSocket(`[DEBUG SOCKET] handshake.auth: ${JSON.stringify(socket.handshake && socket.handshake.auth ? socket.handshake.auth : {}, null, 2)}`);
+  // TODO: remove logs in production - END
+
+  logSocket(`[CONNECTION] Client connected: ${socket.id}, transport: ${socket.conn.transport.name}, handshake: ${JSON.stringify(socket.handshake, null, 2)}`);
 
   // Log transport upgrades
   socket.conn.on('upgrade', (transport) => {
@@ -315,11 +314,23 @@ io.on('connection', (socket) => {
 
   // Log errors
   socket.on('error', (err) => {
-    logSocket(`[ERROR] Socket ${socket.id} error: ${err.message || err}`);
+    logSocket(`[ERROR] Socket ${socket.id} error: ${err && err.message ? err.message : String(err)}`);
+    logSocket(`[ERROR-DETAIL] ${JSON.stringify(err, null, 2)}`);
   });
 
   socket.conn.on('error', (err) => {
-    logSocket(`[CONN ERROR] Socket ${socket.id} connection error: ${err.message || err}`);
+    logSocket(`[CONN ERROR] Socket ${socket.id} connection error: ${err && err.message ? err.message : String(err)}`);
+    logSocket(`[CONN ERROR-DETAIL] ${JSON.stringify(err, null, 2)}`);
+  });
+
+  socket.on('disconnecting', (reason) => {
+    logSocket(`[DISCONNECTING] Socket ${socket.id} disconnecting, reason: ${reason}`);
+    logSocket(`[DISCONNECTING] Socket handshake: ${JSON.stringify(socket.handshake, null, 2)}`);
+  });
+
+  socket.on('disconnect', (reason) => {
+    logSocket(`[DISCONNECT] Socket ${socket.id} disconnected, reason: ${reason}`);
+    logSocket(`[DISCONNECT] Socket handshake: ${JSON.stringify(socket.handshake, null, 2)}`);
   });
 
   // Registracija usera u sobu

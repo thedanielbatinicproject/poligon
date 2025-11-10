@@ -37,7 +37,30 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLoading(true)
     try {
       // prefer high-level api.status if available
-      const body = await (api.status ? api.status() : apiFetch('/api/status', { method: 'GET' }))
+      // But avoid using the shared api.getJSON / postJSON helpers here because they
+      // trigger the global notifier when the server responds 401 (unauthenticated).
+      // On public pages we expect 401 frequently during initial load and should
+      // not surface a notification to the user. Use a targeted fetch and only
+      // show notifications for unexpected errors.
+      let body: any = null
+      try {
+        const resp = await fetch('/api/status', { method: 'GET', credentials: 'include' })
+        if (resp.status === 401) {
+          // Not authenticated - silently treat as anonymous and return
+          setSession(null)
+          setUser(null)
+          setPoligonCookie(null)
+          setLoading(false)
+          return
+        }
+        // for other statuses let the normal flow parse JSON / fallback
+        const text = await resp.text()
+        try { body = JSON.parse(text) } catch { body = text }
+        if (!resp.ok) throw new Error(`Status fetch failed: ${resp.status}`)
+      } catch (err) {
+        // network / unexpected error - rethrow to outer handler
+        throw err
+      }
       // modern API returns { session, user }
       if (body && typeof body === 'object' && ('session' in body || 'user' in body)) {
         setSession(body.session ?? null)

@@ -4,7 +4,6 @@ import { useNotifications } from '../lib/notifications';
 import DocumentsApi from '../lib/documentsApi';
 import * as TasksApi from '../lib/tasksApi';
 import ConfirmationBox from '../components/ConfirmationBox';
-import DocumentFinder from '../components/DocumentFinder';
 import YjsEditor from '../components/YjsEditor';
 import { useSocket } from '../components/SocketProvider';
 
@@ -27,17 +26,12 @@ export default function Documents() {
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   // Tasks sidebar
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    // Initialize from session if available
-    return session?.sidebar_state === 'closed';
-  });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [docTasks, setDocTasks] = useState<any[]>([]);
 
   // Files
   const [docFiles, setDocFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [docVersions, setDocVersions] = useState<any[]>([]);
-  const [shareLink, setShareLink] = useState<string | null>(null);
 
   // Modals
   const [abstractModalOpen, setAbstractModalOpen] = useState(false);
@@ -46,34 +40,12 @@ export default function Documents() {
   const [confirmAction, setConfirmAction] = useState<(() => Promise<any>) | null>(null);
   const [confirmTitle, setConfirmTitle] = useState('Confirm action');
   const [confirmQuestion, setConfirmQuestion] = useState('Are you sure?');
-  const [documentFinderOpen, setDocumentFinderOpen] = useState(false);
 
   // Connected users (for real-time collaboration)
   const [connectedUsers, setConnectedUsers] = useState<number>(0);
 
   // User's role on selected document
   const [userRole, setUserRole] = useState<string>('viewer');
-
-  // Load sidebar state from session
-  useEffect(() => {
-    if (session?.sidebar_state) {
-      setSidebarCollapsed(session.sidebar_state === 'closed');
-    }
-  }, [session?.sidebar_state]);
-
-  // Toggle sidebar and save to session
-  const toggleSidebar = () => {
-    const newState = !sidebarCollapsed;
-    setSidebarCollapsed(newState);
-    
-    // Save to session
-    fetch('/api/utility/session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ sidebar_state: newState ? 'closed' : 'open' })
-    }).catch(() => {});
-  };
 
   // Load documents on mount
   useEffect(() => {
@@ -149,32 +121,8 @@ export default function Documents() {
         .then(r => r.json())
         .then((files: any) => setDocFiles(Array.isArray(files) ? files : []))
         .catch(() => setDocFiles([]));
-      // Load versions
-      DocumentsApi.getVersions(selectedDocId)
-        .then((v: any[]) => setDocVersions(Array.isArray(v) ? v : []))
-        .catch(() => setDocVersions([]));
     }
   }, [selectedDocId, documents, user?.id]);
-
-  // Fetch share link if versions exist
-  useEffect(() => {
-    let mounted = true;
-    async function fetchLink() {
-      if (!selectedDocId) return setShareLink(null);
-      if (!docVersions || docVersions.length === 0) return setShareLink(null);
-      try {
-        const res = await DocumentsApi.getShareLink(selectedDocId);
-        if (!mounted) return;
-        if (res && res.link) setShareLink(res.link);
-        else setShareLink(null);
-      } catch (err) {
-        if (!mounted) return;
-        setShareLink(null);
-      }
-    }
-    fetchLink();
-    return () => { mounted = false; };
-  }, [selectedDocId, docVersions]);
 
   // Handle document selection
   const handleDocumentSelect = (docId: number) => {
@@ -312,10 +260,8 @@ export default function Documents() {
   const handleFileDelete = async (fileId: number, uploadedBy: number) => {
     if (!selectedDocId) return;
     
-    const userId = user?.id || user?.user_id || session?.user_id;
-    
     // Check if user can delete (uploader, mentor, or admin)
-    const canDelete = uploadedBy === userId || userRole === 'mentor' || session?.role === 'admin';
+    const canDelete = uploadedBy === user?.id || userRole === 'mentor' || session?.role === 'admin';
     if (!canDelete) {
       notify.push('You do not have permission to delete this file', undefined, true);
       return;
@@ -387,78 +333,53 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
       background: 'var(--bg)',
       color: 'var(--text)'
     }}>
-      {/* Compact top bar - Document selector */}
+      {/* Top bar - Document selector */}
       <div className="glass-panel" style={{ 
-        padding: '0.75rem 1rem', 
+        padding: '1rem', 
         borderBottom: '1px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
-        gap: '1rem',
-        flexWrap: 'wrap'
+        gap: '1rem'
       }}>
-        <label style={{ fontWeight: 600, color: 'var(--heading)', fontSize: '0.9rem' }}>DOCUMENT:</label>
+        <label style={{ fontWeight: 600, color: 'var(--heading)' }}>SELECT DOCUMENT:</label>
+        <select
+          value={selectedDocId || ''}
+          onChange={(e) => handleDocumentSelect(Number(e.target.value))}
+          style={{
+            flex: 1,
+            maxWidth: 500,
+            padding: '0.5rem',
+            borderRadius: 6,
+            border: '1px solid var(--border)',
+            background: 'var(--panel)',
+            color: 'var(--text)',
+            fontSize: '1rem'
+          }}
+        >
+          <option value="">-- Select a document --</option>
+          {documents.map(doc => (
+            <option key={doc.document_id} value={doc.document_id}>
+              {doc.title} ({doc.status})
+            </option>
+          ))}
+        </select>
         
-        {!selectedDoc ? (
-          <button
-            className="btn btn-primary"
-            onClick={() => setDocumentFinderOpen(true)}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.9rem',
-              fontWeight: 600
-            }}
-          >
-            SELECT DOCUMENT
-          </button>
-        ) : (
-          <>
-            <div style={{ 
-              fontSize: (() => {
-                const wordCount = (selectedDoc.title || '').trim().split(/\s+/).length;
-                if (wordCount <= 5) return '1.1rem';
-                if (wordCount <= 10) return '1rem';
-                if (wordCount <= 15) return '0.95rem';
-                if (wordCount <= 20) return '0.9rem';
-                if (wordCount <= 30) return '0.85rem';
-                return '0.8rem'; // max compression for very long titles
-              })(),
-              fontWeight: 700,
-              color: 'var(--heading)',
-              flex: 1,
-              lineHeight: 1.3,
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word'
-            }}>
-              {selectedDoc.title}
-            </div>
-            <button
-              className="btn btn-ghost"
-              onClick={() => setDocumentFinderOpen(true)}
-              style={{
-                padding: '0.4rem 0.8rem',
-                fontSize: '0.8rem'
-              }}
-            >
-              CHANGE
-            </button>
-            <span style={{ color: 'var(--muted)', fontSize: '0.85rem', marginLeft: 'auto' }}>
-              👥 <strong style={{ color: 'var(--accent)' }}>{connectedUsers}</strong> online
+        {selectedDoc && (
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
+              Connected users: <strong style={{ color: 'var(--accent)' }}>{connectedUsers}</strong>
             </span>
-            <button className="btn btn-ghost" onClick={showPackagesInfo} style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}>
-              ℹ️ Packages
-            </button>
-          </>
+          </div>
         )}
       </div>
 
       {/* Main content area */}
       {selectedDocId ? (
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', gap: 0 }}>
-          {/* Collapsible Left sidebar - Tasks */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          {/* Tasks sidebar */}
           <div style={{
-            width: sidebarCollapsed ? 48 : 280,
-            minWidth: sidebarCollapsed ? 48 : 280,
-            transition: 'all 0.3s ease',
+            width: sidebarCollapsed ? 40 : 300,
+            transition: 'width 0.3s ease',
             borderRight: '1px solid var(--border)',
             background: 'var(--panel)',
             display: 'flex',
@@ -466,127 +387,54 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
             overflow: 'hidden'
           }}>
             <div style={{ 
-              padding: '0.6rem',
+              padding: '0.75rem',
               borderBottom: '1px solid var(--border)',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
-              background: 'var(--bg)'
+              alignItems: 'center'
             }}>
-              {!sidebarCollapsed && <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Tasks</h3>}
+              {!sidebarCollapsed && <h3 style={{ margin: 0, fontSize: '1rem' }}>Tasks</h3>}
               <button
-                onClick={toggleSidebar}
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="btn btn-ghost"
-                style={{ padding: '0.3rem 0.5rem', fontSize: '1.1rem' }}
-                title={sidebarCollapsed ? 'Expand tasks' : 'Collapse tasks'}
+                style={{ padding: '0.25rem 0.5rem' }}
               >
-                {sidebarCollapsed ? '▶' : '◀'}
+                {sidebarCollapsed ? '→' : '←'}
               </button>
             </div>
             
             {!sidebarCollapsed && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
                 {docTasks.length === 0 ? (
-                  <div style={{ color: 'var(--muted)', fontSize: '0.85rem', padding: '1rem', textAlign: 'center' }}>
-                    No tasks assigned
-                  </div>
+                  <div style={{ color: 'var(--muted)', fontSize: '0.9rem', padding: '1rem' }}>No tasks</div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {docTasks.map(task => {
-                      const dueDate = task.due ? new Date(task.due) : null;
-                      const isOverdue = dueDate && dueDate < new Date() && task.task_status !== 'closed';
-                      const dueDateStr = dueDate ? dueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : null;
-                      
-                      return (
-                        <div key={task.task_id} style={{
-                          padding: '0.75rem',
-                          background: 'var(--bg)',
-                          border: `1px solid ${isOverdue ? 'var(--error)' : 'var(--border)'}`,
-                          borderRadius: 8,
-                          boxShadow: isOverdue ? '0 0 0 1px rgba(239, 68, 68, 0.2)' : 'none'
-                        }}>
-                          <div style={{ 
-                            fontWeight: 600, 
-                            fontSize: '0.9rem', 
-                            marginBottom: '0.4rem',
-                            color: task.task_status === 'closed' ? 'var(--success)' : 'var(--text)'
-                          }}>
-                            {task.task_title}
-                          </div>
-                          
-                          {task.task_description && (
-                            <div style={{ 
-                              fontSize: '0.8rem', 
-                              color: 'var(--muted)', 
-                              marginBottom: '0.5rem',
-                              lineHeight: 1.4,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical'
-                            }}>
-                              {task.task_description.length > 80 
-                                ? `${task.task_description.substring(0, 80)}...` 
-                                : task.task_description}
-                            </div>
-                          )}
-                          
-                          <div style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            gap: '0.3rem',
-                            fontSize: '0.75rem',
-                            color: 'var(--muted)'
-                          }}>
-                            {task.assigned_to_name && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                <span>👤</span>
-                                <span style={{ fontWeight: 500, color: 'var(--text)' }}>{task.assigned_to_name}</span>
-                              </div>
-                            )}
-                            
-                            {dueDateStr && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                <span>{isOverdue ? '⚠️' : '📅'}</span>
-                                <span style={{ 
-                                  fontWeight: 500,
-                                  color: isOverdue ? 'var(--error)' : 'var(--text)'
-                                }}>
-                                  Due: {dueDateStr}
-                                </span>
-                              </div>
-                            )}
-                            
-                            <div style={{ 
-                              display: 'inline-block',
-                              marginTop: '0.3rem',
-                              padding: '0.2rem 0.5rem',
-                              borderRadius: 4,
-                              background: task.task_status === 'closed' ? 'var(--success)' : 'var(--warning)',
-                              color: '#fff',
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
-                              textTransform: 'uppercase',
-                              alignSelf: 'flex-start'
-                            }}>
-                              {task.task_status}
-                            </div>
-                          </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {docTasks.map(task => (
+                      <li key={task.task_id} style={{
+                        padding: '0.75rem',
+                        marginBottom: '0.5rem',
+                        background: 'var(--bg)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 6
+                      }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{task.task_title}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{task.task_description}</div>
+                        <div style={{ fontSize: '0.75rem', color: task.task_status === 'closed' ? 'var(--success)' : 'var(--warning)', marginTop: '0.5rem' }}>
+                          {task.task_status}
                         </div>
-                      );
-                    })}
-                  </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             )}
           </div>
 
-          {/* CENTER - EDITOR AREA (MAIN FOCUS) */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-            {/* Minimal toolbar */}
+          {/* Center - Editor area */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Editor toolbar */}
             <div className="glass-panel" style={{
-              padding: '0.5rem 1rem',
+              padding: '0.75rem 1rem',
               borderBottom: '1px solid var(--border)',
               display: 'flex',
               gap: '0.5rem',
@@ -596,37 +444,25 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 className="btn btn-primary" 
                 onClick={handleSave}
                 disabled={isReadOnly || isSaving}
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
               >
-                {isSaving ? '💾 Saving...' : '💾 Save'}
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button className="btn btn-ghost" onClick={showPackagesInfo}>
+                ℹ️ Packages Info
               </button>
               {isReadOnly && (
-                <span style={{ marginLeft: 'auto', color: 'var(--warning)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  🔒 <span>Read-only</span>
+                <span style={{ marginLeft: 'auto', color: 'var(--warning)', fontSize: '0.9rem' }}>
+                  🔒 Read-only mode
                 </span>
               )}
             </div>
 
-            {/* Split view editor - 60/40 split favoring preview */}
+            {/* Split view editor */}
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-              {/* Left: LaTeX Editor (40%) */}
-              <div style={{ 
-                flex: '0 0 42%',
-                minWidth: 400,
-                display: 'flex', 
-                flexDirection: 'column', 
-                borderRight: '1px solid var(--border)',
-                background: 'var(--panel)'
-              }}>
-                <div style={{ 
-                  padding: '0.5rem 1rem', 
-                  background: 'var(--bg)', 
-                  borderBottom: '1px solid var(--border)',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: 'var(--heading)'
-                }}>
-                  LaTeX Editor
+              {/* Left: LaTeX code with Yjs collaboration */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)' }}>
+                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}>
+                  <strong>LaTeX Editor</strong>
                 </div>
                 {selectedDocId ? (
                   <YjsEditor 
@@ -640,110 +476,60 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    color: 'var(--muted)',
-                    fontSize: '0.9rem'
+                    color: 'var(--text-muted)',
+                    fontSize: '0.95rem'
                   }}>
                     Select a document to start editing
                   </div>
                 )}
               </div>
 
-              {/* Right: Preview (58%) */}
-              <div style={{ 
-                flex: 1,
-                minWidth: 450,
-                display: 'flex', 
-                flexDirection: 'column',
-                background: 'var(--bg)'
-              }}>
-                <div style={{ 
-                  padding: '0.5rem 1rem', 
-                  background: 'var(--panel)', 
-                  borderBottom: '1px solid var(--border)',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: 'var(--heading)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <span>Preview</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 400 }}>
-                    (Compile to view)
-                  </span>
+              {/* Right: Preview placeholder */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}>
+                  <strong>Preview (Compile to view)</strong>
                 </div>
-                <div style={{ 
-                  flex: 1, 
-                  padding: '2rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: 'var(--muted)',
-                  fontSize: '0.95rem'
-                }}>
-                  📄 Preview will be available after compilation
+                <div style={{ flex: 1, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
+                  Preview will be available after compilation
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right sidebar - Compact info cards */}
+          {/* Right sidebar - Cards */}
           <div style={{
-            width: 260,
-            minWidth: 260,
+            width: 320,
             borderLeft: '1px solid var(--border)',
             background: 'var(--panel)',
             overflowY: 'auto',
-            padding: '0.75rem',
+            padding: '1rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.75rem'
+            gap: '1rem'
           }}>
             {/* Abstract card */}
-            <div className="glass-panel" style={{ padding: '0.75rem' }}>
-              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Abstract</h3>
-              <p style={{ 
-                fontSize: '0.8rem', 
-                color: 'var(--muted)', 
-                marginBottom: '0.6rem', 
-                lineHeight: 1.5,
-                maxHeight: 80,
-                overflow: 'auto'
-              }}>
+            <div className="glass-panel" style={{ padding: '1rem' }}>
+              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Abstract</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
                 {selectedDoc?.abstract || 'No abstract provided'}
               </p>
-              <button className="btn btn-action" onClick={() => setAbstractModalOpen(true)} style={{ 
-                padding: '0.4rem 0.7rem', 
-                fontSize: '0.8rem',
-                width: '100%'
-              }}>
+              <button className="btn btn-action" onClick={() => setAbstractModalOpen(true)}>
                 Edit Abstract
               </button>
             </div>
 
             {/* Submit for review card */}
-            <div className="glass-panel" style={{ padding: '0.75rem' }}>
-              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Status</h3>
-              <div style={{ 
-                fontSize: '0.8rem', 
-                marginBottom: '0.6rem',
-                padding: '0.4rem 0.6rem',
-                background: 'var(--bg)',
-                borderRadius: 6,
-                border: '1px solid var(--border)'
-              }}>
-                <span style={{ color: 'var(--muted)' }}>Current: </span>
-                <strong style={{ color: 'var(--accent)' }}>{selectedDoc?.status}</strong>
-              </div>
-
-              {/* If draft status, show submit for review button with confirmation */}
-              {selectedDoc?.status === 'draft' && (
+            <div className="glass-panel" style={{ padding: '1rem' }}>
+              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Submit for Review</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.75rem' }}>
+                Current status: <strong style={{ color: 'var(--accent)' }}>{selectedDoc?.status}</strong>
+              </p>
+              {selectedDoc?.status !== 'under_review' && selectedDoc?.status !== 'graded' && (
                 <button 
                   className="btn btn-primary"
-                  style={{ padding: '0.4rem 0.7rem', fontSize: '0.8rem', width: '100%' }}
                   onClick={() => {
                     setConfirmTitle('Submit for Review');
-                    setConfirmQuestion('Once submitted, the document cannot be edited until a mentor reviews and returns it or grades it. Continue?');
+                    setConfirmQuestion('Once submitted, the document cannot be edited until reviewed by a mentor or admin. Continue?');
                     setConfirmAction(() => handleSubmitForReview);
                     setConfirmOpen(true);
                   }}
@@ -751,85 +537,35 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                   Submit for Review
                 </button>
               )}
-
-              {/* If finished, submitted, or graded status, show grade */}
-              {(selectedDoc?.status === 'finished' || selectedDoc?.status === 'submitted' || selectedDoc?.status === 'graded') && (
-                <div style={{ marginTop: '0.6rem' }}>
-                  {selectedDoc.grade !== null && selectedDoc.grade !== undefined ? (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      padding: '0.75rem',
-                      borderRadius: 8,
-                      background: 'var(--bg)',
-                      border: '2px solid var(--border)'
-                    }}>
-                      <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>GRADE:</span>
-                      <span style={{
-                        fontWeight: 'bold',
-                        fontSize: selectedDoc.grade >= 90 ? '2rem' : selectedDoc.grade >= 75 ? '1.5rem' : selectedDoc.grade >= 50 ? '1.2rem' : '1.4rem',
-                        color: selectedDoc.grade >= 90 ? '#00ff00' : selectedDoc.grade >= 75 ? '#28a745' : selectedDoc.grade >= 50 ? '#ff8c00' : '#dc3545'
-                      }}>
-                        {selectedDoc.grade}
-                        {selectedDoc.grade >= 90 && ' 😎'}
-                      </span>
-                    </div>
-                  ) : (
-                    <div style={{
-                      padding: '0.75rem',
-                      borderRadius: 8,
-                      background: 'var(--bg)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--muted)',
-                      fontSize: '0.85rem',
-                      textAlign: 'center'
-                    }}>
-                      Grade not found!
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Upload files card */}
-            <div className="glass-panel" style={{ padding: '0.75rem' }}>
-              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Files</h3>
+            <div className="glass-panel" style={{ padding: '1rem' }}>
+              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Uploaded Files</h3>
               {docFiles.length === 0 ? (
-                <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: '0.6rem', textAlign: 'center', padding: '0.5rem' }}>
-                  No files uploaded
-                </div>
+                <div style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>No files uploaded</div>
               ) : (
-                <div style={{ marginBottom: '0.6rem', maxHeight: 200, overflowY: 'auto' }}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 0.75rem 0', fontSize: '0.85rem' }}>
                   {docFiles.map((file: any) => {
-                    const userId = user?.id || user?.user_id || session?.user_id;
-                    const canDelete = file.uploaded_by === userId || userRole === 'mentor' || session?.role === 'admin';
+                    const canDelete = file.uploaded_by === user?.id || userRole === 'mentor' || session?.role === 'admin';
                     return (
-                      <div key={file.file_id} style={{ 
-                        marginBottom: '0.4rem', 
+                      <li key={file.file_id} style={{ 
+                        marginBottom: '0.5rem', 
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center',
-                        padding: '0.4rem 0.5rem',
+                        padding: '0.5rem',
                         background: 'var(--bg)',
                         borderRadius: 4,
-                        border: '1px solid var(--border)',
-                        fontSize: '0.75rem'
+                        border: '1px solid var(--border)'
                       }}>
-                        <span style={{ 
-                          flex: 1, 
-                          overflow: 'hidden', 
-                          textOverflow: 'ellipsis', 
-                          whiteSpace: 'nowrap',
-                          marginRight: '0.5rem'
-                        }}>
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {file.file_name}
                         </span>
                         {canDelete && (
                           <button 
-                            className="btn btn-danger" 
-                            style={{ padding: '0.3rem 0.5rem', fontSize: '0.7rem', minWidth: '40px' }}
+                            className="btn btn-ghost" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.5rem' }}
                             onClick={() => {
                               setConfirmTitle('Delete File');
                               setConfirmQuestion(`Are you sure you want to delete "${file.file_name}"?`);
@@ -837,23 +573,21 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                               setConfirmOpen(true);
                             }}
                           >
-                            DEL
+                            Delete
                           </button>
                         )}
-                      </div>
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               )}
               <label 
                 className="btn btn-action" 
                 style={{ 
-                  display: 'block', 
+                  display: 'inline-block', 
                   textAlign: 'center',
                   cursor: uploading ? 'not-allowed' : 'pointer',
-                  opacity: uploading ? 0.6 : 1,
-                  padding: '0.4rem 0.7rem',
-                  fontSize: '0.8rem'
+                  opacity: uploading ? 0.6 : 1
                 }}
               >
                 {uploading ? 'Uploading...' : 'Upload File'}
@@ -866,34 +600,13 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 />
               </label>
             </div>
-
-            {/* Share this document card - appears like other right-sidebar cards when renders exist */}
-            {docVersions && docVersions.length > 0 && (
-              <div className="glass-panel" style={{ padding: '0.75rem' }}>
-                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600 }}>Share this document</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 8 }}>Copy a permanent share link to the latest render.</p>
-                <input
-                  readOnly
-                  value={shareLink || ''}
-                  placeholder={shareLink ? '' : 'Share link will appear here'}
-                  onClick={(e) => {
-                    try {
-                      (e.target as HTMLInputElement).select();
-                      if (shareLink) navigator.clipboard.writeText(shareLink).then(() => notify.push('Share link copied to clipboard', 2)).catch(() => {});
-                    } catch (err) {}
-                  }}
-                  className="auth-input"
-                  style={{ cursor: shareLink ? 'pointer' : 'default', color: 'var(--accent)', border: '1px solid var(--border)', width: '100%' }}
-                />
-              </div>
-            )}
           </div>
         </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ color: 'var(--heading)', fontSize: '1.5rem', marginBottom: '0.5rem' }}>No document selected</h2>
-            <p style={{ fontSize: '0.95rem' }}>Please select a document from the dropdown above</p>
+            <h2 style={{ color: 'var(--heading)' }}>No document selected</h2>
+            <p>Please select a document from the dropdown above</p>
           </div>
         </div>
       )}
@@ -975,13 +688,6 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
           setConfirmOpen(false);
           setConfirmAction(null);
         }}
-      />
-
-      {/* Document Finder */}
-      <DocumentFinder
-        open={documentFinderOpen}
-        onClose={() => setDocumentFinderOpen(false)}
-        onSelect={(documentId) => handleDocumentSelect(documentId)}
       />
     </div>
   );

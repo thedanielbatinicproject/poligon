@@ -30,6 +30,8 @@ class CustomSessionStore extends session.Store {
       await upsertSession(sid, sessionData);
       callback();
     } catch (err) {
+      // Log error in required format
+  console.error('[SESSION ERROR]', String(err));
       callback(err);
     }
   }

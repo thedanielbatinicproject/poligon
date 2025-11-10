@@ -6,7 +6,6 @@ import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
 import { createTempUrl, startOnlineRender, isRendering as isOnlineRendering } from '../render/onlineRenderer';
 import { DocumentWorkflowService } from '../services/documentWorkflow.service';
-import { encodeDocumentId } from '../utils/documentHash';
 
 const documentsRouter = Router();
 
@@ -109,32 +108,25 @@ documentsRouter.post('/', checkLogin, async (req: Request, res: Response) => {
 });
 
 // GET /api/documents/all - Get all documents for current user (owner/editor/mentor/viewer or created_by)
-// Admin gets ALL documents from database with enriched data (creator name, type name, mentor names)
 documentsRouter.get('/all', checkLogin, async (req: Request, res: Response) => {
   const user_id = req.session.user_id;
-  const role = req.session.role;
   if (!user_id) {
     return res.status(401).json({ error: 'User not logged in!' });
   }
   try {
-    let documents: any[];
+    // Single query to get all documents where user is:
+    // 1. In document_editors table (any role: owner, editor, mentor, viewer)
+    // 2. OR is the creator (created_by)
+    const [rows] = await pool.query(
+      `SELECT DISTINCT d.* 
+       FROM documents d
+       LEFT JOIN document_editors de ON d.document_id = de.document_id
+       WHERE de.user_id = ? OR d.created_by = ?
+       ORDER BY d.updated_at DESC`,
+      [user_id, user_id]
+    );
     
-    // Admin gets ALL documents with enriched data
-    if (role === 'admin') {
-      documents = await DocumentsService.getAllDocumentsForAdmin();
-    } else {
-      // Regular users get only documents where they are editor or creator
-      const [rows] = await pool.query(
-        `SELECT DISTINCT d.* 
-         FROM documents d
-         LEFT JOIN document_editors de ON d.document_id = de.document_id
-         WHERE de.user_id = ? OR d.created_by = ?
-         ORDER BY d.updated_at DESC`,
-        [user_id, user_id]
-      );
-      documents = rows as any[];
-    }
-    
+    const documents = rows as any[];
     res.json(documents);
   } catch (err) {
     console.error('[/api/documents/all] Error:', err);
@@ -427,7 +419,7 @@ documentsRouter.get('/:document_id/audit-log', checkLogin, async (req: Request, 
   }
 });
 
-// PUT /api/documents/:document_id/status - Change document status
+// PUT /api/documents/:document_id/status - Change document status (admin or mentor only)
 documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res: Response) => {
   const document_id = Number(req.params.document_id);
   const user_id = req.session.user_id;
@@ -437,39 +429,18 @@ documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res
   if (!user_id || !role) {
     return res.status(401).json({ error: 'User not authenticated.' });
   }
+  // Only admin or mentor of this document can change status
+  const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
+  if (role !== 'admin' && !isMentor) {
+    return res.status(403).json({ error: `Only admin or mentor can change document status! Your user role is ${role}.` });
+  }
 
   try {
-    // Get current document to check status
-    const currentDoc = await DocumentsService.getDocumentById(document_id);
-    if (!currentDoc) {
-      return res.status(404).json({ error: 'Document not found.' });
-    }
-
-    // Special case: Students can submit for review (set to under_review) ONLY if current status is draft
-    if (role === 'student' && status === 'under_review') {
-      if (currentDoc.status !== 'draft') {
-        return res.status(403).json({ error: 'You can only submit documents for review when they are in draft status.' });
-      }
-      // Student is allowed to submit draft for review - proceed
-    } else {
-      // For all other status changes: Only admin or mentor of this document can change status
-      const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
-      if (role !== 'admin' && !isMentor) {
-        return res.status(403).json({ error: `Only admin or mentor can change document status! Your user role is ${role}.` });
-      }
-    }
-
     // Update status in documents table
     const updated = await DocumentsService.updateDocumentStatus(document_id, status);
     if (!updated) {
       return res.status(400).json({ error: 'Invalid status or document not found in database!' });
     }
-    
-    // If status is changed to draft, clear the grade
-    if (status === 'draft') {
-      await DocumentsService.updateDocumentGrade(document_id, null);
-    }
-    
     // Log to workflow history
     await DocumentWorkflowService.addWorkflowEvent(document_id, status, user_id);
     // Log to audit log
@@ -486,8 +457,8 @@ documentsRouter.put('/:document_id/status', checkLogin, async (req: Request, res
 });
 
 
-// PUT /api/documents/:document_id/grade - Admin or mentor of the document can change the grade
-documentsRouter.put('/:document_id/grade', checkLogin, async (req: Request, res: Response) => {
+// PUT /api/documents/:document_id/grade - Only mentors of the document can change the grade
+documentsRouter.put('/:document_id/grade', checkMentor, async (req: Request, res: Response) => {
   const document_id = Number(req.params.document_id);
   const user_id = req.session.user_id;
   const role = req.session.role;
@@ -496,10 +467,10 @@ documentsRouter.put('/:document_id/grade', checkLogin, async (req: Request, res:
   if (!user_id || !role) {
     return res.status(401).json({ error: 'User not authenticated.' });
   }
-  // Only admin or mentor of this document can change grade
+  // Only mentor of this document can change grade (no admin access)
   const isMentor = await DocumentsService.isEditor(document_id, user_id, ['mentor']);
-  if (role !== 'admin' && !isMentor) {
-    return res.status(403).json({ error: 'Only admin or mentor of this document can change the grade.' });
+  if (!isMentor) {
+    return res.status(403).json({ error: 'Only mentor of this document can change the grade.' });
   }
 
   try {
@@ -527,49 +498,6 @@ documentsRouter.get('/audit-log', checkLogin, checkAdmin, async (req: Request, r
     res.status(200).json(allLogs);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch audit logs.', details: err });
-  }
-});
-
-// GET /api/documents/:document_id/hash - Get shareable link for document PDF (authenticated users only)
-documentsRouter.get('/:document_id/hash', checkLogin, async (req: Request, res: Response) => {
-  const document_id = Number(req.params.document_id);
-  const user_id = req.session.user_id;
-  
-  if (!user_id) {
-    return res.status(401).json({ error: 'User not authenticated.' });
-  }
-
-  try {
-    // Check if document exists
-    const doc = await DocumentsService.getDocumentById(document_id);
-    if (!doc) {
-      return res.status(404).json({ error: 'Document not found.' });
-    }
-
-    // Generate hash and construct shareable link
-    const hashCode = encodeDocumentId(document_id);
-    const baseUrl = process.env.BASE_URL || process.env.URL || 'http://localhost:5000';
-    const shareableLink = `${baseUrl}/d/${hashCode}`;
-
-    res.status(200).json({ 
-      link: shareableLink,
-      hash: hashCode,
-      document_id 
-    });
-  } catch (err) {
-    console.error('[ERROR] /api/documents/:id/hash', err);
-    res.status(500).json({ error: 'Failed to generate shareable link.', details: err });
-  }
-});
-
-// GET /api/documents/renders/count - Get total count of all renders (admin only)
-documentsRouter.get('/renders/count', checkLogin, checkAdmin, async (req: Request, res: Response) => {
-  try {
-    const totalRenders = await DocumentsService.getTotalRenders();
-    res.status(200).json({ total_renders: totalRenders });
-  } catch (err) {
-    console.error('[ERROR] /api/documents/renders/count', err);
-    res.status(500).json({ error: 'Failed to fetch total renders count.', details: err });
   }
 });
 
