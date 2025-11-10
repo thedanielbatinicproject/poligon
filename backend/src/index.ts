@@ -265,12 +265,13 @@ app.use((req, res, next) => {
 const server = http.createServer(app);
 
 // Socket.io detailed logging to file
+//TODO REMOVE IN PRODUCTION
 const socketLogPath = path.resolve(__dirname, '../socket.log');
 const logSocket = (message: string) => {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
   try {
-    fs.appendFileSync(socketLogPath, logMessage);
+    //fs.appendFileSync(socketLogPath, logMessage);
     console.log(logMessage.trim());
   } catch (e) {
     console.error('Failed to write socket log:', e);

@@ -52,8 +52,8 @@ export default function YjsEditor({ documentId, readOnly, onUserCountChange }: Y
     // Setup WebSocket provider - use VITE_API_BASE from env
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
     const wsUrl = apiBase.replace(/^http/, 'ws') + `/yjs?documentId=${documentId}`;
-    
-    const provider = new WebsocketProvider(wsUrl, `document-${documentId}`, ydoc, {
+    // Room name ostavi prazan string, backend koristi documentId iz query parametra
+    const provider = new WebsocketProvider(wsUrl, '', ydoc, {
       connect: true,
       WebSocketPolyfill: WebSocket as any
     });
