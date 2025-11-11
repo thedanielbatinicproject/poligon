@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+// (removed duplicate import)
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -10,139 +10,32 @@ import { yCollab } from 'y-codemirror.next';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
+// ...existing code...
+
+export interface YjsEditorHandle {
+  getLatexContent: () => string;
+}
+
 interface YjsEditorProps {
   documentId: number;
   readOnly: boolean;
   onUserCountChange?: (count: number) => void;
 }
 
-export default function YjsEditor({ documentId, readOnly, onUserCountChange }: YjsEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const viewRef = useRef<EditorView | null>(null);
-  const providerRef = useRef<WebsocketProvider | null>(null);
-  const ydocRef = useRef<Y.Doc | null>(null);
+const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
+  ({ documentId, readOnly, onUserCountChange }, ref) => {
+    const editorRef = useRef<HTMLDivElement>(null);
+    const viewRef = useRef<EditorView | null>(null);
+    const providerRef = useRef<WebsocketProvider | null>(null);
+    const ydocRef = useRef<Y.Doc | null>(null);
   
   const [isConnected, setIsConnected] = useState(false);
   const [isSynced, setIsSynced] = useState(false);
 
-  useEffect(() => {
-    if (!editorRef.current || !documentId) return;
-
-    // Cleanup previous instance
-    if (viewRef.current) {
-      viewRef.current.destroy();
-      viewRef.current = null;
-    }
-    if (providerRef.current) {
-      providerRef.current.destroy();
-      providerRef.current = null;
-    }
-    if (ydocRef.current) {
-      ydocRef.current.destroy();
-      ydocRef.current = null;
-    }
-
-    // Create new Y.Doc
-    const ydoc = new Y.Doc();
-    ydocRef.current = ydoc;
-    
-    // Get Yjs text type
-    const ytext = ydoc.getText('latex');
-
-    // Use the new external Yjs websocket server
-    const wsUrl = 'wss://socket.poligon.live';
-    const provider = new WebsocketProvider(wsUrl, String(documentId), ydoc, {
-      connect: true,
-      WebSocketPolyfill: WebSocket as any
-    });
-    providerRef.current = provider;
-
-    // Listen to connection status
-    provider.on('status', (event: { status: string }) => {
-      setIsConnected(event.status === 'connected');
-    });
-
-    provider.on('sync', (isSynced: boolean) => {
-      setIsSynced(isSynced);
-    });
-
-    // Use awareness API to compute connected user count and notify parent
-    if (onUserCountChange) {
-      const computeAndNotify = () => {
-        try {
-          const states = provider.awareness.getStates();
-          let count = 0;
-          for (const _ of states.keys()) count++;
-          onUserCountChange(count);
-        } catch (e) {}
-      };
-      // initial
-      computeAndNotify();
-      provider.awareness.on('change', computeAndNotify);
-    }
-
-    // Create basic extensions
-    const basicExtensions = [
-      lineNumbers(),
-      highlightActiveLineGutter(),
-      highlightSpecialChars(),
-      history(),
-      foldGutter(),
-      drawSelection(),
-      dropCursor(),
-      EditorState.allowMultipleSelections.of(true),
-      indentOnInput(),
-      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-      bracketMatching(),
-      closeBrackets(),
-      rectangularSelection(),
-      crosshairCursor(),
-      highlightActiveLine(),
-      highlightSelectionMatches(),
-      keymap.of([
-        ...closeBracketsKeymap,
-        ...defaultKeymap,
-        ...searchKeymap,
-        ...historyKeymap
-      ])
-    ];
-
-    // Create read-only compartment
-    const readOnlyCompartment = new Compartment();
-
-    // Create CodeMirror state with Yjs collaboration
-    const state = EditorState.create({
-      doc: ytext.toString(),
-      extensions: [
-        ...basicExtensions,
-        StreamLanguage.define(stex),
-        yCollab(ytext, provider.awareness),
-        readOnlyCompartment.of(EditorView.editable.of(!readOnly)),
-        EditorView.theme({
-          '&': {
-            height: '100%',
-            fontSize: '0.95rem'
-          },
-          '.cm-scroller': {
-            overflow: 'auto',
-            fontFamily: 'monospace'
-          }
-        })
-      ]
-    });
-
-    // Create CodeMirror view
-    const view = new EditorView({
-      state,
-      parent: editorRef.current
-    });
-    viewRef.current = view;
-
-    // Store compartment in view for later reconfiguration
-    (view as any).readOnlyCompartment = readOnlyCompartment;
-
-    // Cleanup on unmount or documentId change
-    return () => {
+    useEffect(() => {
+      if (!editorRef.current || !documentId) return;
+      // Cleanup previous instance
       if (viewRef.current) {
         viewRef.current.destroy();
         viewRef.current = null;
@@ -155,74 +48,187 @@ export default function YjsEditor({ documentId, readOnly, onUserCountChange }: Y
         ydocRef.current.destroy();
         ydocRef.current = null;
       }
-    };
-  }, [documentId, readOnly]);
-
-  // Update read-only state when prop changes
-  useEffect(() => {
-    if (viewRef.current) {
-      const compartment = (viewRef.current as any).readOnlyCompartment as Compartment;
-      if (compartment) {
-        viewRef.current.dispatch({
-          effects: compartment.reconfigure(EditorView.editable.of(!readOnly))
-        });
+      // Create new Y.Doc
+      const ydoc = new Y.Doc();
+      ydocRef.current = ydoc;
+      // Get Yjs text type
+      const ytext = ydoc.getText('latex');
+      // Use the new external Yjs websocket server
+      const wsUrl = 'wss://socket.poligon.live';
+      const provider = new WebsocketProvider(wsUrl, String(documentId), ydoc, {
+        connect: true,
+        WebSocketPolyfill: WebSocket as any
+      });
+      providerRef.current = provider;
+      // Listen to connection status
+      provider.on('status', (event: { status: string }) => {
+        setIsConnected(event.status === 'connected');
+      });
+      provider.on('sync', (isSynced: boolean) => {
+        setIsSynced(isSynced);
+      });
+      // Use awareness API to compute connected user count and notify parent
+      if (onUserCountChange) {
+        const computeAndNotify = () => {
+          try {
+            const states = provider.awareness.getStates();
+            let count = 0;
+            for (const _ of states.keys()) count++;
+            onUserCountChange(count);
+          } catch (e) {}
+        };
+        // initial
+        computeAndNotify();
+        provider.awareness.on('change', computeAndNotify);
       }
-    }
-  }, [readOnly]);
+      // Create basic extensions
+      const basicExtensions = [
+        lineNumbers(),
+        highlightActiveLineGutter(),
+        highlightSpecialChars(),
+        history(),
+        foldGutter(),
+        drawSelection(),
+        dropCursor(),
+        EditorState.allowMultipleSelections.of(true),
+        indentOnInput(),
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        bracketMatching(),
+        closeBrackets(),
+        rectangularSelection(),
+        crosshairCursor(),
+        highlightActiveLine(),
+        highlightSelectionMatches(),
+        keymap.of([
+          ...closeBracketsKeymap,
+          ...defaultKeymap,
+          ...searchKeymap,
+          ...historyKeymap
+        ])
+      ];
+      // Create read-only compartment
+      const readOnlyCompartment = new Compartment();
+      // Create CodeMirror state with Yjs collaboration
+      const state = EditorState.create({
+        doc: ytext.toString(),
+        extensions: [
+          ...basicExtensions,
+          StreamLanguage.define(stex),
+          yCollab(ytext, provider.awareness),
+          readOnlyCompartment.of(EditorView.editable.of(!readOnly)),
+          EditorView.theme({
+            '&': {
+              height: '100%',
+              fontSize: '0.95rem'
+            },
+            '.cm-scroller': {
+              overflow: 'auto',
+              fontFamily: 'monospace'
+            }
+          })
+        ]
+      });
+      // Create CodeMirror view
+      const view = new EditorView({
+        state,
+        parent: editorRef.current
+      });
+      viewRef.current = view;
+      // Store compartment in view for later reconfiguration
+      (view as any).readOnlyCompartment = readOnlyCompartment;
+      // Cleanup on unmount or documentId change
+      return () => {
+        if (viewRef.current) {
+          viewRef.current.destroy();
+          viewRef.current = null;
+        }
+        if (providerRef.current) {
+          providerRef.current.destroy();
+          providerRef.current = null;
+        }
+        if (ydocRef.current) {
+          ydocRef.current.destroy();
+          ydocRef.current = null;
+        }
+      };
+    }, [documentId, readOnly]);
 
-  return (
-    <div style={{ 
-      flex: 1, 
-      display: 'flex', 
-      flexDirection: 'column',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Connection status indicator */}
-      {!isConnected && (
-        <div style={{
-          position: 'absolute',
-          top: '0.5rem',
-          right: '0.5rem',
-          padding: '0.5rem 1rem',
-          background: 'var(--warning)',
-          color: 'var(--bg)',
-          borderRadius: 6,
-          fontSize: '0.85rem',
-          zIndex: 10,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-        }}>
-          ⚠️ Connecting to collaboration server...
-        </div>
-      )}
-      
-      {isConnected && !isSynced && (
-        <div style={{
-          position: 'absolute',
-          top: '0.5rem',
-          right: '0.5rem',
-          padding: '0.5rem 1rem',
-          background: 'var(--accent)',
-          color: 'var(--bg)',
-          borderRadius: 6,
-          fontSize: '0.85rem',
-          zIndex: 10,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-        }}>
-          🔄 Syncing document...
-        </div>
-      )}
+    // Expose getLatexContent method to parent via ref
+    useImperativeHandle(ref, () => ({
+      getLatexContent: () => {
+        if (ydocRef.current) {
+          return ydocRef.current.getText('latex').toString();
+        }
+        return '';
+      }
+    }), []);
 
-      {/* Editor container */}
-      <div 
-        ref={editorRef} 
-        style={{ 
-          flex: 1,
-          overflow: 'auto',
-          background: 'var(--bg)',
-          color: 'var(--text)'
-        }}
-      />
-    </div>
-  );
-}
+    // Update read-only state when prop changes
+    useEffect(() => {
+      if (viewRef.current) {
+        const compartment = (viewRef.current as any).readOnlyCompartment as Compartment;
+        if (compartment) {
+          viewRef.current.dispatch({
+            effects: compartment.reconfigure(EditorView.editable.of(!readOnly))
+          });
+        }
+      }
+    }, [readOnly]);
+
+    return (
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Connection status indicator */}
+        {!isConnected && (
+          <div style={{
+            position: 'absolute',
+            top: '0.5rem',
+            right: '0.5rem',
+            padding: '0.5rem 1rem',
+            background: 'var(--warning)',
+            color: 'var(--bg)',
+            borderRadius: 6,
+            fontSize: '0.85rem',
+            zIndex: 10,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+          }}>
+            ⚠️ Connecting to collaboration server...
+          </div>
+        )}
+        {isConnected && !isSynced && (
+          <div style={{
+            position: 'absolute',
+            top: '0.5rem',
+            right: '0.5rem',
+            padding: '0.5rem 1rem',
+            background: 'var(--accent)',
+            color: 'var(--bg)',
+            borderRadius: 6,
+            fontSize: '0.85rem',
+            zIndex: 10,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+          }}>
+            🔄 Syncing document...
+          </div>
+        )}
+        {/* Editor container */}
+        <div 
+          ref={editorRef} 
+          style={{ 
+            flex: 1,
+            overflow: 'auto',
+            background: 'var(--bg)',
+            color: 'var(--text)'
+          }}
+        />
+      </div>
+    );
+  }
+);
+
+export default YjsEditor;

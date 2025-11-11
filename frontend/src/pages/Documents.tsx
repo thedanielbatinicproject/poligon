@@ -6,7 +6,7 @@ import * as TasksApi from '../lib/tasksApi';
 import ConfirmationBox from '../components/ConfirmationBox';
 
 // YjsEditor now uses the external websocket server (wss://socket.poligon.live)
-import YjsEditor from '../components/YjsEditor';
+import YjsEditor, { YjsEditorHandle } from '../components/YjsEditor';
 import { useSocket } from '../components/SocketProvider';
 
 export default function Documents() {
@@ -135,27 +135,19 @@ export default function Documents() {
     setSelectedDocId(docId);
   };
 
-  // Manual save/audit log (Yjs auto-syncs content to backend)
+  // Ref for YjsEditor to access content
+  const yjsEditorRef = React.useRef<YjsEditorHandle>(null);
+
+  // Manual save: sync Yjs content to backend
   const handleSave = async () => {
     if (!selectedDocId || isReadOnly) return;
-    
     setIsSaving(true);
     try {
-      notify.push('Changes are automatically saved via Yjs sync', 2);
-      
-      // Create audit log for manual save action
-      await fetch('/api/utility/audit-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          action_type: 'edit',
-          entity_type: 'document',
-          entity_id: selectedDocId
-        })
-      }).catch(() => {});
+      const latexContent = yjsEditorRef.current?.getLatexContent() || '';
+      await DocumentsApi.updateDocumentContent(selectedDocId, { latex_content: latexContent });
+      notify.push('Document content has been saved successfully.', 3);
     } catch (err: any) {
-      notify.push(err?.message || 'Failed to log action', undefined, true);
+      notify.push(`Failed to save document content: ${err?.message || err}.`, undefined, true);
     } finally {
       setIsSaving(false);
     }
@@ -454,11 +446,11 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 {isSaving ? 'Saving...' : 'Save'}
               </button>
               <button className="btn btn-ghost" onClick={showPackagesInfo}>
-                ℹ️ Packages Info
+                Packages Info
               </button>
               {isReadOnly && (
                 <span style={{ marginLeft: 'auto', color: 'var(--warning)', fontSize: '0.9rem' }}>
-                  🔒 Read-only mode
+                  <i>Read-only mode</i> 
                 </span>
               )}
             </div>
@@ -471,8 +463,9 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                   <strong>LaTeX Editor</strong>
                 </div>
                 {selectedDocId ? (
-                  <YjsEditor 
-                    documentId={selectedDocId} 
+                  <YjsEditor
+                    ref={yjsEditorRef}
+                    documentId={selectedDocId!}
                     readOnly={isReadOnly}
                     onUserCountChange={setConnectedUsers}
                   />
