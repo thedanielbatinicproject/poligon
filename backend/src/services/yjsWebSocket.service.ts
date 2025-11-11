@@ -25,8 +25,7 @@ const saveTimers: Map<number, NodeJS.Timeout> = new Map();
 export function setupYjsWebSocketServer(server: http.Server) {
   // Use the standard y-websocket setup to ensure protocol compatibility
   const wss = new WebSocketServer({
-    server,
-    path: '/yjs',
+  server,
     perMessageDeflate: false,
     maxPayload: 10 * 1024 * 1024 // 10MB
   });

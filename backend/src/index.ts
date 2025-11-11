@@ -260,13 +260,12 @@ const server = http.createServer(app);
 // Log raw HTTP upgrade requests to help debug WebSocket extension negotiation
 server.on('upgrade', (req, socket, head) => {
   try {
-    logSocket(`[UPGRADE REQ] ${JSON.stringify(req.headers)}`);
     // Remove any Sec-WebSocket-Extensions or Sec-WebSocket-Protocol forwarded by clients
     // so that the server (engine.io/ws) does not negotiate permessage-deflate via a forwarded header.
     try { delete (req.headers as any)['sec-websocket-extensions']; } catch (e) {}
     try { delete (req.headers as any)['sec-websocket-protocol']; } catch (e) {}
   } catch (e) {
-    logSocket(`[UPGRADE REQ] (failed to stringify headers)`);
+    // ignore
   }
 });
 // Socket.io detailed logging to file

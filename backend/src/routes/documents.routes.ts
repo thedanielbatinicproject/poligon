@@ -501,4 +501,14 @@ documentsRouter.get('/audit-log', checkLogin, checkAdmin, async (req: Request, r
   }
 });
 
+// GET /api/documents/renders/count - Get total number of renders (document versions) in system (admin only)
+documentsRouter.get('/renders/count', checkLogin, checkAdmin, async (req: Request, res: Response) => {
+  try {
+    const total = await DocumentsService.getTotalRenders();
+    res.status(200).json({ total_renders: Number(total) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch total renders count.', details: String(err) });
+  }
+});
+
 export default documentsRouter;
