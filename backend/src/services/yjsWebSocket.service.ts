@@ -2,6 +2,8 @@ import * as Y from 'yjs';
 import { WebSocket, WebSocketServer } from 'ws';
 import * as http from 'http';
 import { YjsService } from '../services/yjs.service';
+// We'll require y-websocket utils at runtime to avoid TypeScript import resolution
+// issues during compilation; the runtime package is present in package.json.
 
 /**
  * Yjs WebSocket Server for real-time collaborative editing
@@ -21,160 +23,31 @@ const saveTimers: Map<number, NodeJS.Timeout> = new Map();
  * Initialize WebSocket server for Yjs
  */
 export function setupYjsWebSocketServer(server: http.Server) {
-  const wss = new WebSocketServer({ 
+  // Use the standard y-websocket setup to ensure protocol compatibility
+  const wss = new WebSocketServer({
     server,
     path: '/yjs',
-    verifyClient: (info, callback) => {
-      // TODO: Add session verification here
-      // For now, allow all connections
-      callback(true);
+    perMessageDeflate: false,
+    maxPayload: 10 * 1024 * 1024 // 10MB
+  });
+
+  wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
+    try {
+      // Dynamically require the y-websocket setup function to avoid
+      // TypeScript compile-time resolution issues.
+      const utils = require('y-websocket/bin/utils');
+      const setup = utils && (utils.setupWSConnection || utils.default && utils.default.setupWSConnection);
+      if (!setup) throw new Error('setupWSConnection not found in y-websocket/bin/utils');
+      // Delegate to the standard implementation which handles sync/awareness
+      // using the document name derived from req.url (e.g. /yjs/<docName>).
+      setup(ws, req, { gc: true });
+    } catch (err) {
+      console.error('[YjsWS] setupWSConnection error:', err);
+      try { ws.close(); } catch (e) {}
     }
   });
 
-
-  wss.on('connection', async (ws: WebSocket, request) => {
-    console.log('[YjsWS] New WebSocket connection');
-
-    // DEBUG: Log cookies and session info
-    const cookieHeader = request.headers['cookie'];
-    let sessionId = null;
-    if (cookieHeader) {
-      // Try to extract session id from cookie string (assume connect.sid or poligon.sid)
-      const match = cookieHeader.match(/(connect\.sid|poligon\.sid)=([^;]+)/);
-      if (match) sessionId = match[2];
-    }
-    console.log('[YjsWS][DEBUG] Cookie header:', cookieHeader);
-    console.log('[YjsWS][DEBUG] Extracted session id:', sessionId);
-    if (sessionId) {
-      try {
-        const { getSessionById } = await import('./session.service');
-        const session = await getSessionById(sessionId);
-        console.log('[YjsWS][DEBUG] Session from DB:', session);
-        if (session) {
-          console.log('[YjsWS][DEBUG] Session user_id:', session.user_id);
-        } else {
-          console.warn('[YjsWS][DEBUG] No session found for session_id:', sessionId);
-        }
-      } catch (err) {
-        console.error('[YjsWS][DEBUG] Error fetching session:', err);
-      }
-    } else {
-      console.warn('[YjsWS][DEBUG] No session id found in cookie header');
-    }
-
-    // Parse document ID from URL query params
-    const url = new URL(request.url || '', `http://${request.headers.host}`);
-    const documentIdParam = url.searchParams.get('documentId');
-    
-    if (!documentIdParam) {
-      console.error('[YjsWS] No documentId provided');
-      ws.close();
-      return;
-    }
-
-    const documentId = parseInt(documentIdParam, 10);
-    if (isNaN(documentId)) {
-      console.error('[YjsWS] Invalid documentId');
-      ws.close();
-      return;
-    }
-
-    console.log(`[YjsWS] Client connected to document ${documentId}`);
-
-    // Get or create Y.Doc for this document
-    let ydoc = docs.get(documentId);
-    if (!ydoc) {
-      ydoc = await YjsService.initializeYjsDocument(documentId);
-      docs.set(documentId, ydoc);
-      
-      // Setup update handler for persistence
-      ydoc.on('update', (update: Uint8Array) => {
-        handleDocumentUpdate(documentId, ydoc!, update);
-      });
-    }
-
-    // Add connection to document's connection set
-    if (!connections.has(documentId)) {
-      connections.set(documentId, new Set());
-    }
-    connections.get(documentId)!.add(ws);
-
-    // Send initial state to new client
-    const stateUpdate = Y.encodeStateAsUpdate(ydoc);
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(createMessage('sync', stateUpdate));
-    }
-
-    // Broadcast connected user count
-    broadcastUserCount(documentId);
-
-    // Handle incoming messages
-    ws.on('message', (data: Buffer) => {
-      try {
-        const message = parseMessage(data);
-        
-        if (message.type === 'update') {
-          // Apply update to document
-          Y.applyUpdate(ydoc!, message.update);
-          
-          // Broadcast to other clients
-          broadcastUpdate(documentId, data, ws);
-        } else if (message.type === 'awareness') {
-          // Broadcast awareness update (cursor positions, etc.)
-          broadcastAwareness(documentId, data, ws);
-        }
-      } catch (err) {
-        console.error('[YjsWS] Error processing message:', err);
-      }
-    });
-
-    // Handle disconnection
-    ws.on('close', () => {
-      console.log(`[YjsWS] Client disconnected from document ${documentId}`);
-      
-      // Remove connection
-      const docConnections = connections.get(documentId);
-      if (docConnections) {
-        docConnections.delete(ws);
-        
-        // Broadcast updated user count
-        broadcastUserCount(documentId);
-        
-        // If no more connections, clean up after delay
-        if (docConnections.size === 0) {
-          setTimeout(() => {
-            if (connections.get(documentId)?.size === 0) {
-              console.log(`[YjsWS] Cleaning up document ${documentId} (no active connections)`);
-              
-              // Save final state
-              const doc = docs.get(documentId);
-              if (doc) {
-                YjsService.saveYjsState(documentId, Y.encodeStateAsUpdate(doc));
-                YjsService.syncToLatexContent(documentId, doc);
-              }
-              
-              // Remove from memory
-              docs.delete(documentId);
-              connections.delete(documentId);
-              
-              // Clear save timer
-              const timer = saveTimers.get(documentId);
-              if (timer) {
-                clearTimeout(timer);
-                saveTimers.delete(documentId);
-              }
-            }
-          }, 30000); // 30 second grace period
-        }
-      }
-    });
-
-    ws.on('error', (err) => {
-      console.error('[YjsWS] WebSocket error:', err);
-    });
-  });
-
-  console.log('[YjsWS] WebSocket server initialized on /yjs');
+  console.log('[YjsWS] y-websocket server initialized on /yjs');
   return wss;
 }
 

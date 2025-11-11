@@ -257,6 +257,18 @@ app.use((req, res, next) => {
 // --- SOCKET.IO SETUP ---
 const server = http.createServer(app);
 
+// Log raw HTTP upgrade requests to help debug WebSocket extension negotiation
+server.on('upgrade', (req, socket, head) => {
+  try {
+    logSocket(`[UPGRADE REQ] ${JSON.stringify(req.headers)}`);
+    // Remove any Sec-WebSocket-Extensions or Sec-WebSocket-Protocol forwarded by clients
+    // so that the server (engine.io/ws) does not negotiate permessage-deflate via a forwarded header.
+    try { delete (req.headers as any)['sec-websocket-extensions']; } catch (e) {}
+    try { delete (req.headers as any)['sec-websocket-protocol']; } catch (e) {}
+  } catch (e) {
+    logSocket(`[UPGRADE REQ] (failed to stringify headers)`);
+  }
+});
 // Socket.io detailed logging to file
 //TODO REMOVE IN PRODUCTION
 const socketLogPath = path.resolve(__dirname, '../socket.log');
@@ -275,16 +287,22 @@ logSocket('=== Socket.io server initializing ===');
 
 const io = new SocketIOServer(server, {
   cors: {
-    origin: 'https://poligon.live',
-    credentials: true,
-    methods: ['GET', 'POST']
+  origin: 'https://poligon.live',
+  credentials: true,
+  methods: ['GET', 'POST']
   },
-  // SHARED HOSTING COMPATIBILITY: Try WebSocket first, fallback to polling
-  transports: ['websocket', 'polling'], // WebSocket first, then HTTP long polling
-  allowEIO3: true, // Support older Engine.IO clients
-  pingTimeout: 60000, // 60 seconds before considering connection dead
-  pingInterval: 25000 // Send ping every 25 seconds
-});
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  perMessageDeflate: false,
+  // Ensure websocket transport explicitly disables per-message deflate
+  transportOptions: {
+    websocket: {
+      perMessageDeflate: false
+    }
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000
+} as any);
 
 logSocket('Socket.io server created with config: ' + JSON.stringify({
   transports: ['websocket', 'polling'],

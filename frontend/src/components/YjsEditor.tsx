@@ -51,10 +51,10 @@ export default function YjsEditor({ documentId, readOnly, onUserCountChange }: Y
 
     // Setup WebSocket provider - use VITE_API_BASE from env
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
-  // Ensure no trailing slash in wsUrl
-  const wsUrl = apiBase.replace(/^http/, 'ws').replace(/\/$/, '') + `/yjs?documentId=${documentId}`;
-    // Leave room name empty to use single shared document on server
-    const provider = new WebsocketProvider(wsUrl, '', ydoc, {
+    // Use the canonical y-websocket path. The provider will connect to
+    // `${wsUrl}/${roomName}` so we pass documentId as the room name.
+    const wsUrl = apiBase.replace(/^http/, 'ws').replace(/\/$/, '') + `/yjs`;
+    const provider = new WebsocketProvider(wsUrl, String(documentId), ydoc, {
       connect: true,
       WebSocketPolyfill: WebSocket as any
     });
@@ -69,35 +69,20 @@ export default function YjsEditor({ documentId, readOnly, onUserCountChange }: Y
       setIsSynced(isSynced);
     });
 
-    // Listen to user count updates from server
-    provider.ws?.addEventListener('message', (event: MessageEvent) => {
-      try {
-        if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
-          // Binary message - parse for userCount
-          const parseUserCount = async (data: ArrayBuffer | Blob) => {
-            const buffer = data instanceof Blob ? await data.arrayBuffer() : data;
-            const bytes = new Uint8Array(buffer);
-            
-            if (bytes.length > 0) {
-              const typeLength = bytes[0];
-              const type = new TextDecoder().decode(bytes.slice(1, 1 + typeLength));
-              
-              if (type === 'userCount') {
-                const countStr = new TextDecoder().decode(bytes.slice(1 + typeLength));
-                const count = parseInt(countStr, 10);
-                if (!isNaN(count) && onUserCountChange) {
-                  onUserCountChange(count);
-                }
-              }
-            }
-          };
-          
-          parseUserCount(event.data);
-        }
-      } catch (err) {
-        // Ignore parsing errors
-      }
-    });
+    // Use awareness API to compute connected user count and notify parent
+    if (onUserCountChange) {
+      const computeAndNotify = () => {
+        try {
+          const states = provider.awareness.getStates();
+          let count = 0;
+          for (const _ of states.keys()) count++;
+          onUserCountChange(count);
+        } catch (e) {}
+      };
+      // initial
+      computeAndNotify();
+      provider.awareness.on('change', computeAndNotify);
+    }
 
     // Create basic extensions
     const basicExtensions = [

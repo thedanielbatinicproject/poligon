@@ -34,7 +34,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       withCredentials: true,
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 5,
+      // Explicitly disable permessage-deflate on the websocket transport
+      transportOptions: {
+        websocket: {
+          perMessageDeflate: false
+        }
+      }
     })
     setSocket(s)
 
