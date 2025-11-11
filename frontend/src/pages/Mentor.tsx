@@ -277,8 +277,11 @@ export default function Mentor() {
       try {
         const res = await DocumentsApi.getShareLink(Number(selectedDocId));
         if (!mounted) return;
-        if (res && res.link) setShareLink(res.link);
-        else setShareLink(null);
+        if (res && res.hash) {
+          setShareLink(`https://poligon.live/d/${res.hash}`);
+        } else {
+          setShareLink(null);
+        }
       } catch (err) {
         if (!mounted) return;
         setShareLink(null);

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getUserDisplayName } from '../lib/usersApi';
 import { useSession } from '../lib/session';
 import { useNotifications } from '../lib/notifications';
 import DocumentsApi, { compileTemp, getLatestTempCompile } from '../lib/documentsApi';
@@ -35,65 +36,80 @@ export default function Documents() {
   const [compileLocked, setCompileLocked] = useState(false);
   const [compileError, setCompileError] = useState<string | null>(null);
   const [tempPdfUrl, setTempPdfUrl] = useState<string | null>(null);
-  const [lastCompileTime, setLastCompileTime] = useState<number | null>(null);
+  const [lastCompileInfo, setLastCompileInfo] = useState<{ by: string, at: Date } | null>(null);
+  const [lastCompileUserName, setLastCompileUserName] = useState<string>('');
   // --- TEMP COMPILE: Socket event listeners for real-time preview and lock ---
   useEffect(() => {
     if (!socket || !selectedDocId) return;
-    // Listen for temp compile lock/unlock events
-    const lockEvent = `doc:${selectedDocId}:compile-temp-lock`;
-    const unlockEvent = `doc:${selectedDocId}:compile-temp-unlock`;
-    const compiledEvent = `doc:${selectedDocId}:compile-temp-done`;
-    const errorEvent = `doc:${selectedDocId}:compile-temp-error`;
-
-    function onLock(payload: any) {
-      setCompileLocked(true);
-      if (payload && payload.user_id !== displayUser?.user_id) {
-        notify.push('Another group member is compiling...', 3);
+    // Listen for backend events: document:temp-compile:started, document:temp-compile:finished
+    function onStarted(payload: any) {
+      if (payload && payload.document_id === selectedDocId) {
+        setCompileLocked(true);
+        setIsCompiling(true);
+        if (payload.started_by !== displayUser?.user_id) {
+          notify.push('Another group member is compiling...', 3);
+        }
       }
     }
-    function onUnlock() {
-      setCompileLocked(false);
+    function onFinished(payload: any) {
+      if (payload && payload.document_id === selectedDocId) {
+        setCompileLocked(false);
+        setIsCompiling(false);
+        setCompileError(payload.success ? null : (payload.error || 'Compile failed'));
+        fetchLatestTempPdf();
+        if (payload.success) {
+          notify.push('Preview updated for all group members.', 2);
+        } else {
+          notify.push(payload.error || 'Compile failed', 4, true);
+        }
+      }
     }
-    function onCompiled(payload: any) {
-      setCompileLocked(false);
-      setIsCompiling(false);
-      setCompileError(null);
-      setLastCompileTime(Date.now());
-      // Always fetch the latest temp PDF
-      fetchLatestTempPdf();
-      notify.push('Preview updated for all group members.', 2);
-    }
-    function onCompileError(payload: any) {
-      setCompileLocked(false);
-      setIsCompiling(false);
-      setCompileError(payload?.error || 'Compile failed');
-      notify.push(payload?.error || 'Compile failed', 4, true);
-    }
-    socket.on(lockEvent, onLock);
-    socket.on(unlockEvent, onUnlock);
-    socket.on(compiledEvent, onCompiled);
-    socket.on(errorEvent, onCompileError);
+    socket.on('document:temp-compile:started', onStarted);
+    socket.on('document:temp-compile:finished', onFinished);
     return () => {
-      socket.off(lockEvent, onLock);
-      socket.off(unlockEvent, onUnlock);
-      socket.off(compiledEvent, onCompiled);
-      socket.off(errorEvent, onCompileError);
+      socket.off('document:temp-compile:started', onStarted);
+      socket.off('document:temp-compile:finished', onFinished);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, selectedDocId, displayUser?.user_id]);
 
   // --- TEMP COMPILE: Fetch latest temp PDF on doc change or after compile ---
+  // Helper: parse info from PDF filename
+  function parseTempPdfInfo(url: string): { by: string, at: Date } | null {
+    // Expect filename: temp-compile-2025-11-11T23-19-23-202Z-BY-1.pdf
+    try {
+      const match = url.match(/temp-compile-(\d{4})-(\d{2})-(\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z-BY-(.+)\.pdf/);
+      if (!match) return null;
+      // match: [0]=full, [1]=yyyy, [2]=mm, [3]=dd, [4]=hh, [5]=min, [6]=ss, [7]=ms, [8]=by
+      const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.${match[7]}Z`;
+      const by = match[8];
+      return { by, at: new Date(iso) };
+    } catch { return null; }
+  }
+
   const fetchLatestTempPdf = async () => {
     if (!selectedDocId) return;
     try {
-  const res = await getLatestTempCompile(selectedDocId);
+      const res = await getLatestTempCompile(selectedDocId);
       if (res && res.url) {
         setTempPdfUrl(res.url + `?t=${Date.now()}`); // cache-bust
+        const info = parseTempPdfInfo(res.url);
+        setLastCompileInfo(info);
+        if (info && info.by) {
+          const name = await getUserDisplayName(Number(info.by));
+          setLastCompileUserName(name);
+        } else {
+          setLastCompileUserName('');
+        }
       } else {
         setTempPdfUrl(null);
+        setLastCompileInfo(null);
+        setLastCompileUserName('');
       }
     } catch {
       setTempPdfUrl(null);
+      setLastCompileInfo(null);
+      setLastCompileUserName('');
     }
   };
 
@@ -519,7 +535,7 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
           </div>
 
           {/* Center - Editor area */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="main-editor" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', width: '90vw' }}>
             {/* Editor toolbar */}
             <div className="glass-panel" style={{
               padding: '0.75rem 1rem',
@@ -587,14 +603,25 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
               {/* Right: PDF Preview (temp compile) */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <strong>Preview (Temporary Compile)</strong>
+                  <strong>
+                    {lastCompileInfo && lastCompileUserName
+                      ? (() => {
+                          const d = lastCompileInfo.at;
+                          const pad = (n: number) => n.toString().padStart(2, '0');
+                          let h = d.getHours();
+                          const m = pad(d.getMinutes());
+                          const s = pad(d.getSeconds());
+                          const ampm = h >= 12 ? 'PM' : 'AM';
+                          h = h % 12;
+                          if (h === 0) h = 12;
+                          const time = `${pad(h)}:${m}:${s} ${ampm}`;
+                          const date = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+                          return `Preview (compiled by ${lastCompileUserName} @ ${time} - ${date})`;
+                        })()
+                      : 'Preview (Temporary Compile)'}
+                  </strong>
                   {isCompiling && <span className="spinner" style={{ marginLeft: 8 }} />}
                   {compileLocked && !isCompiling && <span style={{ color: 'var(--warning)', fontSize: '0.95em' }}>Locked by another user</span>}
-                  {lastCompileTime && (
-                    <span style={{ color: 'var(--muted)', fontSize: '0.85em', marginLeft: 'auto' }}>
-                      Last compiled: {new Date(lastCompileTime).toLocaleTimeString()}
-                    </span>
-                  )}
                 </div>
                 <div style={{ flex: 1, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
                   {compileError ? (

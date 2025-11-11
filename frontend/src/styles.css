@@ -1,4 +1,5 @@
 
+
 /* ---------- THEME VARIABLES ---------- */
 :root{
   /* Light theme - Green aurora inspired (high contrast) */
@@ -113,7 +114,18 @@
 body{font-family: var(--font-sans); margin:0; background:var(--bg); color:var(--text)}
 /* make main content occupy 85% of the viewport width and stay centered */
 /* Use 65vw for a comfortable, centered reading width */
-main{width:65vw;max-width:none;margin:24px auto;padding:0 16px;box-sizing:border-box}
+main:not(:has(.main-editor)) {
+  width: 65vw;
+  max-width: none;
+  margin: 24px auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+/* Main editor area for /documents page */
+.main-editor {
+  width: 90vw !important;
+  max-width: 95vw;
+}
 a{color:var(--primary)}
 
 /* theme transition helper */

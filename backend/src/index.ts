@@ -1,11 +1,3 @@
-// Socket logging switch
-const SOCKET_LOGGING_ENABLED = process.env.SOCKET_LOGGING_ENABLED === 'true';
-function slog(...args: any[]) {
-  if (SOCKET_LOGGING_ENABLED) {
-    const ts = new Date().toISOString();
-    console.log('[SOCKET]', ts, ...args);
-  }
-}
 import express from 'express';
 import session from 'express-session';
 import sessionStore from './config/sessionStore';
@@ -69,6 +61,15 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve only /api/uploads/:document_id/temp/* as static files
+app.use('/api/uploads/:document_id/temp', (req, res, next) => {
+  const documentId = req.params.document_id;
+  if (!documentId) return res.status(400).json({ error: 'Missing document_id' });
+  // Only allow access to files inside uploads/{document_id}/temp
+  const tempDir = path.join(process.cwd(), 'uploads', String(documentId), 'temp');
+  express.static(tempDir, { index: false })(req, res, next);
+});
+
 // CORS - allow frontend origin(s). When using credentials (cookies) the
 // Access-Control-Allow-Origin must be an explicit origin (not '*').
 // Configure allowed origins via CORS_ALLOWED_ORIGINS env var (comma separated).
@@ -96,6 +97,8 @@ const sessionOptions: session.SessionOptions = {
   store: new CustomSessionStore(),
   cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 * 365 * 5 } // session duration set to 5 years
 };
+
+
 
 // CRITICAL FIX: Skip session middleware for WebSocket upgrade requests
 // Session can cause blocking/timeout on WebSocket connections
@@ -126,6 +129,15 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Socket logging switch
+const SOCKET_LOGGING_ENABLED = process.env.SOCKET_LOGGING_ENABLED === 'true';
+function slog(...args: any[]) {
+  if (SOCKET_LOGGING_ENABLED) {
+    const ts = new Date().toISOString();
+    console.log('[SOCKET]', ts, ...args);
+  }
+}
 
 // Initialize Passport and use SAML strategy
 app.use(passport.initialize());

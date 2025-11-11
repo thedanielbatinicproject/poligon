@@ -1,3 +1,8 @@
+import { encodeDocumentId } from '../utils/documentHash';
+
+// --- TEMPORARY COMPILE (GROUP-LOCKED, NO VERSION LOG) ---
+import fs from 'fs/promises';
+import fsSync from 'fs';
 import { Router, Request, Response } from 'express';
 import path from 'path';
 import pool from '../db';
@@ -5,9 +10,90 @@ import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware/auth.middleware';
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
 import { createTempUrl, startOnlineRender, isRendering as isOnlineRendering } from '../render/onlineRenderer';
+import { startTempRender } from '../workers/renderWorker';
 import { DocumentWorkflowService } from '../services/documentWorkflow.service';
 
 const documentsRouter = Router();
+
+// GET /api/documents/:document_id/hash - returns hash for public sharing
+documentsRouter.get('/:document_id/hash', checkLogin, async (req: Request, res: Response) => {
+  const documentId = Number(req.params.document_id);
+  if (!documentId || isNaN(documentId)) return res.status(400).json({ error: 'Invalid document_id' });
+  try {
+    const hash = encodeDocumentId(documentId);
+    return res.json({ hash });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to generate hash' });
+  }
+});
+
+// POST /api/documents/:document_id/compile-temp
+documentsRouter.post('/:document_id/compile-temp', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  const latex_content = req.body?.latex_content;
+  if (!user_id || !role) return res.status(401).json({ error: 'User not authenticated.' });
+  if (!latex_content || typeof latex_content !== 'string') return res.status(400).json({ error: 'Missing or invalid latex_content.' });
+  // Only editors, owners, mentors, or admins can compile
+  const isAllowed = role === 'admin' || await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor']);
+  if (!isAllowed) return res.status(403).json({ error: 'Not authorized to compile this document.' });
+  // Group lock: only one compile at a time
+  const tempDir = path.join(process.cwd(), 'uploads', String(document_id), 'temp');
+  const lockFile = path.join(tempDir, 'compile.lock');
+  try {
+    await fs.mkdir(tempDir, { recursive: true });
+    if (fsSync.existsSync(lockFile)) return res.status(409).json({ error: 'A compile is already in progress for this document.' });
+    await fs.writeFile(lockFile, String(user_id));
+    // Emit socket event: compile started
+    if (typeof req.app.get === 'function') {
+      const io = req.app.get('io');
+      if (io) io.emit('document:temp-compile:started', { document_id, started_by: user_id });
+    }
+    // Write LaTeX to temp file and render real PDF
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const pdfName = `temp-compile-${timestamp}-BY-${user_id}.pdf`;
+    const pdfPath = path.join(tempDir, pdfName);
+    // Use real render pipeline (no DB log)
+    await startTempRender(document_id, user_id, latex_content, pdfPath);
+    // Remove lock
+    await fs.unlink(lockFile);
+    return res.status(200).json({ success: true, pdf: pdfName });
+  } catch (err) {
+    try { await fs.unlink(lockFile); } catch {}
+    // Emit socket event: compile failed
+    if (typeof req.app.get === 'function') {
+      const io = req.app.get('io');
+      if (io) io.emit('document:temp-compile:finished', { document_id, success: false, error: String(err), started_by: user_id });
+    }
+    return res.status(500).json({ error: 'Failed to compile document.', details: String(err) });
+  }
+});
+
+// GET /api/documents/:document_id/compile-temp-latest
+documentsRouter.get('/:document_id/compile-temp-latest', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) return res.status(401).json({ error: 'User not authenticated.' });
+  // Only editors, owners, mentors, or admins can view
+  const isAllowed = role === 'admin' || await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor']);
+  if (!isAllowed) return res.status(403).json({ error: 'Not authorized to view temp compile for this document.' });
+  const tempDir = path.join(process.cwd(), 'uploads', String(document_id), 'temp');
+  try {
+    const files = await fs.readdir(tempDir);
+    const pdfs = files.filter(f => f.endsWith('.pdf')).sort().reverse();
+    if (!pdfs.length) return res.status(404).json({ error: 'No temp PDF found.' });
+    const latest = pdfs[0];
+    // Parse info from filename
+    const match = latest.match(/BY-(\d+)\.pdf$/);
+    const compiled_by = match ? Number(match[1]) : null;
+    const compiled_at = latest.split('-').slice(2, 7).join('-');
+  return res.status(200).json({ pdf: latest, compiled_by, compiled_at, url: `/api/uploads/${document_id}/temp/${latest}` });
+  } catch (err) {
+    return res.status(404).json({ error: 'No temp PDF found.' });
+  }
+});
 
 // POST /api/documents/:document_id/render - Render document to PDF (creator/mentor, admin, editor)
 documentsRouter.post('/:document_id/render', checkLogin, async (req: Request, res: Response) => {

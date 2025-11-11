@@ -181,7 +181,11 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         display: 'flex', 
         flexDirection: 'column',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        maxWidth: '40vw',
+        minWidth: '0',
+        width: '100%',
+        alignSelf: 'flex-start'
       }}>
         {/* Connection status indicator */}
         {!isConnected && (
@@ -221,9 +225,16 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           ref={editorRef} 
           style={{ 
             flex: 1,
-            overflow: 'auto',
+            overflowX: 'hidden',
+            overflowY: 'auto',
             background: 'var(--bg)',
-            color: 'var(--text)'
+            color: 'var(--text)',
+            width: '100%',
+            minWidth: 0,
+            wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap',
+            maxWidth: '40vw',
+            boxSizing: 'border-box'
           }}
         />
       </div>
