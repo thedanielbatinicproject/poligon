@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSession } from '../lib/session';
 import { useNotifications } from '../lib/notifications';
-import DocumentsApi from '../lib/documentsApi';
+import DocumentsApi, { compileTemp, getLatestTempCompile } from '../lib/documentsApi';
 import * as TasksApi from '../lib/tasksApi';
 import ConfirmationBox from '../components/ConfirmationBox';
 
@@ -24,10 +24,100 @@ export default function Documents() {
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
 
+
   // Editor state
   // Note: latexContent is now managed by Yjs editor, not React state
   const [isSaving, setIsSaving] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
+
+  // Temp compile state
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [compileLocked, setCompileLocked] = useState(false);
+  const [compileError, setCompileError] = useState<string | null>(null);
+  const [tempPdfUrl, setTempPdfUrl] = useState<string | null>(null);
+  const [lastCompileTime, setLastCompileTime] = useState<number | null>(null);
+  // --- TEMP COMPILE: Socket event listeners for real-time preview and lock ---
+  useEffect(() => {
+    if (!socket || !selectedDocId) return;
+    // Listen for temp compile lock/unlock events
+    const lockEvent = `doc:${selectedDocId}:compile-temp-lock`;
+    const unlockEvent = `doc:${selectedDocId}:compile-temp-unlock`;
+    const compiledEvent = `doc:${selectedDocId}:compile-temp-done`;
+    const errorEvent = `doc:${selectedDocId}:compile-temp-error`;
+
+    function onLock(payload: any) {
+      setCompileLocked(true);
+      if (payload && payload.user_id !== displayUser?.user_id) {
+        notify.push('Another group member is compiling...', 3);
+      }
+    }
+    function onUnlock() {
+      setCompileLocked(false);
+    }
+    function onCompiled(payload: any) {
+      setCompileLocked(false);
+      setIsCompiling(false);
+      setCompileError(null);
+      setLastCompileTime(Date.now());
+      // Always fetch the latest temp PDF
+      fetchLatestTempPdf();
+      notify.push('Preview updated for all group members.', 2);
+    }
+    function onCompileError(payload: any) {
+      setCompileLocked(false);
+      setIsCompiling(false);
+      setCompileError(payload?.error || 'Compile failed');
+      notify.push(payload?.error || 'Compile failed', 4, true);
+    }
+    socket.on(lockEvent, onLock);
+    socket.on(unlockEvent, onUnlock);
+    socket.on(compiledEvent, onCompiled);
+    socket.on(errorEvent, onCompileError);
+    return () => {
+      socket.off(lockEvent, onLock);
+      socket.off(unlockEvent, onUnlock);
+      socket.off(compiledEvent, onCompiled);
+      socket.off(errorEvent, onCompileError);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, selectedDocId, displayUser?.user_id]);
+
+  // --- TEMP COMPILE: Fetch latest temp PDF on doc change or after compile ---
+  const fetchLatestTempPdf = async () => {
+    if (!selectedDocId) return;
+    try {
+  const res = await getLatestTempCompile(selectedDocId);
+      if (res && res.url) {
+        setTempPdfUrl(res.url + `?t=${Date.now()}`); // cache-bust
+      } else {
+        setTempPdfUrl(null);
+      }
+    } catch {
+      setTempPdfUrl(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchLatestTempPdf();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDocId]);
+
+  // --- TEMP COMPILE: Compile button handler ---
+  const handleTempCompile = async () => {
+    if (!selectedDocId || isReadOnly || isCompiling || compileLocked) return;
+    setIsCompiling(true);
+    setCompileError(null);
+    try {
+      const latexContent = yjsEditorRef.current?.getLatexContent() || '';
+  await compileTemp(selectedDocId, latexContent);
+      // Wait for socket event to update preview
+      notify.push('Compiling document... Preview will update for all group members.', 2);
+    } catch (err: any) {
+      setIsCompiling(false);
+      setCompileError(err?.message || 'Compile failed');
+      notify.push(err?.message || 'Compile failed', 4, true);
+    }
+  };
 
   // Tasks sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -445,6 +535,17 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
               >
                 {isSaving ? 'Saving...' : 'Save'}
               </button>
+              {/* TEMP COMPILE BUTTON */}
+              <button
+                className="btn btn-action"
+                onClick={handleTempCompile}
+                disabled={isReadOnly || isCompiling || compileLocked}
+                style={{ minWidth: 110 }}
+                title={compileLocked ? 'Another user is compiling' : 'Compile and preview PDF'}
+              >
+                {isCompiling ? 'Compiling...' : compileLocked ? 'Locked' : 'Compile'}
+                {isCompiling && <span className="spinner" style={{ marginLeft: 6 }} />}
+              </button>
               <button className="btn btn-ghost" onClick={showPackagesInfo}>
                 Packages Info
               </button>
@@ -483,13 +584,32 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 )}
               </div>
 
-              {/* Right: Preview placeholder */}
+              {/* Right: PDF Preview (temp compile) */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}>
-                  <strong>Preview (Compile to view)</strong>
+                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <strong>Preview (Temporary Compile)</strong>
+                  {isCompiling && <span className="spinner" style={{ marginLeft: 8 }} />}
+                  {compileLocked && !isCompiling && <span style={{ color: 'var(--warning)', fontSize: '0.95em' }}>Locked by another user</span>}
+                  {lastCompileTime && (
+                    <span style={{ color: 'var(--muted)', fontSize: '0.85em', marginLeft: 'auto' }}>
+                      Last compiled: {new Date(lastCompileTime).toLocaleTimeString()}
+                    </span>
+                  )}
                 </div>
-                <div style={{ flex: 1, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
-                  Preview will be available after compilation
+                <div style={{ flex: 1, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+                  {compileError ? (
+                    <div style={{ color: 'var(--danger)', textAlign: 'center' }}>{compileError}</div>
+                  ) : tempPdfUrl ? (
+                    <iframe
+                      src={tempPdfUrl}
+                      title="PDF Preview"
+                      style={{ width: '100%', height: '100%', border: 'none', minHeight: 400, background: '#fff', borderRadius: 6 }}
+                    />
+                  ) : (
+                    <div style={{ color: 'var(--muted)', textAlign: 'center' }}>
+                      Preview will be available after compilation
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

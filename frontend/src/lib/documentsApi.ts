@@ -1,3 +1,18 @@
+// Compile temporary LaTeX content for preview in /documents
+export async function compileTemp(documentId: number, latex_content: string) {
+  const res = await fetch(`${base}/${documentId}/compile-temp`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latex_content })
+  });
+  return handleRes(res);
+}
+
+export async function getLatestTempCompile(documentId: number) {
+  const res = await fetch(`${base}/${documentId}/compile-temp-latest`, { credentials: 'include' });
+  return handleRes(res);
+}
 const base = '/api/documents';
 
 async function handleRes(res: Response) {
