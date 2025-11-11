@@ -4,12 +4,16 @@ import { useNotifications } from '../lib/notifications';
 import DocumentsApi from '../lib/documentsApi';
 import * as TasksApi from '../lib/tasksApi';
 import ConfirmationBox from '../components/ConfirmationBox';
+
+// YjsEditor now uses the external websocket server (wss://socket.poligon.live)
 import YjsEditor from '../components/YjsEditor';
 import { useSocket } from '../components/SocketProvider';
 
 export default function Documents() {
   const sessionCtx = useSession();
   const user = sessionCtx.user;
+  // Always unwrap user object for consistent user_id access
+  const displayUser = user && (user.user ? user.user : user);
   const session = sessionCtx.session;
   const loading = sessionCtx.loading;
   const notify = useNotifications();
@@ -49,16 +53,13 @@ export default function Documents() {
 
   // Load documents on mount
   useEffect(() => {
-    if (loading || !user) return;
-    
-    const userId = user.user_id || user.id;
+    if (loading || !displayUser) return;
+    const userId = displayUser.user_id;
     if (!userId) return;
-    
     DocumentsApi.getAllDocuments()
       .then((docs) => {
         const docsArray = Array.isArray(docs) ? docs : [];
         setDocuments(docsArray);
-        
         if (session?.last_document_id) {
           const lastDoc = docsArray.find((d: any) => d.document_id === session.last_document_id);
           if (lastDoc) {
@@ -69,7 +70,7 @@ export default function Documents() {
       .catch((err) => {
         notify.push('Failed to load documents', undefined, true);
       });
-  }, [loading, user?.user_id, user?.id, session?.last_document_id]);
+  }, [loading, displayUser?.user_id, session?.last_document_id]);
 
   // Load selected document details
   useEffect(() => {
@@ -100,14 +101,19 @@ export default function Documents() {
       // Load editors to determine user role
       DocumentsApi.getEditors(selectedDocId)
         .then((editors: any[]) => {
-          const userEditor = editors.find(e => e.user_id === user?.id);
+          const userId = displayUser?.user_id;
+          const userEditor = editors.find(e => e.user_id === userId);
           const role = userEditor?.role || 'viewer';
           setUserRole(role);
-          
-          // Check if read-only
-          const isViewer = role === 'viewer';
-          const isUnderReview = doc.status === 'under_review' && role !== 'mentor' && session?.role !== 'admin';
-          setIsReadOnly(isViewer || isUnderReview);
+          // Admins can always edit
+          if (session?.role === 'admin') {
+            setIsReadOnly(false);
+          } else {
+            const isViewer = role === 'viewer';
+            const isUnderReview = doc.status === 'under_review' && role !== 'mentor';
+            setIsReadOnly(isViewer || isUnderReview);
+          }
+          setIsReadOnly(role === 'viewer' || (doc.status === 'under_review' && role !== 'mentor'));
         })
         .catch(() => setUserRole('viewer'));
 
@@ -122,7 +128,7 @@ export default function Documents() {
         .then((files: any) => setDocFiles(Array.isArray(files) ? files : []))
         .catch(() => setDocFiles([]));
     }
-  }, [selectedDocId, documents, user?.id]);
+  }, [selectedDocId, documents, displayUser?.user_id]);
 
   // Handle document selection
   const handleDocumentSelect = (docId: number) => {
@@ -261,7 +267,7 @@ export default function Documents() {
     if (!selectedDocId) return;
     
     // Check if user can delete (uploader, mentor, or admin)
-    const canDelete = uploadedBy === user?.id || userRole === 'mentor' || session?.role === 'admin';
+  const canDelete = uploadedBy === displayUser?.user_id || userRole === 'mentor' || session?.role === 'admin';
     if (!canDelete) {
       notify.push('You do not have permission to delete this file', undefined, true);
       return;

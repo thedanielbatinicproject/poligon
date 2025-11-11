@@ -1,3 +1,12 @@
+// [DEPRECATED] This file is no longer used. Yjs WebSocket server is now external (wss://socket.poligon.live)
+// Socket logging switch
+const SOCKET_LOGGING_ENABLED = process.env.SOCKET_LOGGING_ENABLED === 'true';
+function slog(...args: any[]) {
+  if (SOCKET_LOGGING_ENABLED) {
+    const ts = new Date().toISOString();
+    console.log('[YJS]', ts, ...args);
+  }
+}
 import * as Y from 'yjs';
 import { WebSocket, WebSocketServer } from 'ws';
 import * as http from 'http';
@@ -31,17 +40,27 @@ export function setupYjsWebSocketServer(server: http.Server) {
   });
 
   wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
+    // Only log URL and essential headers (no cookies)
+    const { url, headers } = req;
+    const { host, origin, 'user-agent': userAgent } = headers;
+    slog('YjsWS CONNECT', url, { host, origin, 'user-agent': userAgent });
     try {
-      // Dynamically require the y-websocket setup function to avoid
-      // TypeScript compile-time resolution issues.
-      const utils = require('y-websocket/bin/utils');
-      const setup = utils && (utils.setupWSConnection || utils.default && utils.default.setupWSConnection);
-      if (!setup) throw new Error('setupWSConnection not found in y-websocket/bin/utils');
-      // Delegate to the standard implementation which handles sync/awareness
-      // using the document name derived from req.url (e.g. /yjs/<docName>).
-      setup(ws, req, { gc: true });
+      // Try to get setupWSConnection from y-websocket main export
+      const yws = require('y-websocket');
+      const setupWSConnection = yws.setupWSConnection || yws.default || yws;
+      if (typeof setupWSConnection !== 'function') {
+        throw new Error('setupWSConnection is not exported by y-websocket. Please check your y-websocket version.');
+      }
+      ws.on('close', (code, reason) => {
+        slog('YjsWS CLOSE', req.url, 'code:', code, 'reason:', reason?.toString());
+      });
+      ws.on('error', (err) => {
+        slog('YjsWS ERROR', req.url, err);
+      });
+      setupWSConnection(ws, req, { gc: true });
+      slog('YjsWS setupWSConnection OK', req.url);
     } catch (err) {
-      console.error('[YjsWS] setupWSConnection error:', err);
+      slog('YjsWS setupWSConnection ERROR', req.url, err);
       try { ws.close(); } catch (e) {}
     }
   });

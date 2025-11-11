@@ -35,14 +35,8 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
   return body
 }
 
-// Minimal API client for backend calls. Uses credentials: 'include' so server session cookie is sent.
-// Avoid referencing `process` directly in the browser. Prefer (in order):
-// 1) injected env via process.env (when available), 2) a window global `__POLIGON_API_BASE__`, 3) empty string (same-origin)
-// Resolve API base in a safe, dev-friendly way (priority):
-// 1) build-time env (process.env.REACT_APP_API_BASE) for CRA-style apps
-// 2) Vite build-time env (import.meta.env.VITE_API_BASE)
-// 3) runtime override: window.__POLIGON_API_BASE__
-// 4) if running on localhost prefer relative '' so dev-server proxy will forward /api
+
+// [YjsWS] Yjs websocket is now handled externally (wss://socket.poligon.live), not via API_BASE
 const _envBase = (typeof process !== 'undefined' && (process as any)?.env?.REACT_APP_API_BASE) || '';
 // Vite exposes import.meta.env — read safely
 let _viteBase = ''

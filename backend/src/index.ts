@@ -1,3 +1,11 @@
+// Socket logging switch
+const SOCKET_LOGGING_ENABLED = process.env.SOCKET_LOGGING_ENABLED === 'true';
+function slog(...args: any[]) {
+  if (SOCKET_LOGGING_ENABLED) {
+    const ts = new Date().toISOString();
+    console.log('[SOCKET]', ts, ...args);
+  }
+}
 import express from 'express';
 import session from 'express-session';
 import sessionStore from './config/sessionStore';
@@ -20,8 +28,7 @@ import { ErrorTemplates } from './render/errorTemplates';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
-// Yjs WebSocket server
-import { setupYjsWebSocketServer } from './services/yjsWebSocket.service';
+
 
 // Error logging utility
 const logError = (error: any) => {
@@ -317,6 +324,16 @@ setIo(io);
 const presenceMap: Map<string, Set<string>> = new Map(); // userId -> set of socket ids
 
 io.on('connection', (socket) => {
+  slog('Socket.IO CONNECT', socket.id, 'user-agent:', socket.handshake.headers['user-agent']);
+  socket.on('disconnect', (reason) => {
+    slog('Socket.IO DISCONNECT', socket.id, 'reason:', reason);
+  });
+  socket.on('error', (err) => {
+    slog('Socket.IO ERROR', socket.id, err);
+  });
+  socket.conn.on('upgrade', (transport) => {
+    slog('Socket.IO UPGRADE', socket.id, 'to', transport.name);
+  });
   // TODO: remove logs in production - BEGIN
   logSocket(`[DEBUG SOCKET] handshake.headers.cookie: ${socket.handshake && socket.handshake.headers ? socket.handshake.headers.cookie : 'NO COOKIE'}`);
   logSocket(`[DEBUG SOCKET] handshake.auth: ${JSON.stringify(socket.handshake && socket.handshake.auth ? socket.handshake.auth : {}, null, 2)}`);
@@ -352,6 +369,7 @@ io.on('connection', (socket) => {
 
   // Registracija usera u sobu
   socket.on('register_user', (userId) => {
+    slog('Socket.IO register_user', socket.id, 'userId:', userId);
     try {
       // support both primitive id or object { user_id }
       const idRaw = (typeof userId === 'object' && userId && (userId as any).user_id) ? (userId as any).user_id : userId;
@@ -385,6 +403,7 @@ io.on('connection', (socket) => {
 
   // Slanje poruke
   socket.on('send_message', (data) => {
+    slog('Socket.IO send_message', socket.id, data);
     // data: { toUserId, fromUserId, message }
     logSocket(`[MESSAGE] Socket ${socket.id} sending message to user ${data.toUserId}`);
     io.to(data.toUserId).emit('receive_message', data);
@@ -414,15 +433,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Setup Yjs WebSocket server for real-time collaborative editing
-try {
-  logSocket('=== Initializing Yjs WebSocket server ===');
-  setupYjsWebSocketServer(server);
-  logSocket('=== Yjs WebSocket server initialized ===');
-} catch (err) {
-  logSocket(`[ERROR] Failed to setup Yjs WebSocket: ${err}`);
-  logError(err);
-}
+
+// [YjsWS] Disabled internal Yjs WebSocket server. Using external wss://socket.poligon.live
 
 // Pokreni server
 server.listen(port, () => {

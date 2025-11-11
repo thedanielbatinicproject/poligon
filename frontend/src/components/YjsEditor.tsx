@@ -49,11 +49,8 @@ export default function YjsEditor({ documentId, readOnly, onUserCountChange }: Y
     // Get Yjs text type
     const ytext = ydoc.getText('latex');
 
-    // Setup WebSocket provider - use VITE_API_BASE from env
-    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
-    // Use the canonical y-websocket path. The provider will connect to
-    // `${wsUrl}/${roomName}` so we pass documentId as the room name.
-    const wsUrl = apiBase.replace(/^http/, 'ws').replace(/\/$/, '') + `/yjs`;
+    // Use the new external Yjs websocket server
+    const wsUrl = 'wss://socket.poligon.live';
     const provider = new WebsocketProvider(wsUrl, String(documentId), ydoc, {
       connect: true,
       WebSocketPolyfill: WebSocket as any

@@ -1,0 +1,14 @@
+{
+  "name": "poligon-socket",
+  "version": "1.0.0",
+  "description": "Standalone y-websocket server for Yjs collaboration (Poligon)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "start:npx": "npx y-websocket-server --port 1234"
+  },
+  "dependencies": {
+    "y-websocket": "1.4.5",
+    "ws": "^8.18.3"
+  }
+}
