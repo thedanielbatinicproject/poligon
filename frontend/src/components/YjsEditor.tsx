@@ -1,6 +1,6 @@
 // (removed duplicate import)
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
-import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
+import { autocompletion, CompletionContext, completionKeymap, acceptCompletion } from '@codemirror/autocomplete';
 import { latexCompletions } from './latexCompletions';
 import { EditorState, Compartment } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -18,7 +18,7 @@ import { WebsocketProvider } from 'y-websocket';
 
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import './codemirror-poligon-theme.css';
-// ...existing code...
+
 
 export interface YjsEditorHandle {
   getLatexContent: () => string;
@@ -140,7 +140,11 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
             if (onCompile) onCompile();
             return true;
           }
-        }
+        },
+        {
+          key: 'Tab',
+          run: acceptCompletion,
+        },
       ]);
       // Custom LaTeX completion source
       function latexCompletionSource(context: CompletionContext) {
@@ -148,14 +152,14 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         if (!word || (word.from == word.to && !context.explicit)) return null;
         const term = word.text.slice(1); // remove leading '\'
         return {
-          from: word.from + 1, // only complete after '\'
+          from: word.from +1, // only complete after '\'
           options: latexCompletions
             .filter(cmd => cmd.label.startsWith(term))
             .map(cmd => ({
               label: cmd.label,
               type: cmd.type,
               info: cmd.info,
-              apply: `\\${cmd.label}`
+              apply: `${cmd.label}`
             })),
         };
       }
@@ -185,6 +189,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         }),
         customKeymap,
         keymap.of([
+          ...completionKeymap,
           ...closeBracketsKeymap,
           ...defaultKeymap,
           ...searchKeymap,
@@ -286,7 +291,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
             zIndex: 10,
             boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
           }}>
-            ⚠️ Connecting to collaboration server...
+            Connecting to collaboration server...
           </div>
         )}
         {isConnected && !isSynced && (
@@ -302,7 +307,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
             zIndex: 10,
             boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
           }}>
-            🔄 Syncing document...
+            Syncing document...
           </div>
         )}
         {/* Editor container */}

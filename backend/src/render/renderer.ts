@@ -38,7 +38,7 @@ export async function renderLatex(latexContent: string, timeoutMs: number, isUrl
     const pdf = await renderViaLatexOnline(latexContent, timeoutMs, isUrl);
     return { success: true, pdf };
   } catch (err: any) {
-    return { success: false, error: `External render failed - ${String(err)}` };
+    return { success: false, error: `External render failed - ${err.message || String(err)}` };
   }
 }
 

@@ -626,7 +626,14 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                 </div>
                 <div style={{ flex: 1, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
                   {compileError ? (
-                    <div style={{ color: 'var(--danger)', textAlign: 'center' }}>{compileError}</div>
+                    <div style={{ color: 'var(--danger)', textAlign: 'center', whiteSpace: 'pre-line' }}>
+                      {compileError
+                        .replace(/\s*error\s*/gi, '\nerror: ')
+                        .split(/\n+/)
+                        .map((line, idx) => (
+                          <div key={idx}>{line.trim()}</div>
+                        ))}
+                    </div>
                   ) : tempPdfUrl ? (
                     <iframe
                       src={tempPdfUrl}
