@@ -1,0 +1,66 @@
+/* Custom CodeMirror theme for poligon, using CSS variables from styles.css */
+.cm-editor, .cm-scroller, .cm-content {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans), monospace;
+}
+.cm-gutters {
+  background: var(--panel) !important;
+  color: var(--muted) !important;
+  border-right: 1px solid var(--border);
+}
+.cm-activeLineGutter {
+  background: var(--current-day-bg) !important;
+}
+.cm-activeLine {
+  background: var(--current-day-bg) !important;
+}
+.cm-selectionBackground, .cm-selectionMatch {
+  background: rgba(0, 152, 117, 0.18) !important;
+}
+.cm-cursor {
+  border-left: 2px solid var(--primary) !important;
+}
+
+/* Autocomplete popup styling */
+.cm-tooltip-autocomplete {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  border-radius: 8px;
+  font-family: var(--font-sans), monospace;
+  z-index: 10000;
+}
+.cm-tooltip-autocomplete ul {
+  background: transparent !important;
+  color: inherit !important;
+}
+.cm-tooltip-autocomplete li {
+  background: transparent !important;
+  color: inherit !important;
+}
+.cm-tooltip-autocomplete li[aria-selected] {
+  background: var(--current-day-bg) !important;
+  color: var(--primary) !important;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .cm-editor, [data-theme="dark"] .cm-scroller, [data-theme="dark"] .cm-content {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+[data-theme="dark"] .cm-gutters {
+  background: var(--panel) !important;
+  color: var(--muted) !important;
+  border-right: 1px solid var(--border);
+}
+[data-theme="dark"] .cm-tooltip-autocomplete {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+[data-theme="dark"] .cm-tooltip-autocomplete li[aria-selected] {
+  background: var(--current-day-bg) !important;
+  color: var(--primary) !important;
+}

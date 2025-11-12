@@ -1,5 +1,7 @@
 // (removed duplicate import)
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
+import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
+import { latexCompletions } from './latexCompletions';
 import { EditorState, Compartment } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
@@ -11,6 +13,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import './codemirror-poligon-theme.css';
 // ...existing code...
 
 export interface YjsEditorHandle {
@@ -104,6 +107,24 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           }
         }
       ]);
+      // Custom LaTeX completion source
+      function latexCompletionSource(context: CompletionContext) {
+        const word = context.matchBefore(/\\[a-zA-Z]*$/);
+        if (!word || (word.from == word.to && !context.explicit)) return null;
+        const term = word.text.slice(1); // remove leading '\'
+        return {
+          from: word.from + 1, // only complete after '\'
+          options: latexCompletions
+            .filter(cmd => cmd.label.startsWith(term))
+            .map(cmd => ({
+              label: cmd.label,
+              type: cmd.type,
+              info: cmd.info,
+              apply: `\\${cmd.label}`
+            })),
+        };
+      }
+
       const basicExtensions = [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -121,7 +142,12 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         crosshairCursor(),
         highlightActiveLine(),
         highlightSelectionMatches(),
-  EditorView.lineWrapping,
+        EditorView.lineWrapping,
+        autocompletion({
+          override: [latexCompletionSource],
+          activateOnTyping: true,
+          defaultKeymap: true,
+        }),
         customKeymap,
         keymap.of([
           ...closeBracketsKeymap,
