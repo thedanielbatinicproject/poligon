@@ -1,6 +1,6 @@
 // (removed duplicate import)
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
-import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
+import { autocompletion, CompletionContext, completionKeymap } from '@codemirror/autocomplete';
 import { latexCompletions } from './latexCompletions';
 import { EditorState, Compartment } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -113,14 +113,17 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         if (!word || (word.from == word.to && !context.explicit)) return null;
         const term = word.text.slice(1); // remove leading '\'
         return {
-          from: word.from + 1, // only complete after '\'
+          from: word.from,
           options: latexCompletions
             .filter(cmd => cmd.label.startsWith(term))
             .map(cmd => ({
               label: cmd.label,
               type: cmd.type,
               info: cmd.info,
-              apply: `\\${cmd.label}`
+              // Only insert one backslash, since word.from includes the typed '\'
+              apply: (view, completion, from, to) => {
+                view.dispatch({ changes: { from, to, insert: `\\${cmd.label}` } });
+              }
             })),
         };
       }
@@ -148,6 +151,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           activateOnTyping: true,
           defaultKeymap: true,
         }),
+        keymap.of(completionKeymap),
         customKeymap,
         keymap.of([
           ...closeBracketsKeymap,
