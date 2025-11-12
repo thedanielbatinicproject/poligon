@@ -47,7 +47,7 @@ export default function Documents() {
         setCompileLocked(true);
         setIsCompiling(true);
         if (payload.started_by !== displayUser?.user_id) {
-          notify.push('Another group member is compiling...', 3);
+          notify.push('Another connected user is compiling...', 3, true);
         }
       }
     }
@@ -58,7 +58,7 @@ export default function Documents() {
         setCompileError(payload.success ? null : (payload.error || 'Compile failed'));
         fetchLatestTempPdf();
         if (payload.success) {
-          notify.push('Preview updated for all group members.', 2);
+          notify.push('Preview will be updated for all connected users.', 4);
         } else {
           notify.push(payload.error || 'Compile failed', 4, true);
         }
@@ -127,11 +127,11 @@ export default function Documents() {
       const latexContent = yjsEditorRef.current?.getLatexContent() || '';
   await compileTemp(selectedDocId, latexContent);
       // Wait for socket event to update preview
-      notify.push('Compiling document... Preview will update for all group members.', 2);
+      notify.push('Compiling document... Preview will be updated for all connected users.', 4);
     } catch (err: any) {
       setIsCompiling(false);
-      setCompileError(err?.message || 'Compile failed');
-      notify.push(err?.message || 'Compile failed', 4, true);
+      setCompileError(err?.message || 'Compile failed!');
+      notify.push(err?.message || 'Compile failed!', 4, true);
     }
   };
 
@@ -174,7 +174,7 @@ export default function Documents() {
         }
       })
       .catch((err) => {
-        notify.push('Failed to load documents', undefined, true);
+        notify.push('Failed to load documents!', undefined, true);
       });
   }, [loading, displayUser?.user_id, session?.last_document_id]);
 
@@ -265,7 +265,7 @@ export default function Documents() {
     
     try {
       await DocumentsApi.updateDocument(selectedDocId, { abstract: abstractText });
-      notify.push('Abstract saved', 2);
+      notify.push('Abstract saved!', 2);
       setAbstractModalOpen(false);
       
       // Update local state
@@ -273,7 +273,7 @@ export default function Documents() {
         setSelectedDoc({ ...selectedDoc, abstract: abstractText });
       }
     } catch (err: any) {
-      notify.push(err?.message || 'Failed to save abstract', undefined, true);
+      notify.push(err?.message || 'Failed to save abstract!', undefined, true);
     }
   };
 
@@ -289,7 +289,7 @@ export default function Documents() {
         body: JSON.stringify({ status: 'under_review' })
       });
       
-      notify.push('Document submitted for review', 3);
+      notify.push('Document submitted for review. Wait for mentor to grade it or return it for changes.', 7);
       setConfirmOpen(false);
       
       // Reload document
@@ -301,7 +301,7 @@ export default function Documents() {
         setIsReadOnly(true);
       }
     } catch (err: any) {
-      notify.push(err?.message || 'Failed to submit document', undefined, true);
+      notify.push(err?.message || 'Failed to submit document!', undefined, true);
     }
   };
 
@@ -330,11 +330,11 @@ export default function Documents() {
       });
       
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error('Upload failed!');
       }
-      
-      notify.push('File uploaded successfully', 2);
-      
+
+      notify.push('File uploaded successfully!', 2);
+
       // Reload files
       const filesResponse = await fetch(`/api/files/document/${selectedDocId}`, { credentials: 'include' });
       const files = await filesResponse.json();
@@ -352,7 +352,7 @@ export default function Documents() {
         })
       }).catch(() => {});
     } catch (err: any) {
-      notify.push(err?.message || 'Failed to upload file', undefined, true);
+      notify.push(err?.message || 'Failed to upload file!', undefined, true);
     } finally {
       setUploading(false);
       // Reset input
@@ -367,7 +367,7 @@ export default function Documents() {
     // Check if user can delete (uploader, mentor, or admin)
   const canDelete = uploadedBy === displayUser?.user_id || userRole === 'mentor' || session?.role === 'admin';
     if (!canDelete) {
-      notify.push('You do not have permission to delete this file', undefined, true);
+      notify.push('You do not have permission to delete this file!', undefined, true);
       return;
     }
     
@@ -378,7 +378,7 @@ export default function Documents() {
       });
       
       if (!response.ok) {
-        throw new Error('Delete failed');
+        throw new Error('Delete failed!');
       }
       
       notify.push('File deleted', 2);
@@ -400,19 +400,18 @@ export default function Documents() {
         })
       }).catch(() => {});
     } catch (err: any) {
-      notify.push(err?.message || 'Failed to delete file', undefined, true);
+      notify.push(err?.message || 'Failed to delete file!', 4, true);
     }
   };
 
   // Show LaTeX packages info
   const showPackagesInfo = () => {
     const message = `
-✅ SUPPORTED PACKAGES:
-inputenc, fontenc, lmodern, babel, geometry, microtype, xcolor, hyperref, amsmath, amssymb, amsfonts, mathtools, physics, siunitx, mhchem, cancel, ulem, graphicx, tikz, pgfplots, subcaption, caption, booktabs, array, multicol, enumitem, fancyhdr, titlesec, url, setspace, parskip, ragged2e
-
-❌ NOT SUPPORTED:
+SUPPORTED PACKAGES:
+inputenc, fontenc, lmodern, babel, geometry, microtype, xcolor, hyperref, amsmath, amssymb, amsfonts, mathtools, physics, siunitx, mhchem, cancel, ulem, graphicx, tikz, pgfplots, subcaption, caption, booktabs, array, multicol, enumitem, fancyhdr, titlesec, url, setspace, parskip, ragged2e.
+NOT SUPPORTED:
 fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glossaries-extra, biblatex, biber, natbib, minted, tcolorbox, forest, tikz-qtree, tikz-cd
-    `.trim();
+    `;
     
     notify.push(message, 30); // 30 seconds duration
   };
@@ -585,6 +584,8 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                     documentId={selectedDocId!}
                     readOnly={isReadOnly}
                     onUserCountChange={setConnectedUsers}
+                    onSave={handleSave}
+                    onCompile={handleTempCompile}
                   />
                 ) : (
                   <div style={{ 

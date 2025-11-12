@@ -21,10 +21,14 @@ interface YjsEditorProps {
   documentId: number;
   readOnly: boolean;
   onUserCountChange?: (count: number) => void;
+  onSave?: () => void;
+  onCompile?: () => void;
 }
 
 const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
-  ({ documentId, readOnly, onUserCountChange }, ref) => {
+  ({ documentId, readOnly, onUserCountChange, onSave, onCompile }, ref) => {
+    // Keyboard shortcut handler
+    // Remove broken dynamic keymap reconfiguration. Instead, add keymap in initial extensions below.
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const providerRef = useRef<WebsocketProvider | null>(null);
@@ -82,6 +86,24 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         provider.awareness.on('change', computeAndNotify);
       }
       // Create basic extensions
+      const customKeymap = keymap.of([
+        {
+          key: 'Mod-s',
+          preventDefault: true,
+          run: () => {
+            if (onSave) onSave();
+            return true;
+          }
+        },
+        {
+          key: 'Mod-e',
+          preventDefault: true,
+          run: () => {
+            if (onCompile) onCompile();
+            return true;
+          }
+        }
+      ]);
       const basicExtensions = [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -99,6 +121,8 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         crosshairCursor(),
         highlightActiveLine(),
         highlightSelectionMatches(),
+  EditorView.lineWrapping,
+        customKeymap,
         keymap.of([
           ...closeBracketsKeymap,
           ...defaultKeymap,
