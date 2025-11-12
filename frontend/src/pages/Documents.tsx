@@ -450,7 +450,7 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
           onChange={(e) => handleDocumentSelect(Number(e.target.value))}
           style={{
             flex: 1,
-            maxWidth: 500,
+            maxWidth: 1000,
             padding: '0.5rem',
             borderRadius: 6,
             border: '1px solid var(--border)',

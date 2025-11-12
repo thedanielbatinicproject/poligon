@@ -1,3 +1,13 @@
+:root {
+  --highlight-contrast: #ffe066;
+}
+
+.cm-tooltip-autocomplete {
+  z-index: 99999 !important;
+  display: block !important;
+  background: var(--panel) !important;
+  border: 2px solid var(--danger, var(--accent)) !important;
+}
 /* Custom CodeMirror theme for poligon, using CSS variables from styles.css */
 .cm-editor, .cm-scroller, .cm-content {
   background: var(--bg) !important;
@@ -7,7 +17,7 @@
 .cm-gutters {
   background: var(--panel) !important;
   color: var(--muted) !important;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--border) !important;
 }
 .cm-activeLineGutter {
   background: var(--current-day-bg) !important;
@@ -15,11 +25,47 @@
 .cm-activeLine {
   background: var(--current-day-bg) !important;
 }
-.cm-selectionBackground, .cm-selectionMatch {
-  background: rgba(0, 152, 117, 0.18) !important;
+
+/* Real text selection in editor (not match) */
+
+
+.cm-selectionLayer .cm-selectionBackground,
+.cm-selectionBackground {
+  background: var(--highlight-contrast) !important;
+  background-color: var(--highlight-contrast) !important;
+  outline: none !important;
 }
+
+[data-theme="dark"] .cm-selectionLayer .cm-selectionBackground,
+[data-theme="dark"] .cm-selectionBackground {
+  background: color-mix(in srgb, var(--accent) 95%, rgb(39, 39, 39) 5%) !important;
+  background-color: color-mix(in srgb, var(--accent) 95%, rgb(38, 38, 38) 5%) !important;
+  outline: none !important;
+}
+
+/* Only match highlighting stays green */
+.cm-selectionMatch {
+  /* background: var(--accent) !important;
+  background-color: var(--accent) !important; */
+  background: var(#ffe066) !important;
+  background-color: var(#ffe066) !important;
+}
+
+/* Remove legacy fallback, always use palette vars above */
+
 .cm-cursor {
   border-left: 2px solid var(--primary) !important;
+}
+
+
+/* Fallback for native selection (outside CodeMirror, or if all else fails) */
+.cm-content ::selection {
+  background: color-mix(in srgb, var(--primary) 80%, transparent) !important;
+  color: inherit !important;
+}
+[data-theme="dark"] .cm-content ::selection {
+  background: color-mix(in srgb, var(--primary) 60%, transparent) !important;
+  color: inherit !important;
 }
 
 /* Autocomplete popup styling */
@@ -27,8 +73,8 @@
   background: var(--panel) !important;
   color: var(--text) !important;
   border: 1px solid var(--border) !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-  border-radius: 8px;
+  box-shadow: var(--shadow, 0 2px 12px rgba(0,0,0,0.12));
+  border-radius: var(--radius, 8px);
   font-family: var(--font-sans), monospace;
   z-index: 10000;
 }
