@@ -7,9 +7,11 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { StreamLanguage, foldGutter, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
+
+import { stex } from '@codemirror/legacy-modes/mode/stex';
 import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
-import { stex } from '@codemirror/legacy-modes/mode/stex';
+
 import { yCollab } from 'y-codemirror.next';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
