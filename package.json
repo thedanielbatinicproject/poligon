@@ -10,5 +10,10 @@
     "@types/morgan": "^1.9.10",
     "@types/passport": "^1.0.17",
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@codemirror/highlight": "^0.19.8",
+    "@codemirror/language": "^6.11.3",
+    "@lezer/highlight": "^1.2.3"
   }
 }

@@ -2,7 +2,32 @@
 
 /* ---------- THEME VARIABLES ---------- */
 :root{
+  /* ---------- CODEMIRROR SYNTAX COLORS (AURORA) ---------- */
+  --cm-keyword: #1c9022;         /* aurora green, strong accent */
+  --cm-operator: #009875;        /* aurora green, lighter */
+  --cm-variable: #03322b;        /* main text color */
+  --cm-function: #009875;        /* aurora green, vivid */
+  --cm-string: #007f59;          /* deep green, readable */
+  --cm-number: #ffb84d;          /* aurora yellow/orange */
+  --cm-type: #1c9022;            /* aurora green, italic for types */
+  --cm-comment: #5b766a;         /* muted, italic */
+  --cm-meta: #ffb84d;            /* aurora yellow/orange, italic */
+  --cm-attribute: #009875;       /* aurora green, for attributes */
+  --cm-property: #009875;        /* aurora green, for properties */
+  --cm-bracket: #1c9022;         /* aurora green, for brackets */
+  --cm-heading: #05443a;         /* heading-2, strong */
+  --cm-link: #009875;            /* aurora green, underline */
+  --cm-strong: #03322b;          /* main text, bold */
+  --cm-emphasis: #1c9022;        /* aurora green, italic */
+  --cm-quote: #5b766a;           /* muted, italic */
+  --cm-regexp: #d64545;          /* danger red */
+  --cm-special: #1c9022;         /* aurora green, for special */
+  --cm-namespace: #009875;       /* aurora green, for namespace */
+  --cm-deleted: #d64545;         /* danger red, line-through */
+  --cm-inserted: #007f59;        /* success green, underline */
+  --cm-invalid: #d64545;         /* danger red, bg for errors */
   /* Light theme - Green aurora inspired (high contrast) */
+  --highlight-contrast: #ffe066bc; /* strong yellow for visible selection in light theme */
   --bg: #fbfff8; /* very pale mint */
   --panel: #ffffff; /* surface / cards */
   --text: #03322b; /* dark teal for best readability */
@@ -58,7 +83,32 @@
 }
 
 [data-theme="dark"]{
+  /* ---------- CODEMIRROR SYNTAX COLORS (AURORA DARK) ---------- */
+  --cm-keyword: #b78bff;         /* aurora purple, strong accent */
+  --cm-operator: #6ec8ff;        /* icy blue aurora */
+  --cm-variable: #e8f6ff;        /* main text color */
+  --cm-function: #6ec8ff;        /* icy blue aurora */
+  --cm-string: #32d6a4;          /* aurora green, readable */
+  --cm-number: #ffb86b;          /* aurora yellow/orange */
+  --cm-type: #b78bff;            /* aurora purple, italic for types */
+  --cm-comment: #92a8b3;         /* muted, italic */
+  --cm-meta: #ffb86b;            /* aurora yellow/orange, italic */
+  --cm-attribute: #6ec8ff;       /* icy blue aurora, for attributes */
+  --cm-property: #6ec8ff;        /* icy blue aurora, for properties */
+  --cm-bracket: #b78bff;         /* aurora purple, for brackets */
+  --cm-heading: #d7eeff;         /* heading-2, strong */
+  --cm-link: #6ec8ff;            /* icy blue aurora, underline */
+  --cm-strong: #e8f6ff;          /* main text, bold */
+  --cm-emphasis: #b78bff;        /* aurora purple, italic */
+  --cm-quote: #92a8b3;           /* muted, italic */
+  --cm-regexp: #ff6b88;          /* danger red */
+  --cm-special: #b78bff;         /* aurora purple, for special */
+  --cm-namespace: #6ec8ff;       /* icy blue aurora, for namespace */
+  --cm-deleted: #ff6b88;         /* danger red, line-through */
+  --cm-inserted: #32d6a4;        /* success green, underline */
+  --cm-invalid: #ff6b88;         /* danger red, bg for errors */
   /* Dark theme - deep blue / purple aurora inspiration (high contrast) */
+  --highlight-contrast: #b78bffc0; /* purple accent for visible selection in dark theme */
   --bg: #031026; /* deep navy */
   --panel: #07162a; /* slightly lighter surface */
   --text: #e8f6ff; /* pale cyan/white for readability */

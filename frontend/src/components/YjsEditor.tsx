@@ -7,6 +7,8 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { StreamLanguage, foldGutter, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
+import { HighlightStyle } from '@codemirror/language';
+import { tags } from '@lezer/highlight';
 import { stex } from '@codemirror/legacy-modes/mode/stex';
 import { yCollab } from 'y-codemirror.next';
 import * as Y from 'yjs';
@@ -88,7 +90,38 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         computeAndNotify();
         provider.awareness.on('change', computeAndNotify);
       }
-      // Create basic extensions
+      // Helper to get CSS variable value from :root (or body)
+      function getThemeVar(name: string) {
+        // Try :root first, then body
+        return getComputedStyle(document.documentElement).getPropertyValue(name) || getComputedStyle(document.body).getPropertyValue(name) || undefined;
+      }
+
+      // Define a HighlightStyle using theme variables
+      const poligonHighlightStyle = HighlightStyle.define([
+        { tag: tags.keyword, color: getThemeVar('--cm-keyword'), fontWeight: '600' },
+        { tag: tags.operator, color: getThemeVar('--cm-operator') },
+        { tag: tags.variableName, color: getThemeVar('--cm-variable') },
+        { tag: tags.function(tags.variableName), color: getThemeVar('--cm-function') },
+        { tag: tags.string, color: getThemeVar('--cm-string') },
+        { tag: tags.number, color: getThemeVar('--cm-number') },
+        { tag: tags.typeName, color: getThemeVar('--cm-type'), fontStyle: 'italic' },
+        { tag: tags.comment, color: getThemeVar('--cm-comment'), fontStyle: 'italic' },
+        { tag: tags.meta, color: getThemeVar('--cm-meta'), fontStyle: 'italic' },
+        { tag: tags.attributeName, color: getThemeVar('--cm-attribute') },
+        { tag: tags.propertyName, color: getThemeVar('--cm-property') },
+        { tag: tags.bracket, color: getThemeVar('--cm-bracket') },
+        { tag: tags.heading, color: getThemeVar('--cm-heading'), fontWeight: '700' },
+        { tag: tags.link, color: getThemeVar('--cm-link'), textDecoration: 'underline' },
+        { tag: tags.strong, color: getThemeVar('--cm-strong'), fontWeight: '700' },
+        { tag: tags.emphasis, color: getThemeVar('--cm-emphasis'), fontStyle: 'italic' },
+        { tag: tags.quote, color: getThemeVar('--cm-quote'), fontStyle: 'italic' },
+        { tag: tags.regexp, color: getThemeVar('--cm-regexp') },
+        { tag: tags.special(tags.variableName), color: getThemeVar('--cm-special') },
+        { tag: tags.namespace, color: getThemeVar('--cm-namespace') },
+        { tag: tags.deleted, color: getThemeVar('--cm-deleted'), textDecoration: 'line-through' },
+        { tag: tags.inserted, color: getThemeVar('--cm-inserted'), textDecoration: 'underline' },
+        { tag: tags.invalid, color: getThemeVar('--cm-invalid'), backgroundColor: 'rgba(255,0,0,0.08)' },
+      ]);
       const customKeymap = keymap.of([
         {
           key: 'Mod-s',
@@ -135,7 +168,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         dropCursor(),
         EditorState.allowMultipleSelections.of(true),
         indentOnInput(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        syntaxHighlighting(poligonHighlightStyle, { fallback: true }),
         bracketMatching(),
         closeBrackets(),
         rectangularSelection(),
