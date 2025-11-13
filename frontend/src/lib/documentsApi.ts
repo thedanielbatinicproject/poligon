@@ -1,3 +1,8 @@
+// Dohvati slike iz pool foldera za dokument
+export async function getDocumentImages(documentId: number) {
+  const res = await fetch(`/api/documents/${documentId}/images`, { credentials: 'include' });
+  return handleRes(res);
+}
 // Compile temporary LaTeX content for preview in /documents
 export async function compileTemp(documentId: number, latex_content: string) {
   const res = await fetch(`${base}/${documentId}/compile-temp`, {

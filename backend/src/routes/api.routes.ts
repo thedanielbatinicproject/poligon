@@ -4,17 +4,22 @@ import { DocumentsService } from '../services/documents.service';
 import { Router, Request, Response } from 'express';
 import { checkLogin } from '../middleware/auth.middleware';
 import { getUserById } from '../services/user.service';
+
 import filesRouter from './files.routes';
 import usersRouter from './users.routes';
 import authRouter from './auth.routes';
 import utilityRouter from './utility.routes';
 import documentsRouter from './documents.routes';
+import uploadsRouter from './uploads.routes';
+
 
 const apiRouter = Router();
+
 
 apiRouter.use('/files', filesRouter);
 apiRouter.use('/users', usersRouter);
 apiRouter.use('/documents', documentsRouter);
+apiRouter.use('/uploads', uploadsRouter);
 
 apiRouter.use('/utility', utilityRouter);
 apiRouter.use('/auth', authRouter);

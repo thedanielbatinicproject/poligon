@@ -15,6 +15,31 @@ import { DocumentWorkflowService } from '../services/documentWorkflow.service';
 
 const documentsRouter = Router();
 
+// GET /api/documents/:document_id/images - list images for a document from DB (file_uploads)
+import filesService from '../services/files.service';
+documentsRouter.get('/:document_id/images', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const user_id = req.session.user_id;
+  const role = req.session.role;
+  if (!user_id || !role) return res.status(401).json({ error: 'User not authenticated.' });
+  // Only editors, owners, mentors, or admins can view
+  const isAllowed = role === 'admin' || await DocumentsService.isEditor(document_id, user_id, ['owner', 'editor', 'mentor']);
+  if (!isAllowed) return res.status(403).json({ error: 'Not authorized to view images for this document.' });
+  try {
+    const files = await filesService.getFilesByDocument(document_id);
+    const images = files.filter(f => f.file_type === 'image');
+    // Map to expected frontend format: { name, size }
+    const imagesWithMeta = images.map(img => ({
+      name: img.file_name,
+      size: img.file_size,
+      url: `/api/uploads/${document_id}/${img.file_name}`
+    }));
+    return res.json({ images: imagesWithMeta });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to list images.', details: String(err) });
+  }
+});
+
 // GET /api/documents/:document_id/hash - returns hash for public sharing
 documentsRouter.get('/:document_id/hash', checkLogin, async (req: Request, res: Response) => {
   const documentId = Number(req.params.document_id);

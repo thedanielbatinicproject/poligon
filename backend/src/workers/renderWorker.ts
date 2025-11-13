@@ -125,8 +125,39 @@ export async function startRender(documentId: number, userId: number): Promise<{
       console.debug('[renderWorker] fetched document', { documentId, found: !!doc });
       if (!doc) throw new Error('Document not found');
 
+
       const latexContent = doc.latex_content || '';
       console.debug('[renderWorker] latex snapshot length', { documentId, length: (latexContent || '').length });
+
+      // --- VALIDACIJA I KOPIRANJE SLIKA iz uploads/{documentId}/ u temp folder ---
+      const uploadsDir = path.join(process.cwd(), 'uploads', String(documentId));
+      const tempDir = path.join(process.cwd(), 'uploads', String(documentId), 'temp');
+      const imageRegex = /\\includegraphics(?:\[[^\]]*\])?\{([^\}]+\.(?:jpg|jpeg|png|gif|bmp|webp|tiff))\}/gi;
+      let match;
+      let missingImages: string[] = [];
+      let copiedImages: string[] = [];
+      while ((match = imageRegex.exec(latexContent)) !== null) {
+        const imgName = match[1];
+        const srcPath = path.join(uploadsDir, imgName);
+        const destPath = path.join(tempDir, imgName);
+        try {
+          await fs.access(srcPath);
+          // Kopiraj u temp folder (overwrite ako već postoji)
+          await fs.copyFile(srcPath, destPath);
+          copiedImages.push(destPath);
+        } catch {
+          missingImages.push(imgName);
+        }
+      }
+      if (missingImages.length > 0) {
+        const msg = `Sljedeće slike nisu pronađene u uploads folderu: ${missingImages.join(', ')}`;
+        io.emit('document:render:finished', { document_id: documentId, success: false, error: msg, started_by: userId });
+        console.warn('[renderWorker] render failed - missing images', { documentId, missingImages });
+        // Očisti temp slike
+        for (const imgPath of copiedImages) { try { await fs.unlink(imgPath); } catch {} }
+        renderLocks.delete(documentId);
+        return;
+      }
 
       // render with configured timeout
       const timeoutMs = Number(process.env.RENDER_TIMEOUT_MS || 60000);
@@ -138,13 +169,14 @@ export async function startRender(documentId: number, userId: number): Promise<{
         const errMsg = result.error || 'Unknown render failure';
         console.warn('[renderWorker] render failed', { documentId, err: errMsg });
         io.emit('document:render:finished', { document_id: documentId, success: false, error: errMsg, started_by: userId });
+        // Očisti temp slike
+        for (const imgPath of copiedImages) { try { await fs.unlink(imgPath); } catch {} }
         return;
       }
 
-      // ensure uploads folder
-      const uploadsDir = path.join(process.cwd(), 'uploads', String(documentId));
-      console.debug('[renderWorker] ensuring uploads dir', { uploadsDir });
-      await fs.mkdir(uploadsDir, { recursive: true });
+  // ensure uploads folder
+  console.debug('[renderWorker] ensuring uploads dir', { uploadsDir });
+  await fs.mkdir(uploadsDir, { recursive: true });
 
       // fetch user display name
       let userRow: any = null;
@@ -164,16 +196,19 @@ export async function startRender(documentId: number, userId: number): Promise<{
       const absPath = path.join(process.cwd(), relPath);
       console.debug('[renderWorker] writing pdf file', { absPath, relPath, filename });
 
-      // write file
-      await fs.writeFile(absPath, result.pdf);
-      console.debug('[renderWorker] wrote pdf file', { absPath });
+  // write file
+  await fs.writeFile(absPath, result.pdf);
+  console.debug('[renderWorker] wrote pdf file', { absPath });
 
-      // insert version record into DB
-      await DocumentsService.renderDocument(documentId, userId, latexContent, relPath);
-      console.debug('[renderWorker] recorded version in DB', { documentId, relPath });
+  // insert version record into DB
+  await DocumentsService.renderDocument(documentId, userId, latexContent, relPath);
+  console.debug('[renderWorker] recorded version in DB', { documentId, relPath });
 
-      io.emit('document:render:finished', { document_id: documentId, success: true, pdf_path: relPath, finished_at: new Date().toISOString(), started_by: userId });
-      console.debug('[renderWorker] render finished success', { documentId, relPath });
+  // Očisti temp slike nakon uspješnog rendera
+  for (const imgPath of copiedImages) { try { await fs.unlink(imgPath); } catch {} }
+
+  io.emit('document:render:finished', { document_id: documentId, success: true, pdf_path: relPath, finished_at: new Date().toISOString(), started_by: userId });
+  console.debug('[renderWorker] render finished success', { documentId, relPath });
     } catch (err: any) {
       console.error('[renderWorker] render failed for document', documentId, err && err.stack ? err.stack : err);
       io.emit('document:render:finished', { document_id: documentId, success: false, error: String(err?.message || err), started_by: userId });

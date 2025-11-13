@@ -1,4 +1,4 @@
-// (removed duplicate import)
+import { ImageInsertModal } from './ImageInsertModal';
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
 import { autocompletion, CompletionContext, completionKeymap, acceptCompletion } from '@codemirror/autocomplete';
 import { latexCompletions } from './latexCompletions';
@@ -33,6 +33,7 @@ interface YjsEditorProps {
 }
 
 const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
+  
   ({ documentId, readOnly, onUserCountChange, onSave, onCompile }, ref) => {
     // Keyboard shortcut handler
     // Remove broken dynamic keymap reconfiguration. Instead, add keymap in initial extensions below.
@@ -40,10 +41,37 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
     const viewRef = useRef<EditorView | null>(null);
     const providerRef = useRef<WebsocketProvider | null>(null);
     const ydocRef = useRef<Y.Doc | null>(null);
-  
-  const [isConnected, setIsConnected] = useState(false);
-  const [isSynced, setIsSynced] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
+    const [isSynced, setIsSynced] = useState(false);
+    const [showImageModal, setShowImageModal] = useState(false);
 
+    // Handler for inserting image LaTeX code
+    const handleInsertImageLatex = (latex: string) => {
+      // Insert at current cursor position, but ako je ispred kursora "\\in[a-z]*" (npr. "\\ins"), delete it before image insertion
+      if (viewRef.current) {
+        const view = viewRef.current;
+        const { state } = view;
+        const { from } = state.selection.main;
+        // Find \in[a-z]* immediately before the cursor
+        const before = state.sliceDoc(Math.max(0, from - 10), from); // max 10 characters back
+        const match = before.match(/\\in[a-z]*$/);
+        let tr = null;
+        if (match) {
+          // Delete \in[a-z]*
+          tr = state.update({
+            changes: { from: from - match[0].length, to: from, insert: '' }
+          });
+          view.dispatch(tr);
+        }
+        // Insert latex at new position
+        const pos = match ? from - match[0].length : from;
+        const tr2 = view.state.update({
+          changes: { from: pos, to: pos, insert: latex }
+        });
+        view.dispatch(tr2);
+        view.focus();
+      }
+    };
     useEffect(() => {
       if (!editorRef.current || !documentId) return;
       // Cleanup previous instance
@@ -151,16 +179,26 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         const word = context.matchBefore(/\\[a-zA-Z]*$/);
         if (!word || (word.from == word.to && !context.explicit)) return null;
         const term = word.text.slice(1); // remove leading '\'
+        let options: any[] = latexCompletions
+          .filter(cmd => cmd.label.startsWith(term))
+          .map(cmd => ({
+            label: cmd.label,
+            type: cmd.type,
+            info: cmd.info,
+            apply: `${cmd.label}`
+          }));
+        // Dodaj posebnu opciju za insertimage
+        if ('insertimage'.startsWith(term)) {
+          options.unshift({
+            label: 'insertimage',
+            type: 'function',
+            info: 'Umetni sliku iz pool foldera',
+            apply: () => { setShowImageModal(true); return ''; }
+          });
+        }
         return {
-          from: word.from +1, // only complete after '\'
-          options: latexCompletions
-            .filter(cmd => cmd.label.startsWith(term))
-            .map(cmd => ({
-              label: cmd.label,
-              type: cmd.type,
-              info: cmd.info,
-              apply: `${cmd.label}`
-            })),
+          from: word.from + 1,
+          options
         };
       }
 
@@ -266,68 +304,76 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
     }, [readOnly]);
 
     return (
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-        maxWidth: '40vw',
-        minWidth: '0',
-        width: '100%',
-        alignSelf: 'flex-start'
-      }}>
-        {/* Connection status indicator */}
-        {!isConnected && (
-          <div style={{
-            position: 'absolute',
-            top: '0.5rem',
-            right: '0.5rem',
-            padding: '0.5rem 1rem',
-            background: 'var(--warning)',
-            color: 'var(--bg)',
-            borderRadius: 6,
-            fontSize: '0.85rem',
-            zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-          }}>
-            Connecting to collaboration server...
-          </div>
-        )}
-        {isConnected && !isSynced && (
-          <div style={{
-            position: 'absolute',
-            top: '0.5rem',
-            right: '0.5rem',
-            padding: '0.5rem 1rem',
-            background: 'var(--accent)',
-            color: 'var(--bg)',
-            borderRadius: 6,
-            fontSize: '0.85rem',
-            zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-          }}>
-            Syncing document...
-          </div>
-        )}
-        {/* Editor container */}
-        <div 
-          ref={editorRef} 
-          style={{ 
-            flex: 1,
-            overflowX: 'hidden',
-            overflowY: 'auto',
-            background: 'var(--bg)',
-            color: 'var(--text)',
-            width: '100%',
-            minWidth: 0,
-            wordBreak: 'break-word',
-            whiteSpace: 'pre-wrap',
-            maxWidth: '40vw',
-            boxSizing: 'border-box'
-          }}
+      <>
+        <div style={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          position: 'relative',
+          overflow: 'hidden',
+          maxWidth: '40vw',
+          minWidth: '0',
+          width: '100%',
+          alignSelf: 'flex-start'
+        }}>
+          {/* Connection status indicator */}
+          {!isConnected && (
+            <div style={{
+              position: 'absolute',
+              top: '0.5rem',
+              right: '0.5rem',
+              padding: '0.5rem 1rem',
+              background: 'var(--warning)',
+              color: 'var(--bg)',
+              borderRadius: 6,
+              fontSize: '0.85rem',
+              zIndex: 10,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+            }}>
+              Connecting to collaboration server...
+            </div>
+          )}
+          {isConnected && !isSynced && (
+            <div style={{
+              position: 'absolute',
+              top: '0.5rem',
+              right: '0.5rem',
+              padding: '0.5rem 1rem',
+              background: 'var(--accent)',
+              color: 'var(--bg)',
+              borderRadius: 6,
+              fontSize: '0.85rem',
+              zIndex: 10,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+            }}>
+              Syncing document...
+            </div>
+          )}
+          {/* Editor container */}
+          <div 
+            ref={editorRef} 
+            style={{ 
+              flex: 1,
+              overflowX: 'hidden',
+              overflowY: 'auto',
+              background: 'var(--bg)',
+              color: 'var(--text)',
+              width: '100%',
+              minWidth: 0,
+              wordBreak: 'break-word',
+              whiteSpace: 'pre-wrap',
+              maxWidth: '40vw',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+        <ImageInsertModal
+          documentId={documentId}
+          isOpen={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          onInsert={handleInsertImageLatex}
         />
-      </div>
+      </>
     );
   }
 );
