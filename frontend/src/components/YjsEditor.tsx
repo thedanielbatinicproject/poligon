@@ -192,7 +192,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           options.unshift({
             label: 'insertimage',
             type: 'function',
-            info: 'Umetni sliku iz pool foldera',
+            info: 'Insert image from this document uploads',
             apply: () => { setShowImageModal(true); return ''; }
           });
         }
