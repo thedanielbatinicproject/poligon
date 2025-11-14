@@ -212,16 +212,40 @@ app.get('/d/:hashCode', async (req, res) => {
       return res.sendFile(latestVersion.compiled_pdf_path, { root: process.cwd() });
     }
 
-    // Serve custom HTML with embedded PDF, favicon, and dynamic title
-    const faviconUrl = '/assets/PoligonLogoNoText-Dh7rBMOX.png';
+    // Serve custom HTML with embedded PDF, favicon, and dynamic meta tags for sharing
+    const faviconUrl = '/assets/images/PoligonLogoTextWhite.png';
+    const heroImage = 'https://poligon.live/assets/mainShareHeroDoc.png';
+    const docUrl = `https://poligon.live/d/${hashCode}`;
+    const description = `Hey! I just rendered a new document on Poligon - ${doc.title} — by ${author}. Take a look, I think you will like it!`;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(`<!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>${title}</title>
+        <title>${doc.title || 'Rendered Poligon document'}</title>
+        <!-- Open Graph meta -->
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Poligon" />
+        <meta property="og:title" content="${doc.title || 'Rendered Poligon document'}" />
+        <meta property="og:description" content="${description}" />
+        <meta property="og:image" content="${heroImage}" />
+        <meta property="og:url" content="${docUrl}" />
+        <!-- WhatsApp compatibility -->
+        <meta itemprop="name" content="${doc.title || 'Rendered Poligon document'}" />
+        <meta itemprop="description" content="${description}" />
+        <meta itemprop="image" content="${heroImage}" />
+        <!-- Twitter Card meta -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@poligon_live" />
+        <meta name="twitter:creator" content="@poligon_live" />
+        <meta name="twitter:title" content="${title}" />
+        <meta name="twitter:description" content="${description}" />
+        <meta name="twitter:image" content="${heroImage}" />
+        <!-- Standard meta for SEO -->
+        <meta name="description" content="${description}" />
         <link rel="icon" type="image/png" href="${faviconUrl}" />
+        <link rel="apple-touch-icon" href="${faviconUrl}" />
         <style>
           html, body { height: 100%; margin: 0; padding: 0; background: #181c24; }
           body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
