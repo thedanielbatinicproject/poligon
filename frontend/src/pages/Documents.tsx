@@ -701,7 +701,7 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
               ) : (
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 0.75rem 0', fontSize: '0.85rem' }}>
                   {docFiles.map((file: any) => {
-                    const canDelete = file.uploaded_by === user?.id || userRole === 'mentor' || session?.role === 'admin';
+                    const canDelete = file.uploaded_by === displayUser?.user_id || userRole === 'mentor' || session?.role === 'admin';
                     return (
                       <li key={file.file_id} style={{ 
                         marginBottom: '0.5rem', 
@@ -718,11 +718,11 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                         </span>
                         {canDelete && (
                           <button 
-                            className="btn btn-ghost" 
+                            className="btn btn-danger" 
                             style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.5rem' }}
                             onClick={() => {
                               setConfirmTitle('Delete File');
-                              setConfirmQuestion(`Are you sure you want to delete "${file.file_name}"?`);
+                              setConfirmQuestion(`Are you sure you want to delete "${file.file_name}"? Deleting this file cannot be undone and could result in compilation errors if it's referenced in the LaTeX document.`);
                               setConfirmAction(() => async () => await handleFileDelete(file.file_id, file.uploaded_by));
                               setConfirmOpen(true);
                             }}
