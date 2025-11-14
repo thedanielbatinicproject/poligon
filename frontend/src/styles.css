@@ -108,7 +108,7 @@
   --cm-inserted: #32d6a4;        /* aurora green, underline */
   --cm-invalid: #ff0033;         /* aurora red, bg for errors */
   /* Dark theme - deep blue / purple aurora inspiration (high contrast) */
-  --highlight-contrast: #b78bffc0; /* purple accent for visible selection in dark theme */
+  --highlight-contrast: #fde28fc0; /* purple accent for visible selection in dark theme */
   --bg: #031026; /* deep navy */
   --panel: #07162a; /* slightly lighter surface */
   --text: #e8f6ff; /* pale cyan/white for readability */

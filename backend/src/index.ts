@@ -177,42 +177,69 @@ app.get('/d/:hashCode', async (req, res) => {
   try {
     // Decode hash to get document_id
     const document_id = decodeDocumentHash(hashCode);
-    
-    if (!document_id) {
-      return res.status(404).send(ErrorTemplates.invalidLink());
-    }
+    if (!document_id) return res.status(404).send(ErrorTemplates.invalidLink());
 
     // Check if document exists
     const doc = await DocumentsService.getDocumentById(document_id);
-    if (!doc) {
-      return res.status(404).send(ErrorTemplates.documentNotFound(document_id));
-    }
+    if (!doc) return res.status(404).send(ErrorTemplates.documentNotFound(document_id));
 
     // Get all versions for this document
     const versions = await DocumentsService.getDocumentVersions(document_id);
-    
-    if (!versions || versions.length === 0) {
-      return res.status(404).send(ErrorTemplates.noRenders(document_id));
-    }
+    if (!versions || versions.length === 0) return res.status(404).send(ErrorTemplates.noRenders(document_id));
 
-    // Get latest version (last in array since ordered by version_number ASC)
-    const latestVersion = versions[versions.length - 1];
-    
-    if (!latestVersion.compiled_pdf_path) {
-      return res.status(404).send(ErrorTemplates.pdfNotAvailable(document_id));
-    }
+    const latestVersion = versions[0];
+    if (!latestVersion.compiled_pdf_path) return res.status(404).send(ErrorTemplates.pdfNotAvailable(document_id));
 
     // Check if PDF file actually exists on disk
     const pdfPath = path.resolve(process.cwd(), latestVersion.compiled_pdf_path);
-    if (!fs.existsSync(pdfPath)) {
-      return res.status(404).send(ErrorTemplates.pdfNotAvailable(document_id));
+    if (!fs.existsSync(pdfPath)) return res.status(404).send(ErrorTemplates.pdfNotAvailable(document_id));
+
+    // Extract filename and author for title and download
+    let filename = latestVersion.compiled_pdf_path.split(/[\\/]/).pop() || 'document.pdf';
+    let title = filename.endsWith('.pdf') ? filename.slice(0, -4) : filename;
+    let author = 'Poligon';
+    const byIdx = filename.indexOf('-BY-');
+    if (byIdx !== -1) {
+      author = filename.slice(byIdx + 4, filename.length - 4);
+      if (author.includes('.')) author = author.split('.')[0];
     }
 
-    // Serve PDF inline in browser
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline');
-    return res.sendFile(latestVersion.compiled_pdf_path, { root: process.cwd() });
-    
+    // If ?download=1, force download with correct filename and author
+    if (req.query.download === '1') {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('X-Author', author);
+      return res.sendFile(latestVersion.compiled_pdf_path, { root: process.cwd() });
+    }
+
+    // Serve custom HTML with embedded PDF, favicon, and dynamic title
+    const faviconUrl = '/assets/PoligonLogoNoText-Dh7rBMOX.png';
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(`<!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>${title}</title>
+        <link rel="icon" type="image/png" href="${faviconUrl}" />
+        <style>
+          html, body { height: 100%; margin: 0; padding: 0; background: #181c24; }
+          body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
+          .pdf-container { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; }
+          .pdf-actions { margin: 1.5rem 0 0.5rem 0; text-align: center; }
+          .pdf-actions a { color: #fff; background: #2a3140; border-radius: 6px; padding: 0.5em 1.2em; text-decoration: none; font-weight: 600; font-size: 1.1em; margin: 0 0.5em; transition: background 0.2s; }
+          .pdf-actions a:hover { background: #3e4660; }
+        </style>
+      </head>
+      <body>
+        <div class="pdf-actions">
+          <a href="?download=1">Download PDF</a>
+        </div>
+        <div class="pdf-container">
+          <embed src="${encodeURI(req.originalUrl)}?download=1" type="application/pdf" width="100%" height="100%" />
+        </div>
+      </body>
+      </html>`);
   } catch (err) {
     console.error('[ERROR] /d/:hashCode', err);
     return res.status(500).send(ErrorTemplates.serverError());
@@ -446,9 +473,11 @@ io.on('connection', (socket) => {
 });
 
 
-// [YjsWS] Disabled internal Yjs WebSocket server. Using external wss://socket.poligon.live
-
-// Pokreni server
+// HARDCODED PATH FIX FOR TEXLIVE BINARIES - TODO: FIX LATER
+console.log('NODE PATH:', process.env.PATH);
+process.env.PATH = '/opt/texlive/2025/bin/x86_64-linux:' + process.env.PATH;
+console.log('NODE PATH:', process.env.PATH);
+// Server startup
 server.listen(port, () => {
   const msg = `Poligon backend running on port ${port}`;
   console.log(msg);

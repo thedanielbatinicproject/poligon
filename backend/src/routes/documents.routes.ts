@@ -10,7 +10,7 @@ import { DocumentsService } from '../services/documents.service';
 import { checkLogin, checkAdmin, checkMentor, checkStudent } from '../middleware/auth.middleware';
 import { AuditService, AuditLogEntityType, AuditLogActionType } from '../services/audit.service';
 import { createTempUrl, startOnlineRender, isRendering as isOnlineRendering } from '../render/onlineRenderer';
-import { startTempRender } from '../workers/renderWorker';
+import { startTempRender, startRender } from '../workers/renderWorker';
 import { DocumentWorkflowService } from '../services/documentWorkflow.service';
 
 const documentsRouter = Router();
@@ -143,20 +143,32 @@ documentsRouter.post('/:document_id/render', checkLogin, async (req: Request, re
       console.warn('[DEBUG] render authorization failed', { document_id, user_id, role, isMentor });
       return res.status(403).json({ error: 'Only mentors of this document or admins can trigger rendering.' });
     }
-    // create temporary public URL and start external renderer
-    const temp = createTempUrl(document_id, user_id);
-    if (temp.error) {
-      console.debug('[DEBUG] render aborted - already rendering or token error', { document_id, err: temp.error });
-      return res.status(409).json({ error: temp.error });
+
+    // Try local render first
+    let localResult: any = null;
+    try {
+      localResult = await startRender(document_id, user_id);
+      console.debug('[DEBUG] startRender (local) result', { document_id, localResult });
+      if (!localResult || localResult.started === false) {
+        throw new Error(localResult && localResult.message ? localResult.message : 'Local render did not start');
+      }
+      return res.status(200).json({ message: 'Local render job started.' });
+    } catch (localErr) {
+      console.warn('[DEBUG] local render failed, will try online', { document_id, err: localErr });
+      // fallback to online renderer
+      const temp = createTempUrl(document_id, user_id);
+      if (temp.error) {
+        console.debug('[DEBUG] render aborted - already rendering or token error', { document_id, err: temp.error });
+        return res.status(409).json({ error: temp.error });
+      }
+      const token = temp.token!;
+      const started = await startOnlineRender(token);
+      console.debug('[DEBUG] startOnlineRender result', { document_id, started });
+      if (!started || !started.started) {
+        return res.status(500).json({ error: 'Failed to start render job.', details: started?.message });
+      }
+      return res.status(200).json({ message: 'Online render job started.' });
     }
-    const token = temp.token!;
-    // start async external render (spawns background job)
-    const started = await startOnlineRender(token);
-    console.debug('[DEBUG] startOnlineRender result', { document_id, started });
-    if (!started || !started.started) {
-      return res.status(500).json({ error: 'Failed to start render job.', details: started?.message });
-    }
-    return res.status(200).json({ message: 'Render job started.' });
   } catch (err) {
     console.error('[ERROR] /api/documents/:id/render', (err as any)?.stack || err);
     res.status(500).json({ error: 'Failed to process render request.', details: String((err as any)?.message || err) });

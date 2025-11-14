@@ -901,7 +901,7 @@ export default function Mentor() {
                   <h3>Document renders</h3>
                   {docVersions.length === 0 ? <div>No versions available.</div> : (
                     <div>
-                      {docVersions.slice().reverse().slice(0, rendersToShow).map(v => {
+                      {docVersions.slice(0, rendersToShow).map(v => {
                         const editorId = Number(v.edited_by || v.edited_by_id || v.edited_by_user_id || 0);
                         let editorName = usersMap[editorId];
                         if (!editorName) {

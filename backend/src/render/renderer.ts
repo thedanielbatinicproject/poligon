@@ -1,4 +1,7 @@
-import { renderWithWasm, WasmRenderResult, wasmAvailable } from './wasmRenderer';
+
+import { renderWithLocalLatex } from './localRenderer';
+
+
 import https from 'https';
 import { URL } from 'url';
 
@@ -14,25 +17,24 @@ export interface RenderResult {
  * optionally call a public HTTP render service as a fallback.
  */
 // If isUrl is true, treat latexContent as a URL to a .tex file
-export async function renderLatex(latexContent: string, timeoutMs: number, isUrl = false): Promise<RenderResult> {
-  // Try WASM only if not using URL
+export async function renderLatex(latexContent: string, timeoutMs: number, isUrl = false, workDir?: string): Promise<RenderResult> {
+  // If isUrl, we cannot use local renderer (no file access), so fallback to remote
   if (!isUrl) {
     try {
-      const wasmRes: WasmRenderResult = await renderWithWasm(latexContent, timeoutMs);
-      if (wasmRes.success && wasmRes.pdf) return { success: true, pdf: wasmRes.pdf, log: wasmRes.log };
-      // if wasm returned error or not success, continue to fallback
-      const wasmErr = wasmRes.error || wasmRes.log || 'WASM render failed';
+      const localRes = await renderWithLocalLatex(latexContent, timeoutMs, 'pdflatex', workDir);
+      if (localRes.success && localRes.pdf) return localRes;
+      // If local render failed, check if external fallback is allowed
       const allowExternal = (process.env.ALLOW_EXTERNAL_RENDER || 'false').toLowerCase() === 'true';
-      if (!allowExternal) return { success: false, error: `WASM renderer failed: ${wasmErr}` };
+      if (!allowExternal) return { success: false, error: `Local TeX Live render failed: ${localRes.error || localRes.log || 'Unknown error'}` };
     } catch (err) {
       const allowExternal = (process.env.ALLOW_EXTERNAL_RENDER || 'false').toLowerCase() === 'true';
-      if (!allowExternal) return { success: false, error: `WASM renderer threw: ${String(err)}` };
+      if (!allowExternal) return { success: false, error: `Local TeX Live renderer threw: ${String(err)}` };
     }
   }
 
   // Fallback: use latexonline.cc (public) if allowed. If isUrl, send as url param.
   const allowExternal = (process.env.ALLOW_EXTERNAL_RENDER || 'false').toLowerCase() === 'true';
-  if (!allowExternal) return { success: false, error: 'WASM renderer failed and external render not allowed.' };
+  if (!allowExternal) return { success: false, error: 'Local TeX Live renderer failed and external render not allowed.' };
 
   try {
     const pdf = await renderViaLatexOnline(latexContent, timeoutMs, isUrl);
