@@ -101,7 +101,27 @@ export async function renderWithLocalLatex(
       return { success: true, pdf, log };
     } else {
       if (DEBUG_LOCAL_RENDERER) console.error('[localRenderer] Render failed, exitCode:', exitCode, 'log:', log, 'stdout:', stdout, 'stderr:', stderr);
-      return { success: false, error: 'TeX engine failed', log: log || stdout + '\n' + stderr };
+      // Enhanced error extraction from log
+      let detailedError = 'TeX engine failed';
+      if (log) {
+        // Pronađi prvu liniju s '! '
+        const lines = log.split(/\r?\n/);
+        const errLine = lines.find(l => l.trim().startsWith('! '));
+        if (errLine) {
+          // Pokušaj pronaći broj linije iz sljedećih linija
+          let lineInfo = '';
+          const idx = lines.indexOf(errLine);
+          for (let i = idx + 1; i < Math.min(lines.length, idx + 5); ++i) {
+            const m = lines[i].match(/l\.(\d+)\s/); // npr. l.23
+            if (m) {
+              lineInfo = ` (line ${m[1]})`;
+              break;
+            }
+          }
+          detailedError = errLine.replace(/^!\s*/, '') + lineInfo;
+        }
+      }
+      return { success: false, error: detailedError, log: log || stdout + '\n' + stderr };
     }
   } catch (err: any) {
     if (DEBUG_LOCAL_RENDERER) console.error('[localRenderer] Exception:', err);
