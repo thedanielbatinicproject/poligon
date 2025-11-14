@@ -15,7 +15,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Poligon - Frontend</title>
+    <title>Poligon Web App</title>
   </head>
   <body>
     <div id="root"></div>
@@ -29,15 +29,34 @@
 <html lang="en">
   <head>
     <script>
-        // Promijeni port/host ovdje:
-        window.__POLIGON_API_BASE__ = 'http://localhost:5000';
+      window.__POLIGON_API_BASE__ = 'http://localhost:5000';
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poligon</title>
-  <!-- Favicon / site logo -->
-  <link rel="icon" type="image/png" href="/src/assets/images/PoligonLogoNoText.png" />
-  <link rel="apple-touch-icon" href="/src/assets/images/PoligonLogoNoText.png" />
+    <title>Poligon – advanced LaTeX document collaboration platform</title>
+    <!-- Open Graph meta -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Poligon" />
+    <meta property="og:title" content="Poligon – advanced LaTeX document collaboration platform" />
+    <meta property="og:description" content="Join POLIGON today to create, edit, share and write LaTeX scientific documents on your own or with collaborators." />
+    <meta property="og:image" content="https://poligon.live/assets/mainShareHero.png" />
+    <meta property="og:url" content="https://poligon.live/" />
+    <!-- WhatsApp compatibility (uses OG tags, but image and description must be present) -->
+    <meta itemprop="name" content="Poligon – advanced LaTeX document collaboration platform" />
+    <meta itemprop="description" content="Join POLIGON today to create, edit, share and write LaTeX scientific documents on your own or with collaborators." />
+    <meta itemprop="image" content="https://poligon.live/assets/mainShareHero.png" />
+    <!-- Twitter Card meta -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@poligon_live" />
+    <meta name="twitter:creator" content="@poligon_live" />
+    <meta name="twitter:title" content="Poligon – advanced LaTeX document collaboration platform" />
+    <meta name="twitter:description" content="Join POLIGON today to create, edit, share and write LaTeX scientific documents on your own or with collaborators." />
+    <meta name="twitter:image" content="https://poligon.live/assets/mainShareHero.png" />
+    <!-- Standard meta for SEO -->
+    <meta name="description" content="Join POLIGON today to create, edit, share and write LaTeX scientific documents on your own or with collaborators." />
+    <!-- Favicon / site logo -->
+  <link rel="icon" type="image/png" href="/assets/images/PoligonLogoTextWhite.png" />
+  <link rel="apple-touch-icon" href="/assets/images/PoligonLogoTextWhite.png" />
     <!-- Link compiled Tailwind CSS (produced by `npm run build:css`) -->
     <link rel="stylesheet" href="/assets/tailwind.css">
   </head>

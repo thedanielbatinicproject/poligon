@@ -1,6 +1,3 @@
-// List of basic LaTeX commands and commands from supported packages
-// Only include commands/environments from: inputenc, fontenc, lmodern, babel, geometry, microtype, xcolor, hyperref, amsmath, amssymb, amsfonts, mathtools, physics, siunitx, mhchem, cancel, ulem, graphicx, tikz, pgfplots, subcaption, caption, booktabs, array, multicol, enumitem, fancyhdr, titlesec, url, setspace, parskip, ragged2e
-
 export const latexCompletions = [
   // Basic LaTeX
   {label: 'section', type: 'keyword', info: 'Section heading'},
