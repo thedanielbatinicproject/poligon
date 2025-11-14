@@ -125,6 +125,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         // Try :root first, then body
         return getComputedStyle(document.documentElement).getPropertyValue(name) || getComputedStyle(document.body).getPropertyValue(name) || undefined;
       }
+      
 
       // Define a HighlightStyle using theme variables
       const poligonHighlightStyle = HighlightStyle.define([
