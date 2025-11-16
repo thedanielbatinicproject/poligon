@@ -1,3 +1,4 @@
+
 import { encodeDocumentId } from '../utils/documentHash';
 
 // --- TEMPORARY COMPILE (GROUP-LOCKED, NO VERSION LOG) ---
@@ -37,6 +38,29 @@ documentsRouter.get('/:document_id/images', checkLogin, async (req: Request, res
     return res.json({ images: imagesWithMeta });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to list images.', details: String(err) });
+  }
+});
+
+// PUT /api/documents/:document_id/editors/role - Change editor role (admin or mentor with higher role)
+documentsRouter.put('/:document_id/editors/role', checkLogin, async (req: Request, res: Response) => {
+  const document_id = Number(req.params.document_id);
+  const requester_id = req.session.user_id;
+  const requester_role = req.session.role;
+  const { user_id, new_role } = req.body; // user_id to change, new_role to assign
+  if (!requester_id || !requester_role) {
+    return res.status(401).json({ error: 'Not authenticated.' });
+  }
+  if (!user_id || !new_role || !['editor','viewer','mentor','owner'].includes(new_role)) {
+    return res.status(400).json({ error: 'Invalid user_id or new_role.' });
+  }
+  try {
+    const success = await DocumentsService.changeEditorRole(document_id, user_id, new_role, requester_id);
+    if (!success) {
+      return res.status(403).json({ error: 'Not authorized to change editor role for this document.' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to change editor role.', details: err });
   }
 });
 

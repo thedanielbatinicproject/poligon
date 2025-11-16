@@ -136,7 +136,7 @@ usersRouter.get('/reduced', checkLogin, async (req: Request, res: Response) => {
     const users = await getAllUsersReduced(includeAdmins);
     res.json(users);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users for messaging!', details: err });
+    res.status(500).json({ error: 'Failed to fetch reduced users list!', details: err });
   }
 });
 

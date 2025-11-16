@@ -1,3 +1,12 @@
+export async function changeEditorRole(documentId: number, payload: { user_id: number; new_role: string }) {
+  const res = await fetch(`${base}/${documentId}/editors/role`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return handleRes(res);
+}
 // Dohvati slike iz pool foldera za dokument
 export async function getDocumentImages(documentId: number) {
   const res = await fetch(`/api/documents/${documentId}/images`, { credentials: 'include' });
@@ -150,4 +159,5 @@ export default {
   , getDocumentTypes,
   getFiles,
   deleteFile
+  , changeEditorRole
 };

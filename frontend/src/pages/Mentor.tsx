@@ -11,8 +11,13 @@ import WorkflowHistoryModal from '../components/WorkflowHistoryModal';
 import AuditLogModal from '../components/AuditLogModal';
 import DocumentGrader from '../components/DocumentGrader';
 import EditorRemoveButton from '../components/EditorRemoveButton';
+import EditorRoleSelect from '../components/EditorRoleSelect';
+import EditorRoleChangeInline from '../components/EditorRoleChangeInline';
 
 export default function Mentor() {
+  // ...existing code...
+  // Add Editor role selection state
+  const [addEditorRole, setAddEditorRole] = useState<string>('editor');
   const sessionCtx = useSession();
   const user = sessionCtx.user;
   const session = sessionCtx.session;
@@ -1052,18 +1057,61 @@ export default function Mentor() {
           <div>
             <div className="glass-panel profile-card" style={{ padding: 12 }}>
               <h3>Editors</h3>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <EditorRoleSelect
+                  value={addEditorRole}
+                  onChange={setAddEditorRole}
+                  isAdmin={user?.role === 'admin'}
+                />
                 <button className="btn-action" onClick={() => setUserFinderOpen(true)}>Add editor</button>
-                <button className="btn-action" onClick={async () => { const v = await DocumentsApi.getEditors(Number(selectedDocId)); setEditors(Array.isArray(v) ? v : []); }}>Refresh</button>
+                <button
+                  className="btn-action"
+                  onClick={async () => {
+                    const v = await DocumentsApi.getEditors(Number(selectedDocId));
+                    setEditors(Array.isArray(v) ? v : []);
+                    // Also update usersMap for any new editors
+                    const arr = Array.isArray(v) ? v : [];
+                    const missing: number[] = [];
+                    for (const ed of arr) {
+                      const id = Number(ed.user_id ?? ed.id ?? 0);
+                      if (id && !usersMap[id]) missing.push(id);
+                    }
+                    if (missing.length > 0) {
+                      try {
+                        const res = await fetch('/api/users/reduced', { credentials: 'include' });
+                        const list = await res.json();
+                        const map: Record<number, string> = {};
+                        for (const u of list) {
+                          const id = Number(u.user_id ?? u.id ?? u.userId ?? 0);
+                          if (!id) continue;
+                          const name = (u.display_name && String(u.display_name).trim()) || `${(u.first_name ?? u.firstName ?? '').trim()} ${(u.last_name ?? u.lastName ?? '').trim()}`.trim() || (u.email ?? '') || String(id);
+                          map[id] = name;
+                        }
+                        setUsersMap(prev => ({ ...prev, ...map }));
+                      } catch {}
+                    }
+                  }}
+                >Refresh</button>
               </div>
               <div>
                 {editors.length === 0 ? <div style={{ color: 'var(--muted)' }}>No editors</div> : (
                   <ul>
                     {editors.map(ed => {
                       const uid = Number(ed.user_id || ed.id || 0);
-                      const display = usersMap[uid] || (ed.display_name || ed.name || '');
+                      // Always prefer display_name from usersMap if available
+                      let display = usersMap[uid];
+                      if (!display) {
+                        const dn = (ed.display_name || '').toString().trim();
+                        if (dn) display = dn;
+                        else {
+                          const fn = (ed.first_name || '').toString().trim();
+                          const ln = (ed.last_name || '').toString().trim();
+                          const combined = `${fn} ${ln}`.trim();
+                          if (combined) display = combined;
+                          else display = (ed.email || '').toString() || String(uid || '');
+                        }
+                      }
                       const nameLabel = display ? `${display} (${uid})` : String(uid || '');
-                      const roleLabel = ed.role ? ` - ${ed.role}` : '';
                       // Role hierarchy: mentor > owner > editor > viewer
                       const roleHierarchy: Record<string, number> = { mentor: 4, owner: 3, editor: 2, viewer: 1 };
                       const currentUserEditor = editors.find(e => Number(e.user_id || e.id) === user?.id);
@@ -1075,25 +1123,54 @@ export default function Mentor() {
                       // - Only admin can remove mentors
                       let canRemove = false;
                       if (ed.role !== 'owner') {
-                        if (ed.role === 'mentor') {
-                          canRemove = currentUserEditor?.role === 'admin';
+                        if (user?.role === 'admin') {
+                          canRemove = true;
+                        } else if (ed.role === 'mentor') {
+                          canRemove = false;
                         } else {
                           canRemove = currentUserRoleLevel > editorRoleLevel;
                         }
                       }
+                      // Only allow role change if:
+                      // - Not owner
+                      // - Not mentor unless admin
+                      // - Current user is admin or mentor on this doc
+                      let canChangeRole = false;
+                      if (ed.role !== 'owner') {
+                        if (ed.role === 'mentor') {
+                          canChangeRole = currentUserEditor?.role === 'admin';
+                        } else {
+                          canChangeRole = currentUserRoleLevel > editorRoleLevel;
+                        }
+                      }
                       return (
-                        <li key={`${uid}`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span>{nameLabel}{roleLabel}</span>
-                          {canRemove && (
-                            <EditorRemoveButton
-                              onRemove={async () => {
-                                await DocumentsApi.removeEditor(Number(selectedDocId), { user_id: uid });
+                        <li key={`${uid}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, marginBottom: 12 }}>
+                          <div style={{ fontWeight: 500, wordBreak: 'break-all', fontSize: '1rem' }}>{nameLabel}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+                            <span style={{ color: 'var(--muted)', fontSize: '0.95em', minWidth: 60 }}>{`UserID: ${uid}`}</span>
+                            <EditorRoleChangeInline
+                              currentRole={ed.role}
+                              isAdmin={user?.role === 'admin'}
+                              disabled={!canChangeRole}
+                              onChange={async (newRole) => {
+                                await DocumentsApi.changeEditorRole(Number(selectedDocId), { user_id: uid, new_role: newRole });
                                 const v = await DocumentsApi.getEditors(Number(selectedDocId));
                                 setEditors(Array.isArray(v) ? v : []);
-                                notify.push('Editor removed', 2);
+                                notify.push('User role changed!', 2);
                               }}
                             />
-                          )}
+                            {canRemove && (
+                              <EditorRemoveButton
+                                label="DEL"
+                                onRemove={async () => {
+                                  await DocumentsApi.removeEditor(Number(selectedDocId), { user_id: uid });
+                                  const v = await DocumentsApi.getEditors(Number(selectedDocId));
+                                  setEditors(Array.isArray(v) ? v : []);
+                                  notify.push('Editor removed', 2);
+                                }}
+                              />
+                            )}
+                          </div>
                         </li>
                       );
                     })}
@@ -1314,7 +1391,7 @@ export default function Mentor() {
 
       <UserFinder open={userFinderOpen} onClose={() => setUserFinderOpen(false)} onSelect={async (uid) => {
         try {
-          await DocumentsApi.addEditor(Number(selectedDocId), { user_id: uid, role: 'editor' });
+          await DocumentsApi.addEditor(Number(selectedDocId), { user_id: uid, role: addEditorRole });
           const v = await DocumentsApi.getEditors(Number(selectedDocId));
           setEditors(Array.isArray(v) ? v : []);
           notify.push('Editor added', 2);

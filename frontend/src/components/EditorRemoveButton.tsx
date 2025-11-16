@@ -26,13 +26,12 @@ const EditorRemoveButton: React.FC<EditorRemoveButtonProps> = ({ onRemove, disab
 
   return (
     <button
-      className="btn btn-danger"
-      style={{ marginLeft: 8, minWidth: 80 }}
+      className="editor-remove-btn"
       disabled={disabled || loading}
       onClick={handleClick}
       type="button"
     >
-      {loading ? 'Removing...' : confirming ? 'Confirm?' : (label || 'Remove')}
+      {loading ? 'Removing...' : confirming ? 'Confirm?' : (label || 'DEL')}
     </button>
   );
 };

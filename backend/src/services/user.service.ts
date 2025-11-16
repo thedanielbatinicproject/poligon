@@ -191,19 +191,21 @@ export async function getAllUsersReduced(includeAdmins: boolean = false): Promis
   first_name: string,
   last_name: string,
   email: string,
-  role: string
+  role: string,
+  display_name: string | null
 }>> {
   // If includeAdmins is true, include all users; otherwise exclude admins
   const sql = includeAdmins
-    ? "SELECT user_id, first_name, last_name, email, role FROM users"
-    : "SELECT user_id, first_name, last_name, email, role FROM users WHERE role != 'admin'";
+    ? "SELECT user_id, first_name, last_name, email, role, display_name FROM users"
+    : "SELECT user_id, first_name, last_name, email, role, display_name FROM users WHERE role != 'admin'";
   const [rows] = await pool.query(sql);
   return rows as Array<{
     user_id: number,
     first_name: string,
     last_name: string,
     email: string,
-    role: string
+    role: string,
+    display_name: string | null
   }>;
 }
 

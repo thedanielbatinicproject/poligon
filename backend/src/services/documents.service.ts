@@ -1,3 +1,4 @@
+
 import pool from '../db';
 import { Document } from '../types/document';
 import { WorkflowStatus } from './documentWorkflow.service';
@@ -7,7 +8,47 @@ const VALID_STATUS = ['draft', 'submitted', 'under_review', 'finished', 'graded'
 const VALID_LANGUAGE = ['hr', 'en'];
 const MENTOR_ROLE = 'mentor';
 
-export class DocumentsService {
+export class DocumentsService {  
+  /**
+   * Changes the role of an editor for a document.
+   * Only admin or mentor with higher role can change roles. Only admin can assign/remove mentor/owner roles.
+   * @param document_id Document ID
+   * @param user_id_to_change User ID whose role is being changed
+   * @param new_role New role to assign
+   * @param requester_id User ID who is requesting the change
+   * @returns true if changed, false otherwise
+   */
+  static async changeEditorRole(document_id: number, user_id_to_change: number, new_role: string, requester_id: number): Promise<boolean> {
+    const roleHierarchy: Record<string, number> = { mentor: 4, owner: 3, editor: 2, viewer: 1 };
+    // Get document creator
+    const [docRows] = await pool.query('SELECT created_by FROM documents WHERE document_id = ?', [document_id]);
+    if ((docRows as any[]).length === 0) return false;
+    const created_by = (docRows as any[])[0].created_by;
+    // Get requester global role
+    const [userRows] = await pool.query('SELECT role FROM users WHERE user_id = ?', [requester_id]);
+    const isAdmin = (userRows as any[])[0]?.role === 'admin';
+    // Get current roles on this document
+    const [requesterEditorRows] = await pool.query('SELECT role FROM document_editors WHERE document_id = ? AND user_id = ?', [document_id, requester_id]);
+    const [targetEditorRows] = await pool.query('SELECT role FROM document_editors WHERE document_id = ? AND user_id = ?', [document_id, user_id_to_change]);
+    const requesterRole = (requesterEditorRows as any[])[0]?.role || 'viewer';
+    const targetRole = (targetEditorRows as any[])[0]?.role || 'viewer';
+    const requesterRoleLevel = roleHierarchy[requesterRole] || 0;
+    const targetRoleLevel = roleHierarchy[targetRole] || 0;
+    // Only admin can assign/remove mentor or owner roles
+    if ((targetRole === 'mentor' || targetRole === 'owner' || new_role === 'mentor' || new_role === 'owner') && !isAdmin) {
+      return false;
+    }
+    // Prevent owner from changing their own role
+    if (user_id_to_change === created_by && requester_id === created_by) return false;
+    // Check role hierarchy: requester must have higher role level than target
+    if (!isAdmin && requester_id !== created_by && requesterRoleLevel <= targetRoleLevel) {
+      return false;
+    }
+    // Update role
+    await pool.query('UPDATE document_editors SET role = ? WHERE document_id = ? AND user_id = ?', [new_role, document_id, user_id_to_change]);
+    return true;
+  }
+
   /**
    * Creates a new document (thesis) in the database.
    * Only admin or mentor can create documents.
