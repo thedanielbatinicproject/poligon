@@ -10,6 +10,7 @@ import { useSocket } from '../components/SocketProvider';
 import WorkflowHistoryModal from '../components/WorkflowHistoryModal';
 import AuditLogModal from '../components/AuditLogModal';
 import DocumentGrader from '../components/DocumentGrader';
+import EditorRemoveButton from '../components/EditorRemoveButton';
 
 export default function Mentor() {
   const sessionCtx = useSession();
@@ -1063,19 +1064,35 @@ export default function Mentor() {
                       const display = usersMap[uid] || (ed.display_name || ed.name || '');
                       const nameLabel = display ? `${display} (${uid})` : String(uid || '');
                       const roleLabel = ed.role ? ` - ${ed.role}` : '';
-                      
                       // Role hierarchy: mentor > owner > editor > viewer
                       const roleHierarchy: Record<string, number> = { mentor: 4, owner: 3, editor: 2, viewer: 1 };
                       const currentUserEditor = editors.find(e => Number(e.user_id || e.id) === user?.id);
                       const currentUserRoleLevel = roleHierarchy[currentUserEditor?.role || 'viewer'] || 0;
                       const editorRoleLevel = roleHierarchy[ed.role || 'viewer'] || 0;
-                      const canRemove = ed.role !== 'owner' && currentUserRoleLevel > editorRoleLevel;
-                      
+                      // Only allow remove if:
+                      // - Not owner
+                      // - Current user is admin or mentor on this doc
+                      // - Only admin can remove mentors
+                      let canRemove = false;
+                      if (ed.role !== 'owner') {
+                        if (ed.role === 'mentor') {
+                          canRemove = currentUserEditor?.role === 'admin';
+                        } else {
+                          canRemove = currentUserRoleLevel > editorRoleLevel;
+                        }
+                      }
                       return (
-                        <li key={`${uid}`}>
-                          {nameLabel}{roleLabel}
+                        <li key={`${uid}`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{nameLabel}{roleLabel}</span>
                           {canRemove && (
-                            <button className="btn btn-ghost" onClick={() => { setConfirmAction(() => async () => { await DocumentsApi.removeEditor(Number(selectedDocId), { user_id: uid }); const v = await DocumentsApi.getEditors(Number(selectedDocId)); setEditors(Array.isArray(v) ? v : []); notify.push('Editor removed', 2); }); setConfirmOpen(true); }}>Remove</button>
+                            <EditorRemoveButton
+                              onRemove={async () => {
+                                await DocumentsApi.removeEditor(Number(selectedDocId), { user_id: uid });
+                                const v = await DocumentsApi.getEditors(Number(selectedDocId));
+                                setEditors(Array.isArray(v) ? v : []);
+                                notify.push('Editor removed', 2);
+                              }}
+                            />
                           )}
                         </li>
                       );

@@ -171,6 +171,23 @@ app.get('/sp', (req, res) => {
 
 // Public document sharing endpoint - GET /d/:hashCode
 // Decodes hash, fetches latest PDF version, serves inline in browser
+// List of common bot/crawler user-agents for SEO/social compatibility
+const botUserAgents = [
+  'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider', 'yandex', 'sogou',
+  'exabot', 'facebot', 'facebookexternalhit', 'ia_archiver', 'twitterbot', 'linkedinbot', 'embedly',
+  'pinterest', 'quora link preview', 'redditbot', 'applebot', 'whatsapp', 'flipboard', 'tumblr',
+  'vkshare', 'skypeuripreview', 'nuzzel', 'discordbot', 'telegrambot', 'bitlybot', 'x-bufferbot',
+  'outbrain', 'w3c_validator', 'slackbot', 'slack-imgproxy', 'google page speed', 'chrome-lighthouse',
+  'ahrefsbot', 'semrushbot', 'mj12bot', 'dotbot', 'gigabot', 'seznambot', 'rogerbot', 'baiduspider',
+  'proximic', 'screaming frog', 'uptimerobot', 'crawler', 'spider', 'bot', 'preview', 'fetch', 'monitor'
+];
+
+function isBot(userAgent: string | undefined) {
+  if (!userAgent) return false;
+  const ua = userAgent.toLowerCase();
+  return botUserAgents.some(bot => ua.includes(bot));
+}
+
 app.get('/d/:hashCode', async (req, res) => {
   const hashCode = req.params.hashCode;
   
@@ -217,53 +234,50 @@ app.get('/d/:hashCode', async (req, res) => {
     const heroImage = 'https://poligon.live/assets/mainShareHeroDoc.png';
     const docUrl = `https://poligon.live/d/${hashCode}`;
     const description = `Hey! I just rendered a new document on Poligon - ${doc.title} — by ${author}. Take a look, I think you will like it!`;
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.send(`<!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>${doc.title || 'Rendered Poligon document'}</title>
-        <!-- Open Graph meta -->
-        <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="Poligon" />
-        <meta property="og:title" content="${doc.title || 'Rendered Poligon document'}" />
-        <meta property="og:description" content="${description}" />
-        <meta property="og:image" content="${heroImage}" />
-        <meta property="og:url" content="${docUrl}" />
-        <!-- WhatsApp compatibility -->
-        <meta itemprop="name" content="${doc.title || 'Rendered Poligon document'}" />
-        <meta itemprop="description" content="${description}" />
-        <meta itemprop="image" content="${heroImage}" />
-        <!-- Twitter Card meta -->
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@poligon_live" />
-        <meta name="twitter:creator" content="@poligon_live" />
-        <meta name="twitter:title" content="${title}" />
-        <meta name="twitter:description" content="${description}" />
-        <meta name="twitter:image" content="${heroImage}" />
-        <!-- Standard meta for SEO -->
-        <meta name="description" content="${description}" />
-        <link rel="icon" type="image/png" href="${faviconUrl}" />
-        <link rel="apple-touch-icon" href="${faviconUrl}" />
-        <style>
-          html, body { height: 100%; margin: 0; padding: 0; background: #181c24; }
-          body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
-          .pdf-container { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; }
-          .pdf-actions { margin: 1.5rem 0 0.5rem 0; text-align: center; }
-          .pdf-actions a { color: #fff; background: #2a3140; border-radius: 6px; padding: 0.5em 1.2em; text-decoration: none; font-weight: 600; font-size: 1.1em; margin: 0 0.5em; transition: background 0.2s; }
-          .pdf-actions a:hover { background: #3e4660; }
-        </style>
-      </head>
-      <body>
-        <div class="pdf-actions">
-          <a href="?download=1">Download PDF</a>
-        </div>
-        <div class="pdf-container">
-          <embed src="${encodeURI(req.originalUrl)}?download=1" type="application/pdf" width="100%" height="100%" />
-        </div>
-      </body>
-      </html>`);
+    const userAgent = req.headers['user-agent'];
+    if (isBot(userAgent)) {
+      // Serve HTML with meta tags for bots/crawlers
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(`<!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width,initial-scale=1" />
+          <title>${doc.title || 'Rendered Poligon document'}</title>
+          <!-- Open Graph meta -->
+          <meta property="og:type" content="article" />
+          <meta property="og:site_name" content="Poligon" />
+          <meta property="og:title" content="${doc.title || 'Rendered Poligon document'}" />
+          <meta property="og:description" content="${description}" />
+          <meta property="og:image" content="${heroImage}" />
+          <meta property="og:url" content="${docUrl}" />
+          <!-- WhatsApp compatibility -->
+          <meta itemprop="name" content="${doc.title || 'Rendered Poligon document'}" />
+          <meta itemprop="description" content="${description}" />
+          <meta itemprop="image" content="${heroImage}" />
+          <!-- Twitter Card meta -->
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:site" content="@poligon_live" />
+          <meta name="twitter:creator" content="@poligon_live" />
+          <meta name="twitter:title" content="${title}" />
+          <meta name="twitter:description" content="${description}" />
+          <meta name="twitter:image" content="${heroImage}" />
+          <!-- Standard meta for SEO -->
+          <meta name="description" content="${description}" />
+          <link rel="icon" type="image/png" href="${faviconUrl}" />
+          <link rel="apple-touch-icon" href="${faviconUrl}" />
+        </head>
+        <body style="background:#181c24;color:#fff;text-align:center;display:flex;align-items:center;justify-content:center;height:100vh;">
+          <p style="font-size:1.2em;">Ovo je PDF dokument. <a href="${encodeURI(req.originalUrl)}?download=1" style="color:#fff;text-decoration:underline;">Preuzmi PDF</a></p>
+        </body>
+        </html>`);
+    } else {
+      // Serve PDF directly for real users
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('X-Author', author);
+      return res.sendFile(latestVersion.compiled_pdf_path, { root: process.cwd() });
+    }
   } catch (err) {
     console.error('[ERROR] /d/:hashCode', err);
     return res.status(500).send(ErrorTemplates.serverError());

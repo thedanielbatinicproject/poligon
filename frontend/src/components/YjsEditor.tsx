@@ -1,7 +1,9 @@
 import { ImageInsertModal } from './ImageInsertModal';
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
 import { autocompletion, CompletionContext, completionKeymap, acceptCompletion } from '@codemirror/autocomplete';
-import { latexCompletions } from './latexCompletions';
+import { renderLatexCompletion } from './latexCompletionRender';
+// import { latexCompletions } from './latexCompletions';
+import { dynamicLatexCompletionSource } from './dynamicLatexCompletionProvider';
 import { EditorState, Compartment } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
@@ -175,32 +177,25 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           run: acceptCompletion,
         },
       ]);
-      // Custom LaTeX completion source
-      function latexCompletionSource(context: CompletionContext) {
-        const word = context.matchBefore(/\\[a-zA-Z]*$/);
-        if (!word || (word.from == word.to && !context.explicit)) return null;
-        const term = word.text.slice(1); // remove leading '\'
-        let options: any[] = latexCompletions
-          .filter(cmd => cmd.label.startsWith(term))
-          .map(cmd => ({
-            label: cmd.label,
-            type: cmd.type,
-            info: cmd.info,
-            apply: `${cmd.label}`
-          }));
-        // Dodaj posebnu opciju za insertimage
-        if ('insertimage'.startsWith(term)) {
-          options.unshift({
-            label: 'insertimage',
-            type: 'function',
-            info: 'Insert image from this document uploads',
-            apply: () => { setShowImageModal(true); return ''; }
+
+      // Custom LaTeX completion source using dynamic provider
+      // Wrap the async provider to allow triggering the image modal
+      function completionSourceWithImage(context: CompletionContext) {
+        // We call the async provider and then patch the insertimage completion to trigger the modal
+        return Promise.resolve(dynamicLatexCompletionSource(context)).then(result => {
+          if (!result) return null;
+          // Patch insertimage completion to trigger modal
+          result.options = result.options.map(opt => {
+            if (opt.label === 'insertimage') {
+              return {
+                ...opt,
+                apply: () => { setShowImageModal(true); return ''; }
+              };
+            }
+            return opt;
           });
-        }
-        return {
-          from: word.from + 1,
-          options
-        };
+          return result;
+        });
       }
 
       const basicExtensions = [
@@ -222,9 +217,20 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         highlightSelectionMatches(),
         EditorView.lineWrapping,
         autocompletion({
-          override: [latexCompletionSource],
+          override: [completionSourceWithImage],
           activateOnTyping: true,
           defaultKeymap: true,
+          optionClass: (completion) => {
+            // Add a class for the tag if present (cast to any for tag property)
+            const tag = (completion as any).tag;
+            return tag ? `cm-latex-tag-${tag}` : '';
+          },
+          addToOptions: [
+            {
+              render: renderLatexCompletion,
+              position: 100
+            }
+          ],
         }),
         customKeymap,
         keymap.of([
