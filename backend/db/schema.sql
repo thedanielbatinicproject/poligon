@@ -202,3 +202,13 @@ CREATE TABLE yjs_updates (
   FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
   INDEX idx_yjs_document_created (document_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- VISITOR RENDERS (for playground usage by unlogged users)
+-- Tracks number of renders per IP per day for playground feature
+CREATE TABLE visitor_renders (
+  ip VARCHAR(45) NOT NULL,
+  render_date DATE NOT NULL,
+  count INT UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (ip, render_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -76,19 +76,32 @@ Represents a document created by a user.
 | type_id            | INT UNSIGNED, FOREIGN KEY                                         | References `document_types.type_id`. |
 | title              | VARCHAR(255), NOT NULL                                            | Document title. |
 | abstract           | TEXT                                                              | Short summary or description. |
-| latex_content      | LONGTEXT                                                          | Main LaTeX content. |
-| compiled_pdf_path  | VARCHAR(255)                                                      | File path of the compiled PDF. |
-| status             | ENUM('draft', 'submitted', 'under_review', 'finished', 'graded') | Current document status. |
-| language           | ENUM('hr', 'en')                                                  | Language of the document. |
 | grade              | TINYINT UNSIGNED                                                  | Optional grade if applicable. |
 | created_by         | INT UNSIGNED, FOREIGN KEY                                         | References `users.user_id`. |
-| created_at         | DATETIME, NOT NULL                                                | Creation timestamp. |
 | updated_at         | DATETIME, NOT NULL                                                | Last update timestamp. |
 
-**Relationships:**
 - One-to-many with `document_versions`.
-- Many-to-many with users through `document_editors`.
 - Referenced by `tasks.document_id`, `file_uploads.document_id`, `workflow_history.document_id`.
+
+---
+
+## Table: `visitor_renders`
+
+Tracks the number of playground renders performed by unlogged (anonymous) users, counted by IP address and date. Used to enforce daily render limits for the playground feature.
+
+| Column       | Type                | Description |
+|--------------|---------------------|-------------|
+| ip           | VARCHAR(45), PK     | IP address of the visitor (supports IPv4/IPv6). |
+| render_date  | DATE, PK            | Date of the render (YYYY-MM-DD). |
+| count        | INT UNSIGNED        | Number of renders performed by this IP on this date. |
+
+**Purpose:**
+- Enables the "playground" service for unlogged users, allowing up to a fixed number of renders per IP per day (e.g., 15).
+- Each time an unlogged user renders, the counter for their IP and the current date is incremented.
+- Used to prevent abuse and provide limited access to rendering features for anonymous visitors.
+
+**Indexes:**
+- Primary key on (ip, render_date) ensures one row per IP per day and fast lookups/updates.
 
 ---
 
