@@ -46,6 +46,28 @@ export async function incrementRendersForIp(ip: string, date?: string): Promise<
   }
 }
 
+export async function decrementRendersForIp(ip: string, date?: string): Promise<void> {
+  const renderDate = date || getCurrentZagrebDate();
+  const [rows] = await pool.query(
+    'SELECT count FROM visitor_renders WHERE ip = ? AND render_date = ?',
+    [ip, renderDate]
+  );
+  if ((rows as any[]).length > 0) {
+    await pool.query(
+      'UPDATE visitor_renders SET count = count - 1 WHERE ip = ? AND render_date = ?',
+      [ip, renderDate]
+    );
+  } else {
+    await pool.query(
+      'INSERT INTO visitor_renders (ip, render_date, count) VALUES (?, ?, 1)',
+      [ip, renderDate]
+    );
+  }
+}
+
+
+
+
 /**
  * Resets the render count for the given IP and date (defaults to today in Zagreb time).
  * If no record exists, does nothing.

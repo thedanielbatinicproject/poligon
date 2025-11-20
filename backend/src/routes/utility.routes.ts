@@ -11,6 +11,7 @@ import { getAllSessions } from '../services/user.service';
 import {
   getRendersForIp,
   incrementRendersForIp,
+  decrementRendersForIp
 } from '../services/playground.service';
 
 import { renderLatex } from '../render/renderer';
@@ -30,11 +31,15 @@ utilityRouter.post('/playground/compile', async (req: Request, res: Response) =>
     if (!result.success || !result.pdf) {
       return res.status(400).json({ error: result.error || 'Failed to render PDF.' });
     }
+    await incrementRendersForIp(String(req.ip));
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="playground.pdf"');
     res.send(result.pdf);
+
   } catch (err: any) {
+    await decrementRendersForIp(String(req.ip));
     res.status(500).json({ error: 'Internal error during PDF render', details: String(err) });
+    
   }
 });
 
@@ -53,7 +58,6 @@ utilityRouter.post('/playground/render', async (req: Request, res: Response) => 
     if (count >= limit) {
       return res.status(429).json({ allowed: false, reason: 'limit', count, limit });
     }
-    await incrementRendersForIp(String(ip));
     return res.status(200).json({ allowed: true, count: count + 1, limit });
   } catch (err) {
     return res.status(500).json({ allowed: false, error: 'Failed to check or increment renders', details: String(err) });

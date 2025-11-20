@@ -95,13 +95,12 @@ const Playground: React.FC = () => {
       if (!unlimited) {
         const res = await fetch('/api/utility/playground/render', { method: 'POST' });
         const data = await res.json();
-        // (log removed)
         if (!data.allowed) {
           push('Daily render limit reached!', 4, true);
           setIsRendering(false);
           return;
         }
-        setRenderCount(data.count);
+        // Do not update renderCount yet; wait for successful compile
       }
       // Call backend to render LaTeX and get PDF as Blob
       const res = await fetch('/api/utility/playground/compile', {
@@ -111,13 +110,35 @@ const Playground: React.FC = () => {
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        // (log removed)
+        // After failed compile, fetch correct render count from backend
+        if (!unlimited) {
+          fetch('/api/utility/playground/renders')
+            .then(res => res.json())
+            .then(data => {
+              if (!data.unlimited) setRenderCount(data.count || 0);
+            });
+        }
         throw new Error(errData.error || 'Render failed');
       }
       const pdfBlob = await res.blob();
-      // (log removed)
       if (pdfBlob.type !== 'application/pdf') {
+        // After failed compile, fetch correct render count from backend
+        if (!unlimited) {
+          fetch('/api/utility/playground/renders')
+            .then(res => res.json())
+            .then(data => {
+              if (!data.unlimited) setRenderCount(data.count || 0);
+            });
+        }
         throw new Error('Did not receive a valid PDF.');
+      }
+      // After successful compile, fetch correct render count from backend
+      if (!unlimited) {
+        fetch('/api/utility/playground/renders')
+          .then(res => res.json())
+          .then(data => {
+            if (!data.unlimited) setRenderCount(data.count || 0);
+          });
       }
       // Convert PDF Blob to base64 for cookie storage
       const reader = new FileReader();
