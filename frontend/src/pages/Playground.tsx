@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
 import YjsEditor from '../components/YjsEditor';
@@ -45,34 +44,40 @@ const Playground: React.FC = () => {
 
   // Track LaTeX content in state, update onChange, and persist
   const [latexContent, setLatexContent] = useState<string>('');
-  // (log removed)
   const [initialContent, setInitialContent] = useState<string>('');
   // Load initial content only once on mount (no template, just user content or empty)
   useEffect(() => {
-    const content = Cookies.get(LATEX_COOKIE_KEY);
-    if (typeof content === 'string') {
-      setInitialContent(content);
-      setLatexContent(content);
-    } else {
-      const local = localStorage.getItem(PLAYGROUND_STORAGE_KEY);
-      if (typeof local === 'string') {
+    let content = '';
+    try {
+      content = Cookies.get(LATEX_COOKIE_KEY) || '';
+      if (content) {
+        setInitialContent(content);
+        setLatexContent(content);
+        return;
+      }
+      const local = localStorage.getItem(PLAYGROUND_STORAGE_KEY) || '';
+      if (local) {
         setInitialContent(local);
         setLatexContent(local);
-      } else {
-        setInitialContent('');
-        setLatexContent('');
+        return;
       }
+      setInitialContent('');
+      setLatexContent('');
+    } catch (err) {
+      setInitialContent('');
+      setLatexContent('');
     }
   }, []);
 
   // Editor content persistence (localStorage + cookie)
   const handleEditorChange = (content: string) => {
-    // (log removed)
     setLatexContent(content);
-    localStorage.setItem(PLAYGROUND_STORAGE_KEY, content);
-    Cookies.set(LATEX_COOKIE_KEY, content, { expires: COOKIE_EXPIRE_DAYS });
+    try {
+      localStorage.setItem(PLAYGROUND_STORAGE_KEY, content);
+      Cookies.set(LATEX_COOKIE_KEY, content, { expires: COOKIE_EXPIRE_DAYS });
+    } catch (err) {
+    }
   };
-
 
 
 
@@ -143,9 +148,11 @@ const Playground: React.FC = () => {
       // Convert PDF Blob to base64 for cookie storage
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        Cookies.set(PDF_COOKIE_KEY, base64, { expires: COOKIE_EXPIRE_DAYS });
-        // (log removed)
+        try {
+          const base64 = (reader.result as string).split(',')[1];
+          Cookies.set(PDF_COOKIE_KEY, base64, { expires: COOKIE_EXPIRE_DAYS });
+        } catch (err) {
+        }
       };
       reader.readAsDataURL(pdfBlob);
       // Create object URL for preview
@@ -165,20 +172,23 @@ const Playground: React.FC = () => {
 
   // Restore PDF from cookie on mount
   useEffect(() => {
-    const base64 = Cookies.get(PDF_COOKIE_KEY);
-    if (base64) {
-      const byteCharacters = atob(base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    try {
+      const base64 = Cookies.get(PDF_COOKIE_KEY);
+      if (base64) {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+      } else {
+        setPdfUrl(null);
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
-      // (log removed)
-    } else {
-      // (log removed)
+    } catch (err) {
+      setPdfUrl(null);
     }
   }, []);
 

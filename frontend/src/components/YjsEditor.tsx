@@ -219,7 +219,6 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
 
       // LOCAL-ONLY MODE: no WebSocket, use localStorage for persistence
       if (localOnly) {
-        // (logs removed)
         let initial = '';
         if (typeof initialContent === 'string') {
           initial = initialContent;
@@ -229,13 +228,12 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         }
         // Force Yjs text to always match initialContent on mount
         if (ytext.toString() !== initial) {
-          // (log removed)
           ytext.delete(0, ytext.length);
           if (initial) ytext.insert(0, initial);
-        }
-        // Always call onChange with current content on mount
-        if (onChange) {
-          onChange(ytext.toString());
+          if (onChange) onChange(ytext.toString());
+        } else if (initial && onChange) {
+          // Only call onChange if initial is non-empty
+          onChange(initial);
         }
         // Listen for changes and save to localStorage/callback
         // (log removed)
