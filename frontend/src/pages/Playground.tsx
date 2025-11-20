@@ -9,7 +9,7 @@ const RENDER_LIMIT = 15;
 
 
 const Playground: React.FC = () => {
-  const { user, loading: sessionLoading } = useSession();
+  const { session, loading: sessionLoading } = useSession();
   const { push } = useNotifications();
   const editorRef = useRef<any>(null);
   const [renderCount, setRenderCount] = useState<number>(0);
@@ -19,7 +19,7 @@ const Playground: React.FC = () => {
   // Load render count on mount
   useEffect(() => {
     if (sessionLoading) return;
-    if (user) {
+    if (session && session.user_id) {
       setUnlimited(true);
       setLoading(false);
     } else {
@@ -32,7 +32,7 @@ const Playground: React.FC = () => {
         .catch(() => push('Could not fetch remaining renders', 3, true))
         .finally(() => setLoading(false));
     }
-  }, [user, sessionLoading, push]);
+  }, [session, sessionLoading, push]);
 
   // Editor content persistence (localStorage)
   const handleEditorChange = (content: string) => {
@@ -70,9 +70,9 @@ const Playground: React.FC = () => {
       <main className="main-editor col">
         <div className="playground-editor-area col">
           <div className="playground-toolbar row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <span className="playground-title"><b>Playground Editor</b></span>
+            <span className="playground-title"><b> Playground Editor </b></span>
             {loading ? null : unlimited ? (
-              <span className="playground-unlimited" style={{ color: 'var(--success)' }}>Unlimited renders</span>
+              <span className="playground-unlimited" style={{ color: 'var(--success)' }}> Unlimited renders </span>
             ) : (
               <span className="playground-renders-left">Renders left: {RENDER_LIMIT - renderCount} / {RENDER_LIMIT}</span>
             )}
