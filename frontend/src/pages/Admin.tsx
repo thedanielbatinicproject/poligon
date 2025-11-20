@@ -231,13 +231,13 @@ export default function Admin() {
               <div className="stat-item">
                 <div className="stat-label">Database Storage</div>
                 <div className="stat-value">{formatBytes(stats?.databaseSize || 0, 'database')}</div>
-                <div className="stat-description">Recorded file sizes in database</div>
+                <div className="stat-description">Total uploaded data recorded by database</div>
               </div>
 
               <div className="stat-item">
                 <div className="stat-label">Disk Storage</div>
                 <div className="stat-value">{formatBytes(stats?.folderSize || 0, 'disk')}</div>
-                <div className="stat-description">Actual files on disk</div>
+                <div className="stat-description">Actual resource usage on disk by users</div>
               </div>
 
               <div className="stat-item">

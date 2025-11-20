@@ -8,8 +8,50 @@ import sessionStore from '../config/sessionStore';
 import { getSessionById } from '../services/session.service';
 import { getAllSessions } from '../services/user.service';
 
+import {
+  getRendersForIp,
+  incrementRendersForIp,
+} from '../services/playground.service';
+
 
 const utilityRouter = Router();
+
+// PLAYGROUND RENDER LIMIT ROUTES
+// POST /api/utility/playground/render - Attempt a render (enforces limit for unlogged users)
+utilityRouter.post('/playground/render', async (req: Request, res: Response) => {
+  // If logged in, allow unlimited
+  if (req.session && req.session.user_id) {
+    return res.status(200).json({ allowed: true, unlimited: true });
+  }
+  // Get IP (trusts proxy if set up, else req.ip)
+  const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.ip;
+  const limit = 15;
+  try {
+    const count = await getRendersForIp(String(ip));
+    if (count >= limit) {
+      return res.status(429).json({ allowed: false, reason: 'limit', count, limit });
+    }
+    await incrementRendersForIp(String(ip));
+    return res.status(200).json({ allowed: true, count: count + 1, limit });
+  } catch (err) {
+    return res.status(500).json({ allowed: false, error: 'Failed to check or increment renders', details: String(err) });
+  }
+});
+
+// GET /api/utility/playground/renders - Get today's render count for this IP
+utilityRouter.get('/playground/renders', async (req: Request, res: Response) => {
+  if (req.session && req.session.user_id) {
+    return res.status(200).json({ unlimited: true });
+  }
+  const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.ip;
+  const limit = Number(process.env.PLAYGROUND_RENDER_LIMIT_UNLOGGED) || 15;
+  try {
+    const count = await getRendersForIp(String(ip));
+    return res.status(200).json({ count, limit });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to get render count', details: String(err) });
+  }
+});
 
 //DOCUMENT TYPES ROUTES
 // GET /api/document-types - All logged-in users can get list of document types

@@ -185,7 +185,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Watch route changes and persist main routes to server (debounced)
   useEffect(() => {
-    const allowed = ['/home', '/profile', '/documents', '/tasks', '/mentor', '/admin', '/']
+    const allowed = ['/home', '/profile', '/documents', '/tasks', '/mentor', '/admin', '/playground', '/']
     const p = location.pathname || '/'
     const match = allowed.some((a) => p === a || p.startsWith(a + '/'))
     if (!match) return

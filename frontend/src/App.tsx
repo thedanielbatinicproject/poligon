@@ -12,6 +12,7 @@ import Tasks from './pages/Tasks'
 import Mentor from './pages/Mentor'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
+import Playground from './pages/Playground'
 
 export default function App(): JSX.Element {
   return (
@@ -26,6 +27,7 @@ export default function App(): JSX.Element {
           <Route path="/tasks" element={<RoleRoute element={<Tasks />} />} />
           <Route path="/mentor" element={<RoleRoute element={<Mentor />} allowedRoles={["mentor","admin"]} />} />
           <Route path="/admin" element={<RoleRoute element={<Admin />} allowedRoles={["admin"]} />} />
+          <Route path="/playground" element={<Playground />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

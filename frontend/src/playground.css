@@ -1,0 +1,53 @@
+.playground-root {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+.playground-editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  background: var(--panel);
+}
+
+.playground-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--divider);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: var(--shadow);
+  min-height: 56px;
+}
+
+.playground-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--heading-2);
+}
+
+.playground-unlimited {
+  color: var(--success);
+  font-weight: 500;
+}
+
+.playground-renders-left {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.playground-editor-flex {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-radius: 0 0 var(--radius) var(--radius);
+}

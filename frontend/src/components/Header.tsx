@@ -87,9 +87,13 @@ export default function Header(): JSX.Element {
           <span className="site-title-text">Poligon</span>
         </div>
 
+
         <nav className="nav-links" aria-label="Main navigation">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
             <span className="nav-link-label">Home</span>
+          </NavLink>
+          <NavLink to="/playground" className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>
+            <span className="nav-link-label">LaTeX Playground</span>
           </NavLink>
 
           {isLoggedIn && (

@@ -5,7 +5,7 @@ import { useSession } from '../lib/session'
 import Home from '../pages/Home'
 
 // Allowed top-level routes to redirect into (avoid open redirect risks)
-const ALLOWED_PREFIXES = ['/', '/home', '/profile', '/documents', '/tasks', '/mentor', '/admin']
+const ALLOWED_PREFIXES = ['/', '/home', '/profile', '/documents', '/tasks', '/mentor', '/admin', '/playground']
 
 function isAllowedRoute(path: string) {
   if (!path || typeof path !== 'string') return false
