@@ -236,7 +236,6 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           onChange(initial);
         }
         // Listen for changes and save to localStorage/callback
-        // (log removed)
         ytext.observe(event => {
           const content = ytext.toString();
           localStorage.setItem('playground-editor-content', content);

@@ -31,15 +31,22 @@ utilityRouter.post('/playground/compile', async (req: Request, res: Response) =>
     if (!result.success || !result.pdf) {
       return res.status(400).json({ error: result.error || 'Failed to render PDF.' });
     }
-    await incrementRendersForIp(String(req.ip));
+    if (req.session && req.session.user_id) {
+      // User is logged in, do not increment counter
+    } else {
+      await incrementRendersForIp(String(req.ip));
+    }
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="playground.pdf"');
     res.send(result.pdf);
 
   } catch (err: any) {
-    await decrementRendersForIp(String(req.ip));
+    if (req.session && req.session.user_id) {
+      // User is logged in, do not decrement counter
+    } else {
+      await decrementRendersForIp(String(req.ip));
+    }
     res.status(500).json({ error: 'Internal error during PDF render', details: String(err) });
-    
   }
 });
 
