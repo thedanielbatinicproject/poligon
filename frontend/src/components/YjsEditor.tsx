@@ -32,17 +32,21 @@ interface YjsEditorProps {
   onUserCountChange?: (count: number) => void;
   onSave?: () => void;
   onCompile?: () => void;
+  localOnly?: boolean;
+  initialContent?: string;
+  onChange?: (content: string) => void;
+  ydoc?: Y.Doc;
 }
 
 const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
   
-  ({ documentId, readOnly, onUserCountChange, onSave, onCompile }, ref) => {
+  ({ documentId, readOnly, onUserCountChange, onSave, onCompile, localOnly, initialContent, onChange, ydoc }, ref) => {
     // Keyboard shortcut handler
     // Remove broken dynamic keymap reconfiguration. Instead, add keymap in initial extensions below.
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const providerRef = useRef<WebsocketProvider | null>(null);
-    const ydocRef = useRef<Y.Doc | null>(null);
+    const ydocRef = useRef<Y.Doc | null>(ydoc || null);
     const [isConnected, setIsConnected] = useState(false);
     const [isSynced, setIsSynced] = useState(false);
     const [showImageModal, setShowImageModal] = useState(false);
@@ -89,45 +93,18 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         ydocRef.current.destroy();
         ydocRef.current = null;
       }
-      // Create new Y.Doc
-      const ydoc = new Y.Doc();
-      ydocRef.current = ydoc;
-      // Get Yjs text type
-      const ytext = ydoc.getText('latex');
-      // Use the new external Yjs websocket server
-      const wsUrl = 'wss://socket.poligon.live';
-      const provider = new WebsocketProvider(wsUrl, String(documentId), ydoc, {
-        connect: true,
-        WebSocketPolyfill: WebSocket as any
-      });
-      providerRef.current = provider;
-      // Listen to connection status
-      provider.on('status', (event: { status: string }) => {
-        setIsConnected(event.status === 'connected');
-      });
-      provider.on('sync', (isSynced: boolean) => {
-        setIsSynced(isSynced);
-      });
-      // Use awareness API to compute connected user count and notify parent
-      if (onUserCountChange) {
-        const computeAndNotify = () => {
-          try {
-            const states = provider.awareness.getStates();
-            let count = 0;
-            for (const _ of states.keys()) count++;
-            onUserCountChange(count);
-          } catch (e) {}
-        };
-        // initial
-        computeAndNotify();
-        provider.awareness.on('change', computeAndNotify);
+      // Use provided Y.Doc or create new
+      if (!ydocRef.current) {
+        ydocRef.current = ydoc ? ydoc : new Y.Doc();
       }
+      const ydocInstance = ydocRef.current;
+      // Get Yjs text type
+      const ytext = ydocInstance.getText('latex');
+
       // Helper to get CSS variable value from :root (or body)
       function getThemeVar(name: string) {
-        // Try :root first, then body
         return getComputedStyle(document.documentElement).getPropertyValue(name) || getComputedStyle(document.body).getPropertyValue(name) || undefined;
       }
-      
 
       // Define a HighlightStyle using theme variables
       const poligonHighlightStyle = HighlightStyle.define([
@@ -179,12 +156,9 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
       ]);
 
       // Custom LaTeX completion source using dynamic provider
-      // Wrap the async provider to allow triggering the image modal
       function completionSourceWithImage(context: CompletionContext) {
-        // We call the async provider and then patch the insertimage completion to trigger the modal
         return Promise.resolve(dynamicLatexCompletionSource(context)).then(result => {
           if (!result) return null;
-          // Patch insertimage completion to trigger modal
           result.options = result.options.map(opt => {
             if (opt.label === 'insertimage') {
               return {
@@ -221,7 +195,6 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           activateOnTyping: true,
           defaultKeymap: true,
           optionClass: (completion) => {
-            // Add a class for the tag if present (cast to any for tag property)
             const tag = (completion as any).tag;
             return tag ? `cm-latex-tag-${tag}` : '';
           },
@@ -243,7 +216,100 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
       ];
       // Create read-only compartment
       const readOnlyCompartment = new Compartment();
-      // Create CodeMirror state with Yjs collaboration
+
+      // LOCAL-ONLY MODE: no WebSocket, use localStorage for persistence
+      if (localOnly) {
+        // (logs removed)
+        let initial = '';
+        if (typeof initialContent === 'string') {
+          initial = initialContent;
+        } else {
+          const storageKey = 'playground-editor-content';
+          initial = localStorage.getItem(storageKey) || '';
+        }
+        // Force Yjs text to always match initialContent on mount
+        if (ytext.toString() !== initial) {
+          // (log removed)
+          ytext.delete(0, ytext.length);
+          if (initial) ytext.insert(0, initial);
+        }
+        // Always call onChange with current content on mount
+        if (onChange) {
+          onChange(ytext.toString());
+        }
+        // Listen for changes and save to localStorage/callback
+        // (log removed)
+        ytext.observe(event => {
+          const content = ytext.toString();
+          localStorage.setItem('playground-editor-content', content);
+          if (onChange) {
+            onChange(content);
+          }
+        });
+        // No yCollab extension
+        const state = EditorState.create({
+          doc: ytext.toString(),
+          extensions: [
+            ...basicExtensions,
+            StreamLanguage.define(stex),
+            yCollab(ytext, null),
+            readOnlyCompartment.of(EditorView.editable.of(!readOnly)),
+            EditorView.theme({
+              '&': {
+                height: '100%',
+                fontSize: '0.95rem'
+              },
+              '.cm-scroller': {
+                overflow: 'auto',
+                fontFamily: 'monospace'
+              }
+            })
+          ]
+        });
+        const view = new EditorView({
+          state,
+          parent: editorRef.current
+        });
+        viewRef.current = view;
+        (view as any).readOnlyCompartment = readOnlyCompartment;
+        return () => {
+          if (viewRef.current) {
+            viewRef.current.destroy();
+            viewRef.current = null;
+          }
+          if (ydocRef.current) {
+            ydocRef.current.destroy();
+            ydocRef.current = null;
+          }
+        };
+      }
+
+      // COLLABORATIVE MODE (default)
+      const wsUrl = 'wss://socket.poligon.live';
+      const ydocForCollab = ydocRef.current || new Y.Doc();
+      const provider = new WebsocketProvider(wsUrl, String(documentId), ydocForCollab, {
+        connect: true,
+        WebSocketPolyfill: WebSocket as any
+      });
+      providerRef.current = provider;
+      provider.on('status', (event: { status: string }) => {
+        setIsConnected(event.status === 'connected');
+      });
+      provider.on('sync', (isSynced: boolean) => {
+        setIsSynced(isSynced);
+      });
+      if (onUserCountChange) {
+        const computeAndNotify = () => {
+          try {
+            const states = provider.awareness.getStates();
+            let count = 0;
+            for (const _ of states.keys()) count++;
+            onUserCountChange(count);
+          } catch (e) {}
+        };
+        computeAndNotify();
+        provider.awareness.on('change', computeAndNotify);
+      }
       const state = EditorState.create({
         doc: ytext.toString(),
         extensions: [
@@ -263,15 +329,12 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           })
         ]
       });
-      // Create CodeMirror view
       const view = new EditorView({
         state,
         parent: editorRef.current
       });
       viewRef.current = view;
-      // Store compartment in view for later reconfiguration
       (view as any).readOnlyCompartment = readOnlyCompartment;
-      // Cleanup on unmount or documentId change
       return () => {
         if (viewRef.current) {
           viewRef.current.destroy();
@@ -286,7 +349,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           ydocRef.current = null;
         }
       };
-    }, [documentId, readOnly]);
+    }, [documentId, readOnly, localOnly]);
 
     // Expose getLatexContent method to parent via ref
     useImperativeHandle(ref, () => ({
@@ -323,8 +386,8 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           width: '100%',
           alignSelf: 'flex-start'
         }}>
-          {/* Connection status indicator */}
-          {!isConnected && (
+          {/* Connection status indicator (hide in localOnly mode) */}
+          {!localOnly && !isConnected && (
             <div style={{
               position: 'absolute',
               top: '0.5rem',
@@ -340,7 +403,7 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
               Connecting to collaboration server...
             </div>
           )}
-          {isConnected && !isSynced && (
+          {!localOnly && isConnected && !isSynced && (
             <div style={{
               position: 'absolute',
               top: '0.5rem',

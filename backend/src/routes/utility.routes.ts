@@ -13,8 +13,30 @@ import {
   incrementRendersForIp,
 } from '../services/playground.service';
 
+import { renderLatex } from '../render/renderer';
+
 
 const utilityRouter = Router();
+
+// POST /api/utility/playground/compile - Render LaTeX and stream PDF as binary (no save)
+utilityRouter.post('/playground/compile', async (req: Request, res: Response) => {
+  try {
+    const content = req.body?.content;
+    if (typeof content !== 'string' || !content.trim()) {
+      return res.status(400).json({ error: 'Missing or invalid LaTeX content.' });
+    }
+    // Render with 20s timeout
+    const result = await renderLatex(content, 20000, false);
+    if (!result.success || !result.pdf) {
+      return res.status(400).json({ error: result.error || 'Failed to render PDF.' });
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="playground.pdf"');
+    res.send(result.pdf);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Internal error during PDF render', details: String(err) });
+  }
+});
 
 // PLAYGROUND RENDER LIMIT ROUTES
 // POST /api/utility/playground/render - Attempt a render (enforces limit for unlogged users)
