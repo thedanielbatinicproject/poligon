@@ -157,11 +157,15 @@ export default function Documents() {
   // User's role on selected document
   const [userRole, setUserRole] = useState<string>('viewer');
 
-  // Load documents on mount
+  // Load documents on mount and set sidebar state from session
   useEffect(() => {
     if (loading || !displayUser) return;
     const userId = displayUser.user_id;
     if (!userId) return;
+    // Set sidebar state from session
+    if (session && typeof session.sidebar_state === 'string') {
+      setSidebarCollapsed(session.sidebar_state === 'closed');
+    }
     DocumentsApi.getAllDocuments()
       .then((docs) => {
         const docsArray = Array.isArray(docs) ? docs : [];
@@ -176,7 +180,7 @@ export default function Documents() {
       .catch((err) => {
         notify.push('Failed to load documents!', undefined, true);
       });
-  }, [loading, displayUser?.user_id, session?.last_document_id]);
+  }, [loading, displayUser?.user_id, session?.last_document_id, session?.sidebar_state]);
 
   // Load selected document details
   useEffect(() => {
@@ -498,7 +502,16 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
             }}>
               {!sidebarCollapsed && <h3 style={{ margin: 0, fontSize: '1rem' }}>Tasks</h3>}
               <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                onClick={async () => {
+                  const newState = !sidebarCollapsed;
+                  setSidebarCollapsed(newState);
+                  // Persist to session
+                  try {
+                    if (sessionCtx && typeof sessionCtx.patchSession === 'function') {
+                      await sessionCtx.patchSession({ sidebar_state: newState ? 'closed' : 'open' });
+                    }
+                  } catch (e) {}
+                }}
                 className="btn btn-ghost"
                 style={{ padding: '0.25rem 0.5rem' }}
               >
