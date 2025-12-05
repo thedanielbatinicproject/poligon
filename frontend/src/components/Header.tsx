@@ -87,6 +87,10 @@ export default function Header(): JSX.Element {
           <span className="site-title-text">Poligon</span>
         </div>
 
+        {/* Theme toggle visible on mobile */}
+        <div className="mobile-theme-toggle">
+          <ThemeToggle />
+        </div>
 
         <nav className="nav-links" aria-label="Main navigation">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}>

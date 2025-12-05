@@ -641,11 +641,38 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                   {compileError ? (
                     <div style={{ color: 'var(--danger)', textAlign: 'center', whiteSpace: 'pre-line' }}>
                       {compileError
-                        .replace(/\s*error\s*/gi, '\nerror: ')
+                        .replace(/\s*error\s*/gi, '\nerror - ')
                         .split(/\n+/)
-                        .map((line, idx) => (
-                          <div key={idx}>{line.trim()}</div>
-                        ))}
+                        .flatMap((line) => {
+                          // Split each line into chunks of 40 chars
+                          const chunks = [];
+                          let l = line.trim();
+                          while (l.length > 40) {
+                            const chunk = l.slice(0, 40);
+                            chunks.push(chunk);
+                            l = l.slice(40);
+                          }
+                          if (l.length > 0) chunks.push(l);
+                          return chunks;
+                        })
+                        .map((chunk, idx, arr) => {
+                          // Only add '-' if this is not the last chunk,
+                          // and last char is not space,
+                          // and first char of next chunk is not space
+                          const isNotLast = idx < arr.length - 1;
+                          const lastChar = chunk[chunk.length - 1];
+                          const nextChunk = isNotLast ? arr[idx + 1] : '';
+                          const nextFirstChar = nextChunk[0];
+                          if (
+                            isNotLast &&
+                            lastChar !== ' ' &&
+                            nextFirstChar !== ' '
+                          ) {
+                            return <div key={idx}>{chunk + '-'}</div>;
+                          } else {
+                            return <div key={idx}>{chunk}</div>;
+                          }
+                        })}
                     </div>
                   ) : tempPdfUrl ? (
                     <iframe

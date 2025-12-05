@@ -19,6 +19,16 @@ import { renderLatex } from '../render/renderer';
 
 const utilityRouter = Router();
 
+// GET /api/utility/admin-info - Public route to get admin contact email
+utilityRouter.get('/admin-info', async (req: Request, res: Response) => {
+  try {
+    const adminMail = process.env.VITE_ADMIN_MAIL || 'support@poligon.live';
+    res.status(200).json({ email: adminMail });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to get admin info' });
+  }
+});
+
 // POST /api/utility/playground/compile - Render LaTeX and stream PDF as binary (no save)
 utilityRouter.post('/playground/compile', async (req: Request, res: Response) => {
   try {

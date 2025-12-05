@@ -104,21 +104,29 @@ export async function renderWithLocalLatex(
       // Enhanced error extraction from log
       let detailedError = 'TeX engine failed';
       if (log) {
-        // Pronađi prvu liniju s '! '
         const lines = log.split(/\r?\n/);
-        const errLine = lines.find(l => l.trim().startsWith('! '));
-        if (errLine) {
-          // Pokušaj pronaći broj linije iz sljedećih linija
+        const errIdx = lines.findIndex(l => l.trim().startsWith('! '));
+        if (errIdx !== -1) {
+          let errorLines = [lines[errIdx].replace(/^!\s*/, '')];
+          // Collect next 2 lines if they look like a continuation (not blank, not line info, not new error)
+          for (let i = errIdx + 1; i < Math.min(lines.length, errIdx + 3); ++i) {
+            const line = lines[i];
+            if (!line || line.trim() === '' || line.trim().startsWith('! ') || line.trim().startsWith('l.')) break;
+            errorLines.push(line.trim());
+          }
+          // Add line info if present
           let lineInfo = '';
-          const idx = lines.indexOf(errLine);
-          for (let i = idx + 1; i < Math.min(lines.length, idx + 5); ++i) {
-            const m = lines[i].match(/l\.(\d+)\s/); // npr. l.23
+          for (let i = errIdx + 1; i < Math.min(lines.length, errIdx + 6); ++i) {
+            const m = lines[i].match(/l\.(\d+)\s/); // e.g. l.23
             if (m) {
               lineInfo = ` (line ${m[1]})`;
               break;
             }
           }
-          detailedError = errLine.replace(/^!\s*/, '') + lineInfo;
+          detailedError = errorLines.join('') + lineInfo;
+          if (detailedError.length > 500) {
+            detailedError = detailedError.slice(0, 497) + '...';
+          }
         }
       }
       return { success: false, error: detailedError, log: log || stdout + '\n' + stderr };

@@ -57,10 +57,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode; initialTheme?:
   const [theme, setThemeState] = React.useState<Theme>('light')
 
   useEffect(() => {
-    // priority: explicit initialTheme prop -> server provided -> cookie -> default 'light'
+    // Check if mobile device (width <= 768px)
+    const isMobile = window.innerWidth <= 768
+    // Default to 'dark' on mobile if no preference is saved
+    const mobileDefault: Theme = isMobile ? 'dark' : 'light'
+    
+    // priority: explicit initialTheme prop -> server provided -> cookie -> mobile default -> 'light'
     const server = (window as any).__SERVER_THEME__
     const cookie = readThemeCookie()
-    const initial = (initialTheme as Theme) || (server as Theme) || cookie || 'light'
+    const initial = (initialTheme as Theme) || (server as Theme) || cookie || mobileDefault
     setThemeState(initial as Theme)
     try {
       document.documentElement.setAttribute('data-theme', resolveEffective(initial as Theme))
