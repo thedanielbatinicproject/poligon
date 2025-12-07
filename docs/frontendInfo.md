@@ -72,7 +72,7 @@ The header also displays:
 
 ### Theme Selection
 
-Poligon supports light and dark themes. Click the theme toggle icon in the header to switch between modes. Your preference is saved automatically and persists across sessions.
+Poligon supports light and dark themes. Click the theme toggle icon in the header to switch between modes. Your preference is saved automatically and persists across current session.
 
 ---
 
