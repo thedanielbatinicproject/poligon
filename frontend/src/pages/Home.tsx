@@ -50,6 +50,16 @@ export default function Home(): JSX.Element {
       content: 'Poligon supports both light and dark themes, which you can switch using the theme toggle in the header navigation. Your selection is saved automatically and persists across sessions. The entire interface adjusts to your chosen theme using CSS variables, ensuring a consistent and unified experience.' + (isMobile ? ' (Note: Theme toggle is not available on mobile devices.)' : ''),
     },
     {
+      id: 'playground',
+      title: 'LaTeX Playground',
+      content:
+        'The Poligon Playground allows you to experiment with LaTeX code directly within the platform, providing instant rendering and debugging feedback. It is especially useful for users who want to test LaTeX code without navigating to the /documents page. Currently, the playground is publicly accessible to all users, including guests (non-logged-in users), who have a limit of 15 renders per day. This limit is easily removed by registering locally or logging in via AAI@Edu.hr — registered users can render LaTeX code in the playground without restrictions.' +
+        (isMobile
+          ? ' (Since you are on mobile, the main menu is not available. You can access the playground by visiting /playground directly or by using Poligon on a desktop device.)'
+          : ''),
+    },
+
+    {
       id: 'registration',
       title: 'Registration & Authentication',
       forLoggedIn: false,
