@@ -599,6 +599,7 @@ fontawesome5, skak, qtree, dingbat, chemfig, pstricks, fontspec, glossaries, glo
                     onUserCountChange={setConnectedUsers}
                     onSave={handleSave}
                     onCompile={handleTempCompile}
+                    userName={displayUser?.display_name || (displayUser?.first_name && displayUser?.last_name ? `${displayUser.first_name} ${displayUser.last_name}` : undefined)}
                   />
                 ) : (
                   <div style={{ 

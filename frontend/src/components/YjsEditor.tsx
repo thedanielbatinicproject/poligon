@@ -36,11 +36,13 @@ interface YjsEditorProps {
   initialContent?: string;
   onChange?: (content: string) => void;
   ydoc?: Y.Doc;
+  userName?: string;
+  userColor?: string;
 }
 
 const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
   
-  ({ documentId, readOnly, onUserCountChange, onSave, onCompile, localOnly, initialContent, onChange, ydoc }, ref) => {
+  ({ documentId, readOnly, onUserCountChange, onSave, onCompile, localOnly, initialContent, onChange, ydoc, userName, userColor }, ref) => {
     // Keyboard shortcut handler
     // Remove broken dynamic keymap reconfiguration. Instead, add keymap in initial extensions below.
     const editorRef = useRef<HTMLDivElement>(null);
@@ -289,6 +291,17 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
         WebSocketPolyfill: WebSocket as any
       });
       providerRef.current = provider;
+      
+      // Set user awareness info for cursor labels
+      // Each connection gets unique clientId, but displays same userName for same user
+      const displayName = userName || 'Anonymous';
+      const color = userColor || `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+      provider.awareness.setLocalStateField('user', {
+        name: displayName,
+        color: color,
+        colorLight: color + '40' // 25% opacity for selection highlight
+      });
+      
       provider.on('status', (event: { status: string }) => {
         setIsConnected(event.status === 'connected');
       });
