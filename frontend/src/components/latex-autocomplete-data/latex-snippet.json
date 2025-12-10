@@ -2,261 +2,260 @@
 	"item": {
 		"prefix": "item",
 		"body": "\n\\item ",
-		"description": "\\item on a newline"
+		"description": "Insert a new list item (\\item) on a newline"
 	},
 	"subscript": {
 		"prefix": "__",
 		"body": "_{${1:${TM_SELECTED_TEXT}}}",
-		"description": "subscript"
+		"description": "Create subscript text (e.g., x₂)"
 	},
 	"superscript": {
 		"prefix": "**",
 		"body": "^{${1:${TM_SELECTED_TEXT}}}",
-		"description": "superscript"
+		"description": "Create superscript text (e.g., x²)"
 	},
 	"etc": {
 		"prefix": "...",
 		"body": "\\dots",
-		"description": "\\dots"
+		"description": "Insert ellipsis dots (\\dots)"
 	},
 	"equation": {
 		"prefix": "BEQ",
 		"body": "\\begin{equation}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{equation}",
-		"description": "equation environment"
+		"description": "Numbered equation environment for single-line math"
 	},
 	"equation*": {
 		"prefix": "BSEQ",
 		"body": "\\begin{equation*}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{equation*}",
-		"description": "equation* environment"
+		"description": "Unnumbered equation environment for single-line math"
 	},
 	"align": {
 		"prefix": "BAL",
 		"body": "\\begin{align}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{align}",
-		"description": "align environment"
+		"description": "Numbered multi-line equations with alignment (use & for alignment points)"
 	},
 	"align*": {
 		"prefix": "BSAL",
 		"body": "\\begin{align*}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{align*}",
-		"description": "align* environment"
+		"description": "Unnumbered multi-line equations with alignment (use & for alignment points)"
 	},
 	"gather": {
 		"prefix": "BGA",
 		"body": "\\begin{gather}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{gather}",
-		"description": "gather environment"
+		"description": "Numbered multi-line equations, centered without alignment"
 	},
 	"gather*": {
 		"prefix": "BSGA",
 		"body": "\\begin{gather*}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{gather*}",
-		"description": "gather* environment"
+		"description": "Unnumbered multi-line equations, centered without alignment"
 	},
 	"multline": {
 		"prefix": "BMU",
 		"body": "\\begin{multline}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{multline}",
-		"description": "multline environment"
+		"description": "Numbered environment for long equations that span multiple lines"
 	},
 	"multline*": {
 		"prefix": "BSMU",
 		"body": "\\begin{multline*}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{multline*}",
-		"description": "multline* environment"
+		"description": "Unnumbered environment for long equations that span multiple lines"
 	},
 	"itemize": {
 		"prefix": "BIT",
 		"body": "\\begin{itemize}\n\t\\item ${0:${TM_SELECTED_TEXT}}\n\\end{itemize}",
-		"description": "itemize environment"
+		"description": "Bulleted (unordered) list environment"
 	},
 	"enumerate": {
 		"prefix": "BEN",
 		"body": "\\begin{enumerate}\n\t\\item ${0:${TM_SELECTED_TEXT}}\n\\end{enumerate}",
-		"description": "enumerate environment"
+		"description": "Numbered (ordered) list environment"
 	},
 	"split": {
 		"prefix": "BSPL",
 		"body": "\\begin{split}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{split}",
-		"description": "split environment"
+		"description": "Split a single equation across multiple lines (use inside equation)"
 	},
 	"cases": {
 		"prefix": "BCAS",
 		"body": "\\begin{cases}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{cases}",
-		"description": "cases environment"
+		"description": "Piecewise function with conditions (left brace with cases)"
 	},
 	"frame": {
 		"prefix": "BFR",
 		"body": "\\begin{frame}\n\t\\frametitle{${1:<title>}}\n\n\t${0:${TM_SELECTED_TEXT}}\n\n\\end{frame}",
-		"description": "frame"
+		"description": "Beamer presentation slide with title"
 	},
 	"figure": {
 		"prefix": "BFI",
 		"body": "\\begin{figure}[${1:htbp}]\n\t\\centering\n\t${0:${TM_SELECTED_TEXT}}\n\t\\caption{${2:<caption>}}\n\t\\label{${3:<label>}}\n\\end{figure}",
-		"description": "figure"
+		"description": "Floating figure environment with caption and label"
 	},
 	"table (caption after tabular)": {
 		"prefix": "BTA",
 		"body": "\\begin{table}[${1:htbp}]\n\t\\centering\n\t\\begin{tabular}{${4:<columns>}}\n\t\t${0:${TM_SELECTED_TEXT}}\n\t\\end{tabular}\n\t\\caption{${2:<caption>}}\n\t\\label{${3:<label>}}\n\\end{table}",
-		"description": "table"
+		"description": "Floating table with caption below the tabular content"
 	},
 	"table (caption before tabular)": {
 		"prefix": "BTB",
 		"body": "\\begin{table}[${1:htbp}]\n\t\\centering\n\t\\caption{${2:<caption>}}\n\t\\label{${3:<label>}}\n\t\\begin{tabular}{${4:<columns>}}\n\t\t${0:${TM_SELECTED_TEXT}}\n\t\\end{tabular}\n\\end{table}",
-		"description": "table"
+		"description": "Floating table with caption above the tabular content"
 	},
 	"tikzcd": {
 		"prefix": "BTC",
 		"body": "\\begin{tikzcd}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{tikzcd}",
-		"description": "tikzcd"
+		"description": "Commutative diagram environment (requires tikz-cd package)"
 	},
 	"tikzpicture": {
 		"prefix": "BTP",
 		"body": "\\begin{tikzpicture}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{tikzpicture}",
-		"description": "tikzpicture"
+		"description": "TikZ drawing environment for graphics and diagrams"
 	},
 	"set font size": {
 		"prefix": "fontsize",
 		"body": "${1|\\Huge,\\huge,\\LARGE,\\Large,\\large,\\normalsize,\\small,\\footnotesize,\\scriptsize,\\tiny|}",
-		"description": "Select a font size"
+		"description": "Select a font size from dropdown (Huge to tiny)"
 	},
 	"textnormal": {
 		"prefix": "FNO",
 		"body": "\\textnormal{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "normal font"
+		"description": "Reset to normal/default font style"
 	},
 	"textrm": {
 		"prefix": "FRM",
 		"body": "\\textrm{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "roman font"
+		"description": "Roman (serif) font - standard body text style"
 	},
 	"emph": {
 		"prefix": "FEM",
 		"body": "\\emph{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "emphasis font"
+		"description": "Emphasized text (typically italic, toggles in nested use)"
 	},
 	"textsf": {
 		"prefix": "FSF",
 		"body": "\\textsf{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "sans serif font"
+		"description": "Sans-serif font (e.g., Arial-like)"
 	},
 	"texttt": {
 		"prefix": "FTT",
 		"body": "\\texttt{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "typewriter font"
+		"description": "Typewriter/monospace font - for code or technical terms"
 	},
 	"textit": {
 		"prefix": "FIT",
 		"body": "\\textit{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "italic font"
+		"description": "Italic text style"
 	},
 	"textsl": {
 		"prefix": "FSL",
 		"body": "\\textsl{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "slanted font"
+		"description": "Slanted text (similar to italic but mechanically sloped)"
 	},
 	"textsc": {
 		"prefix": "FSC",
 		"body": "\\textsc{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "smallcaps font"
+		"description": "Small capitals text style"
 	},
 	"underline": {
 		"prefix": "FUL",
 		"body": "\\underline{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "Underline text"
+		"description": "Underline text (use sparingly, prefer \\emph)"
 	},
 	"uppercase": {
 		"prefix": "FUC",
 		"body": "\\uppercase{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "Make text uppercase (all caps)"
+		"description": "Convert text to ALL UPPERCASE"
 	},
 	"lowercase": {
 		"prefix": "FLC",
 		"body": "\\lowercase{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "Make text lowercase (no caps)"
+		"description": "Convert text to all lowercase"
 	},
 	"textbf": {
 		"prefix": "FBF",
 		"body": "\\textbf{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "bold font"
+		"description": "Bold text style"
 	},
 	"textsuperscript": {
 		"prefix": "FSS",
 		"body": "\\textsuperscript{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "Make text a superscript"
+		"description": "Superscript text in normal mode (e.g., 1st, 2nd)"
 	},
 	"textsubscript": {
 		"prefix": "FBS",
 		"body": "\\textsubscript{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "Make text a superscript"
+		"description": "Subscript text in normal mode (e.g., H₂O)"
 	},
 	"mathrm": {
 		"prefix": "MRM",
 		"body": "\\mathrm{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "math roman font"
+		"description": "Roman (upright) font in math mode - for operators like sin, cos"
 	},
 	"mathsf": {
 		"prefix": "MSF",
 		"body": "\\mathsf{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "math sans serif font"
+		"description": "Sans-serif font in math mode"
 	},
 	"mathbf": {
 		"prefix": "MBF",
 		"body": "\\mathbf{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "math bold font"
+		"description": "Bold font in math mode - for vectors"
 	},
 	"mathbb": {
 		"prefix": "MBB",
 		"body": "\\mathbb{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "math blackboard bold font"
+		"description": "Blackboard bold in math mode - for ℝ, ℕ, ℤ, ℂ (requires amsfonts)"
 	},
 	"mathcal": {
 		"prefix": "MCA",
 		"body": "\\mathcal{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "math caligraphic font"
+		"description": "Calligraphic font in math mode - for sets and collections"
 	},
 	"mathit": {
 		"prefix": "MIT",
 		"body": "\\mathit{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "math italic font"
+		"description": "Italic font in math mode (multi-letter variables)"
 	},
 	"mathtt": {
 		"prefix": "MTT",
 		"body": "\\mathtt{${1:${TM_SELECTED_TEXT:text}}}",
-		"description": "math typewriter font"
+		"description": "Typewriter font in math mode"
 	},
 	"wrapEnv": {
 		"body": "\n\\begin{$1}\n\t${0:${TM_SELECTED_TEXT}}\n\\end{$1}",
-		"description": "Wrap selection into an environment"
+		"description": "Wrap selected text in a custom environment"
 	},
 	"part": {
 		"prefix": "SPA",
 		"body": "\\part{${1:${TM_SELECTED_TEXT}}}",
-		"description": "part"
-		},
+		"description": "Document part - highest sectioning level (for books)"
+	},
 	"chapter": {
 		"prefix": "SCH",
 		"body": "\\chapter{${1:${TM_SELECTED_TEXT}}}",
-		"description": "chapter"
+		"description": "Chapter heading (for book/report document classes)"
 	},
 	"section": {
 		"prefix": "SSE",
 		"body": "\\section{${1:${TM_SELECTED_TEXT}}}",
-		"description": "section"
-
+		"description": "Section heading - primary document division"
 	},
 	"subsection": {
 		"prefix": "SSS",
 		"body": "\\subsection{${1:${TM_SELECTED_TEXT}}}",
-		"description": "subsection"
+		"description": "Subsection heading - second level division"
 	},
 	"subsubsection": {
 		"prefix": "SS2",
 		"body": "\\subsubsection{${1:${TM_SELECTED_TEXT}}}",
-		"description": "subsubsection"
+		"description": "Subsubsection heading - third level division"
 	},
 	"paragraph": {
 		"prefix": "SPG",
 		"body": "\\paragraph{${1:${TM_SELECTED_TEXT}}}",
-		"description": "paragraph"
+		"description": "Paragraph heading - fourth level (inline heading)"
 	},
 	"subparagraph": {
 		"prefix": "SSP",
 		"body": "\\subparagraph{${1:${TM_SELECTED_TEXT}}}",
-		"description": "subparagraph"
+		"description": "Subparagraph heading - fifth level (inline heading)"
 	}
 }

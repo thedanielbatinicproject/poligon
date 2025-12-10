@@ -56,9 +56,15 @@ export async function getUnifiedLatexCompletions(activePackages: string[] = []) 
 
   // Merge snippets
   const latexSnippet = (data as any)['latex-snippet'];
+  console.log('[DEBUG] latex-snippet data:', latexSnippet);
+  console.log('[DEBUG] latex-snippet keys:', latexSnippet ? Object.keys(latexSnippet).slice(0, 5) : 'null');
   if (latexSnippet && typeof latexSnippet === 'object') {
     for (const [name, entryRaw] of Object.entries(latexSnippet)) {
       const entry = entryRaw as any;
+      if (name === 'chapter') {
+        console.log('[DEBUG] chapter entry:', entry);
+        console.log('[DEBUG] chapter description:', entry.description);
+      }
       snippetCompletions.push({
         label: name,
         type: 'snippet',

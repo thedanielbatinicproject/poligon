@@ -307,7 +307,13 @@ try {
   if (fs.existsSync(frontendPublic)) {
     console.log('Serving frontend from', frontendPublic);
 
-    // Serve static assets (hashed files) with long cache
+    // Serve latex-autocomplete-data with no cache (these files change without hash)
+    app.use('/assets/latex-autocomplete-data', express.static(
+      path.join(frontendPublic, 'assets', 'latex-autocomplete-data'),
+      { index: false, maxAge: 0, etag: false }
+    ));
+
+    // Serve other static assets (hashed files) with long cache
     app.use(express.static(frontendPublic, { index: false, maxAge: '1y' }));
 
     // SPA fallback: for GET requests not starting with /api and not requesting a file, return index.html

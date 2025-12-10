@@ -30,18 +30,24 @@ export async function dynamicLatexCompletionSource(context: CompletionContext) {
 
   // Merge all completions (commands, snippets, environments, BibTeX)
   let options: any[] = [];
-  // Commands/macros
-  if (completionsData.completions) {
-    options = options.concat(
-      completionsData.completions.filter((cmd: any) => cmd.label.startsWith(term))
-    );
-  }
-  // Snippets
+  
+  // Snippets FIRST (they have better descriptions)
   if (completionsData.snippetCompletions) {
     options = options.concat(
       completionsData.snippetCompletions.filter((sn: any) => sn.label.startsWith(term))
     );
   }
+  
+  // Commands/macros (but skip if we already have a snippet with same label)
+  if (completionsData.completions) {
+    const snippetLabels = new Set(options.map(o => o.label));
+    options = options.concat(
+      completionsData.completions
+        .filter((cmd: any) => cmd.label.startsWith(term))
+        .filter((cmd: any) => !snippetLabels.has(cmd.label)) // Skip duplicates
+    );
+  }
+  
   // Environments (triggered by \\begin, \\end, etc. -- can be refined)
   if (completionsData.environmentCompletions && /^(begin|end)/.test(term)) {
     options = options.concat(
@@ -55,28 +61,39 @@ export async function dynamicLatexCompletionSource(context: CompletionContext) {
     );
   }
 
-  // Add tags and improve snippet/environment/BibTeX display
+  // Move detail to info for external tooltip display, add type as detail label
   options = options.map(opt => {
-    let tag = undefined;
-    let detail = opt.detail;
+    let typeLabel = '';
     if (opt.type === 'snippet') {
-      tag = 'snippet';
-      detail = opt.detail || 'Snippet';
+      typeLabel = 'snippet';
     } else if (opt.type === 'environment') {
-      tag = 'environment';
-      detail = opt.detail || 'Environment';
+      typeLabel = 'environment';
     } else if (opt.type === 'bibtex') {
-      tag = 'bibtex';
-      detail = opt.detail || 'BibTeX';
+      typeLabel = 'bibtex';
     } else if (opt.source && opt.source !== 'base' && opt.source !== 'snippet') {
-      tag = opt.source;
+      typeLabel = opt.source;
     }
-    return {
+    
+    // Debug logging
+    if (opt.label === 'chapter') {
+      console.log('[DEBUG] chapter opt BEFORE transform:', opt);
+      console.log('[DEBUG] chapter opt.detail:', opt.detail);
+      console.log('[DEBUG] chapter opt.info:', opt.info);
+    }
+    
+    const result = {
       ...opt,
       boost: opt.type === 'snippet' ? 99 : undefined,
-      tag,
-      detail
+      detail: typeLabel, // Shows inline (e.g., "snippet")
+      info: opt.detail || opt.info // Shows in external tooltip
     };
+    
+    if (opt.label === 'chapter') {
+      console.log('[DEBUG] chapter AFTER transform:', result);
+      console.log('[DEBUG] chapter result.info:', result.info);
+    }
+    
+    return result;
   });
 
   // Add custom insertimage completion always

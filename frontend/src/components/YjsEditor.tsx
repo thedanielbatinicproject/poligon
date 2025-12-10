@@ -1,7 +1,6 @@
 import { ImageInsertModal } from './ImageInsertModal';
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
 import { autocompletion, CompletionContext, completionKeymap, acceptCompletion } from '@codemirror/autocomplete';
-import { renderLatexCompletion } from './latexCompletionRender';
 // import { latexCompletions } from './latexCompletions';
 import { dynamicLatexCompletionSource } from './dynamicLatexCompletionProvider';
 import { EditorState, Compartment } from '@codemirror/state';
@@ -196,16 +195,6 @@ const YjsEditor = forwardRef<YjsEditorHandle, YjsEditorProps>(
           override: [completionSourceWithImage],
           activateOnTyping: true,
           defaultKeymap: true,
-          optionClass: (completion) => {
-            const tag = (completion as any).tag;
-            return tag ? `cm-latex-tag-${tag}` : '';
-          },
-          addToOptions: [
-            {
-              render: renderLatexCompletion,
-              position: 100
-            }
-          ],
         }),
         customKeymap,
         keymap.of([

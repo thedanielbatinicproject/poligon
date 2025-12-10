@@ -17,8 +17,8 @@
   font-family: var(--font-sans);
   font-size: 1rem;
   padding: 0.25rem 0;
-  min-width: 220px;
-  max-width: 420px;
+  min-width: 180px;
+  max-width: 350px;
   z-index: 100;
   pointer-events: none !important;
 }
@@ -37,23 +37,35 @@
   list-style: none;
 }
 
+.cm-tooltip-autocomplete li {
+  display: flex;
+  align-items: center;
+  padding: 0.35em 0.75em 0.35em 0.5em;
+  cursor: pointer;
+  transition: background 0.15s;
+  background: transparent;
+}
+
 .cm-tooltip-autocomplete li[aria-selected='true'] {
   background: var(--highlight-contrast);
   color: var(--text);
   font-weight: 600;
-  color: var(--text);
-  background: transparent;
-  padding: 0.15em 0.75em 0.15em 0.5em;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background 0.15s;
 }
 
 .cm-completionLabel {
   color: inherit;
   font-weight: 500;
   padding-left: 0.25em;
+}
+
+/* Detail text (e.g., "snippet") shown inline */
+.cm-completionDetail {
+  margin-left: auto;
+  padding-left: 1em;
+  font-size: 0.8em;
+  color: var(--text-muted, #888);
+  opacity: 0.7;
+  font-style: italic;
 }
 
 .cm-completionIcon {
