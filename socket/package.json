@@ -8,6 +8,8 @@
     "start:npx": "npx y-websocket-server --port 1234"
   },
   "dependencies": {
+    "dotenv": "^16.3.1",
+    "mysql2": "^3.6.0",
     "yjs": "^13.6.0",
     "y-websocket": "1.4.5",
     "y-leveldb": "^0.1.2",
