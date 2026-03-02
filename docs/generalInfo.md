@@ -71,38 +71,6 @@ The rendering service supports both temporary compilations (for preview) and per
 
 ---
 
-## Project Structure
-
-```
-poligon/
-├── backend/           # Express API server
-│   ├── src/
-│   │   ├── config/    # Authentication configuration (SAML, session)
-│   │   ├── controllers/
-│   │   ├── db/        # Database connection
-│   │   ├── middleware/ # Auth checks, file upload handling
-│   │   ├── render/    # LaTeX rendering logic
-│   │   ├── routes/    # API route definitions
-│   │   ├── services/  # Business logic layer
-│   │   ├── types/     # TypeScript type definitions
-│   │   ├── utils/     # Helper functions
-│   │   └── workers/   # Background workers (render queue)
-│   ├── public/        # Static frontend files (production build)
-│   ├── uploads/       # User-uploaded files
-│   └── db/            # Database schema
-├── frontend/          # React application
-│   ├── src/
-│   │   ├── assets/    # Images, fonts, icons
-│   │   ├── components/ # Reusable UI components
-│   │   ├── lib/       # Utilities, hooks, API client
-│   │   └── pages/     # Page components
-│   └── scripts/       # Build scripts
-├── socket/            # Yjs WebSocket server
-└── docs/              # Documentation
-```
-
----
-
 ## Authentication
 
 Poligon supports two authentication methods:
